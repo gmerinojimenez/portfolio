@@ -9,7 +9,11 @@ import './console.css';
 import '../card/card.css';
 import type { Locale } from '../../lib/locales';
 import { locales } from '../../lib/locales';
-import { itemIdFromPath, switchLocalePath } from '../../i18n/paths';
+import {
+  itemIdFromPath,
+  sectionPath,
+  switchLocalePath,
+} from '../../i18n/paths';
 import { useTranslations } from '../../i18n/ui';
 import { renderBoot } from './boot';
 import { createRegistry } from './commands';
@@ -86,6 +90,12 @@ const payload = JSON.stringify({ locale, data }).replace(/</g, '\\u003c');
       <button type="button" class="c-skip" data-console-skip hidden>
         {t.console.skipBoot}
       </button>
+      <nav class="c-links" aria-label={t.nav.label}>
+        <a href={sectionPath('reading', locale)} title={t.nav.readingLabel}>
+          {t.nav.reading}
+        </a>
+        <a href={sectionPath('privacy', locale)}>{t.nav.privacy}</a>
+      </nav>
       <nav class="c-lang" aria-label={t.console.languageLabel}>
         {locales.map((l, i) => (
           <>

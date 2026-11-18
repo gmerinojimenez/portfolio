@@ -1,0 +1,40 @@
+---
+/**
+ * The page of one item (`/es/proyectos/<id>/`, `/en/projects/<id>/`).
+ *
+ * It holds two views of the same item:
+ * - the console, whose script opens the card for this URL (with JS);
+ * - a static article rendered with the card's own template (without JS,
+ *   and for search engines and link previews).
+ * CSS shows exactly one of them (see reading.css).
+ */
+import '../components/card/card.css';
+import { renderCard } from '../components/card/card-view';
+import type { CardItem } from '../components/card/model';
+import Console from '../components/console/Console.astro';
+import type { Locale } from '../lib/locales';
+import Base from './Base.astro';
+import ReadingShell from './ReadingShell.astro';
+
+interface Props {
+  locale: Locale;
+  item: CardItem;
+}
+
+const { locale, item } = Astro.props;
+const article = renderCard(item, { locale, heading: 'h1' });
+const description = item.summary || item.title;
+---
+
+<Base
+  locale={locale}
+  title={`${item.title} · Portfolio`}
+  description={description}
+  theme="system"
+  ogType="article"
+>
+  <Console locale={locale} />
+  <ReadingShell locale={locale} class="r-item">
+    <article class="r-article" set:html={article.value} />
+  </ReadingShell>
+</Base>

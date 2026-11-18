@@ -24,7 +24,7 @@ export interface CardViewOptions {
  */
 function itemLink(target: CardRef, locale: Locale, className: string): Html {
   const type = useTranslations(locale).card.types[target.type];
-  return markup`<a class="${className}" href="${target.path}" data-card-open="${target.id}"><span class="k-shape" aria-hidden="true">${TYPE_SHAPES[target.type]}</span> <span class="sr-only">${type}: </span>${target.title}</a>`;
+  return markup`<a class="${className}" href="${target.path}" data-card-open="${target.id}"><span class="k-shape" aria-hidden="true">${TYPE_SHAPES[target.type]}</span><span class="sr-only">${type}: </span>${target.title}</a>`;
 }
 
 export function renderCard(item: CardItem, options: CardViewOptions): Html {

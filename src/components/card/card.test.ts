@@ -12,6 +12,7 @@ import {
   compareItems,
   filterByTag,
   formatDates,
+  groupByTopic,
   tagsOf,
   toCardItems,
 } from './model';
@@ -176,5 +177,24 @@ describe('card history', () => {
       kind: 'replace',
       url: '/en/',
     });
+  });
+});
+
+describe('groupByTopic', () => {
+  it('puts known clusters first, then other topics, then items without one', () => {
+    const groups = groupByTopic([
+      { id: 1, topic: 'kotlin' },
+      { id: 2, topic: 'AI' },
+      { id: 3, topic: undefined },
+      { id: 4, topic: 'android' },
+      { id: 5, topic: 'ai' },
+    ]);
+    expect(groups.map((g) => g.topic)).toEqual([
+      'android',
+      'ai',
+      'kotlin',
+      'other',
+    ]);
+    expect(groups[1]?.items.map((i) => i.id)).toEqual([2, 5]);
   });
 });

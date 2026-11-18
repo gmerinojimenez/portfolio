@@ -67,13 +67,15 @@
   white-space: nowrap;
 }
 
-.c-lang {
+.c-lang,
+.c-links {
   display: flex;
   align-items: center;
   gap: 2px;
 }
 
 .c-lang a,
+.c-links a,
 .c-skip {
   padding: 4px 6px;
   color: var(--color-dim);
@@ -85,6 +87,7 @@
 }
 
 .c-lang a:hover,
+.c-links a:hover,
 .c-skip:hover {
   color: var(--color-title);
 }

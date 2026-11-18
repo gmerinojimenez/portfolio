@@ -276,8 +276,9 @@
   margin: 2px 0;
 }
 
+/* inline-block keeps the link underline off the shape. */
 .k-shape {
-  color: var(--color-dim);
-  text-decoration: none;
   display: inline-block;
+  margin-right: 0.5em;
+  color: var(--color-dim);
 }

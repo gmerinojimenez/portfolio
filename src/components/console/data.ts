@@ -8,8 +8,9 @@ import { profiles } from './profile';
  * Everything the console needs from the content layer, already localized.
  *
  * This is the only seam between the console and the content: commands read
- * `ctx.data`, never `astro:content`. `getConsoleData` is called at build time and the result is embedded in the page as JSON, so it
- * must stay serializable (no functions, no Dates).
+ * `ctx.data`, never `astro:content`. `getConsoleData` is called at build
+ * time and the result is embedded in the page as JSON, so it must stay
+ * serializable (no functions, no Dates).
  */
 export interface ConsoleData extends SiteProfile {
   /** Published items (drafts too in `astro dev`), sorted for `ls`. */
@@ -50,7 +51,21 @@ export interface ContactLink {
  * code must import this module with `import type` only, so `astro:content`
  * never ends up in the client bundle.
  */
-export async function getConsoleData(locale: Locale): Promise<ConsoleData> {
+export function getConsoleData(locale: Locale): Promise<ConsoleData> {
+  // Every page embeds the same data: build it once per language (only in
+  // `astro build`, so the dev server picks up content edits).
+  if (import.meta.env.DEV) return loadConsoleData(locale);
+  let data = cache.get(locale);
+  if (!data) {
+    data = loadConsoleData(locale);
+    cache.set(locale, data);
+  }
+  return data;
+}
+
+const cache = new Map<Locale, Promise<ConsoleData>>();
+
+async function loadConsoleData(locale: Locale): Promise<ConsoleData> {
   const [items, companies] = await Promise.all([
     getItems(locale),
     getCompanies(),

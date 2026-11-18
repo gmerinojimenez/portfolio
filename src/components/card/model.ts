@@ -202,3 +202,35 @@ export function filterByTag<T extends Pick<CardItem, 'tags'>>(
     item.tags.some((t) => t.toLowerCase() === wanted),
   );
 }
+
+/** Map clusters in display order (ui-direction.md). */
+export const KNOWN_TOPICS = ['android', 'cloud', 'ai', 'fundamentals'] as const;
+
+export interface TopicGroup<T> {
+  /** Topic id (`other` for items without one). */
+  readonly topic: string;
+  readonly items: T[];
+}
+
+/**
+ * Groups items by `topic`: the map's clusters first, in their order, then any
+ * other topic alphabetically, then items without a topic (`other`).
+ * Items keep their relative order.
+ */
+export function groupByTopic<T extends Pick<CardItem, 'topic'>>(
+  items: readonly T[],
+): TopicGroup<T>[] {
+  const groups = new Map<string, T[]>();
+  for (const item of items) {
+    const topic = item.topic?.toLowerCase() || 'other';
+    groups.set(topic, [...(groups.get(topic) ?? []), item]);
+  }
+  const rank = (topic: string) => {
+    const known = (KNOWN_TOPICS as readonly string[]).indexOf(topic);
+    if (known >= 0) return known;
+    return topic === 'other' ? Number.MAX_SAFE_INTEGER : KNOWN_TOPICS.length;
+  };
+  return [...groups]
+    .sort(([a], [b]) => rank(a) - rank(b) || a.localeCompare(b))
+    .map(([topic, list]) => ({ topic, items: list }));
+}

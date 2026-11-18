@@ -106,9 +106,31 @@ const es = {
     },
   },
   nav: {
+    label: 'Navegación',
     console: 'consola',
     reading: 'lectura',
+    readingLabel: 'Versión de lectura',
     privacy: 'privacidad',
+  },
+  reading: {
+    title: 'Versión de lectura · Portfolio',
+    description:
+      'Todo el portfolio en una página normal: experiencia en Android, full stack e IA aplicada, agrupada por tema.',
+    intro: 'Lo mismo que la consola, en una página para leer de corrido.',
+    contact: 'Contacto',
+    topics: {
+      android: 'Android',
+      cloud: 'Cloud',
+      ai: 'IA',
+      fundamentals: 'Fundamentos',
+      other: 'Otros',
+    },
+  },
+  notFound: {
+    title: 'Página no encontrada',
+    body: 'Esta página no existe (o ya no).',
+    home: 'Ir a la consola',
+    reading: 'Ver la versión de lectura',
   },
   fallback: {
     aiSoon: 'La IA aún no está conectada: llega muy pronto. Mientras, prueba ',
@@ -217,9 +239,31 @@ const en: UiStrings = {
     },
   },
   nav: {
+    label: 'Navigation',
     console: 'console',
     reading: 'reading',
+    readingLabel: 'Reading version',
     privacy: 'privacy',
+  },
+  reading: {
+    title: 'Reading version · Portfolio',
+    description:
+      'The whole portfolio as a plain page: Android, full stack and applied AI experience, grouped by topic.',
+    intro: 'Same as the console, as a page you can read top to bottom.',
+    contact: 'Contact',
+    topics: {
+      android: 'Android',
+      cloud: 'Cloud',
+      ai: 'AI',
+      fundamentals: 'Fundamentals',
+      other: 'Other',
+    },
+  },
+  notFound: {
+    title: 'Page not found',
+    body: "This page doesn't exist (or not anymore).",
+    home: 'Go to the console',
+    reading: 'See the reading version',
   },
   fallback: {
     aiSoon:
