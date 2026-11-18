@@ -171,7 +171,7 @@ describe('AI handler', () => {
 
     // Prompt: fixed instructions + the locale's document; server-side max_tokens.
     const request = provider.requests[0]!;
-    expect(request.instructions).toContain('Answer in Spanish');
+    expect(request.instructions).toContain('reply in Spanish');
     expect(request.context).toBe(context.locales.es.document);
     expect(request.maxTokens).toBe(1024);
 
@@ -328,7 +328,7 @@ describe('AI handler', () => {
       },
     );
     expect(provider.requests[0]?.messages).toHaveLength(3);
-    expect(provider.requests[0]?.instructions).toContain('Answer in English');
+    expect(provider.requests[0]?.instructions).toContain('reply in English');
     expect(store.logs[0]).toMatchObject({
       turn: 2,
       question: 'And then?',
