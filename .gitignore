@@ -11,3 +11,4 @@ dist/
 # Local-only project docs (Spanish), not published
 docs/
 content-inbox/
+CLAUDE.local.md
