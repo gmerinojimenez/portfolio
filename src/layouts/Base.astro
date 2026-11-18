@@ -32,6 +32,9 @@ const { locale, title, description } = Astro.props;
       // Runs before first paint: CSS can tell whether JS is available.
       document.documentElement.classList.replace('no-js', 'js');
     </script>
+    <script>
+      import '../lib/analytics/client';
+    </script>
   </head>
   <body>
     <slot />
