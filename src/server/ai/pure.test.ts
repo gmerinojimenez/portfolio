@@ -218,8 +218,12 @@ describe('prompt', () => {
 
   it('instructions are stable per locale and carry no variable data', () => {
     expect(systemInstructions('es')).toBe(systemInstructions('es'));
-    expect(systemInstructions('es')).toContain('Answer in Spanish');
-    expect(systemInstructions('en')).toContain('Answer in English');
+    expect(systemInstructions('es')).toContain(
+      "language of the visitor's latest question",
+    );
+    expect(systemInstructions('es')).toContain('ambiguous');
+    expect(systemInstructions('es')).toContain('reply in Spanish');
+    expect(systemInstructions('en')).toContain('reply in English');
     expect(systemInstructions('es')).toContain('"contacto"');
     expect(systemInstructions('en')).toContain('"contact"');
   });

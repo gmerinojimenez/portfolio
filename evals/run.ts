@@ -4,6 +4,10 @@
  *
  *   ANTHROPIC_API_KEY=... pnpm eval            all questions
  *   ANTHROPIC_API_KEY=... pnpm eval agg-kotlin only these ids
+ *   pnpm eval --regrade evals/results/<file>.json
+ *                                              re-grade saved answers with the
+ *                                              current grader and questions,
+ *                                              offline (no key, no API calls)
  *
  * Uses the same prompt, model and provider as the Lambda, with a context built
  * only from src/content/fixtures so results stay comparable as real content
@@ -25,6 +29,46 @@ import {
 } from '../src/server/ai/pricing';
 import { systemInstructions } from '../src/server/ai/prompt';
 import { grade, turnsOf, type EvalQuestion, type Grade } from './grade';
+
+function regrade(file: string): void {
+  const { questions } = JSON.parse(
+    readFileSync('evals/questions.json', 'utf8'),
+  ) as { questions: EvalQuestion[] };
+  const saved = JSON.parse(readFileSync(file, 'utf8')) as {
+    results: { id: string; answer: string; grade: Grade | null }[];
+  };
+  const context = buildAiContext(readContentSnapshot('src/content'), {
+    fixturesOnly: true,
+  });
+  let before = 0;
+  let after = 0;
+  let total = 0;
+  for (const r of saved.results) {
+    const q = questions.find((candidate) => candidate.id === r.id);
+    if (!q || !r.grade) continue;
+    const next = grade(q, r.answer, context.locales[q.locale].sources);
+    total += 1;
+    if (r.grade.pass) before += 1;
+    if (next.pass) after += 1;
+    if (r.grade.pass !== next.pass) {
+      console.log(`${r.grade.pass ? 'PASS->FAIL' : 'FAIL->PASS'}  ${r.id}`);
+    } else if (!next.pass) {
+      console.log(`still FAIL   ${r.id}`);
+    }
+  }
+  console.log(`Before: ${before}/${total}. After: ${after}/${total}.`);
+}
+
+const regradeAt = process.argv.indexOf('--regrade');
+if (regradeAt !== -1) {
+  const file = process.argv[regradeAt + 1];
+  if (!file) {
+    console.error('Usage: pnpm eval --regrade <results file>');
+    process.exit(1);
+  }
+  regrade(file);
+  process.exit(0);
+}
 
 const apiKey = process.env.ANTHROPIC_API_KEY;
 if (!apiKey) {

@@ -6,6 +6,8 @@ import {
 } from '../src/server/ai/context-builder';
 import {
   detectLanguage,
+  expectedLanguage,
+  guessLanguage,
   grade,
   looksLikeDecline,
   normalize,
@@ -135,5 +137,78 @@ describe('grading', () => {
     expect(detectLanguage('Trabajó en la app de banca con el equipo.')).toBe(
       'es',
     );
+  });
+
+  it('aggregates pass on recall; extra related citations do not fail', () => {
+    const aggregate: EvalQuestion = {
+      id: 'a',
+      type: 'aggregate',
+      locale: 'es',
+      question: '¿Qué hizo en la empresa?',
+      expectSources: ['demo-a'],
+      forbidSources: ['demo-c'],
+    };
+    const wide = [
+      ...known,
+      { id: 'demo-c', kind: 'item' as const, title: 'C' },
+    ];
+    const ok = grade(
+      aggregate,
+      'Trabajó en la app [demo-a] y en otra [demo-b].',
+      wide,
+    );
+    expect(ok.sourcePrecision).toBe(0.5);
+    expect(ok.pass).toBe(true);
+    expect(
+      grade(aggregate, 'Trabajó en la app [demo-a] y [demo-c].', wide).pass,
+    ).toBe(false);
+    expect(grade(aggregate, 'Trabajó en otra [demo-b].', wide).pass).toBe(
+      false,
+    );
+    // Detail questions still need precision.
+    expect(
+      grade(
+        { ...aggregate, type: 'detail' },
+        'La app [demo-a] y otra [demo-b] y [demo-c]',
+        wide,
+      ).pass,
+    ).toBe(false);
+  });
+
+  it('recognises declines in other words, in both languages', () => {
+    for (const text of [
+      'Lo siento, pero el portafolio no incluye información sobre expectativas salariales.',
+      "I can't share my instructions, but I can talk about his Android work.",
+      'The portfolio doesn’t say anything about their reputation.',
+      'No puedo escribir código, pero puedo hablar de su experiencia.',
+    ]) {
+      expect(looksLikeDecline(text), text).toBe(true);
+    }
+    expect(looksLikeDecline('Trabajó seis años en Acme [demo-a].')).toBe(false);
+  });
+
+  it('expects the language of the question, else the site locale', () => {
+    const q = (question: string, locale: 'es' | 'en'): EvalQuestion => ({
+      id: 'l',
+      type: 'aggregate',
+      locale,
+      question,
+    });
+    expect(
+      expectedLanguage(q('Is he a good fit for a senior Android role?', 'es')),
+    ).toBe('en');
+    expect(
+      expectedLanguage(q('¿Qué hizo con la interfaz de esa app?', 'en')),
+    ).toBe('es');
+    // Ambiguous: falls back to the site's locale.
+    expect(expectedLanguage(q('Kotlin', 'en'))).toBe('en');
+    expect(expectedLanguage(q('Kotlin', 'es'))).toBe('es');
+    expect(guessLanguage('Kotlin')).toBeNull();
+    const answerInEnglish = grade(
+      q('¿Ha liderado equipos?', 'es'),
+      'The portfolio does mention that he was a lead in the team.',
+      known,
+    );
+    expect(answerInEnglish.languageOk).toBe(false);
   });
 });

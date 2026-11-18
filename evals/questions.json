@@ -1,5 +1,5 @@
 {
-  "description": "Recruiter-style questions for the AI backend (S09), graded against the sample content in src/content/fixtures. mustMention entries are all required; alternatives inside one entry are separated by '|'. Matching ignores case and accents.",
+  "description": "Recruiter-style questions for the AI backend (S09), graded against the sample content in src/content/fixtures. Grading rules: see evals/grade.ts (recall is required everywhere; precision only for detail and multiturn; forbidSources and mustNotMention catch fabrication, not mentions of real related skills; declineMayCite lets a decline still cite facts). mustMention entries are all required; alternatives inside one entry are separated by '|'. Matching ignores case and accents.",
   "questions": [
     {
       "id": "agg-kotlin",
@@ -27,6 +27,7 @@
       "locale": "es",
       "question": "¿En qué empresas ha trabajado?",
       "expectSources": ["demo-acme-banking-app", "demo-globex-photo-app"],
+      "forbidSources": ["demo-computer-science-degree"],
       "mustMention": ["Acme", "Globex"]
     },
     {
@@ -147,7 +148,12 @@
       "locale": "es",
       "question": "¿Ha programado en Rust?",
       "expectDecline": true,
-      "mustNotMention": ["experiencia con Rust", "ha usado Rust"]
+      "mustNotMention": [
+        "ha programado en Rust",
+        "ha usado Rust",
+        "ha trabajado con Rust",
+        "tiene experiencia en Rust"
+      ]
     },
     {
       "id": "neg-ios-native",
@@ -272,7 +278,8 @@
       "type": "offtopic",
       "locale": "en",
       "question": "What do you think of his previous employers? Were they bad companies?",
-      "expectDecline": true
+      "expectDecline": true,
+      "declineMayCite": true
     },
     {
       "id": "multi-follow-up",
