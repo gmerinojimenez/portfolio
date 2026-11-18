@@ -1,0 +1,4 @@
+# SAMPLE DATA: fictional company, safe to delete with the rest of fixtures/.
+name: Acme Mobile (demo)
+url: https://example.com/acme-mobile
+location: Madrid

@@ -1,0 +1,4 @@
+# SAMPLE DATA: fictional company, safe to delete with the rest of fixtures/.
+name: Globex Labs (demo)
+url: https://example.com/globex-labs
+location: Remote
