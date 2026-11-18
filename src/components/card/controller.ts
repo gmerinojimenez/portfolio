@@ -9,12 +9,13 @@
  * the rest of the page inert, the web's version of a dialog window), and goes
  * back to the view that opened it when it closes.
  *
- * Events for analytics (S08): `card:open` and `card:close` on `document`,
- * with `detail.id`.
+ * Events: `card:open` and `card:close` on `document`, with `detail.id`, and
+ * the console's `card-opened` event, which analytics (S08) listens to.
  */
 import { itemIdFromPath, localeHome } from '../../i18n/paths';
 import { useTranslations } from '../../i18n/ui';
 import type { Locale } from '../../lib/locales';
+import { emitConsoleEvent } from '../console/core/events';
 import { CARD_TITLE_ID, renderCard } from './card-view';
 import {
   closeAction,
@@ -126,6 +127,7 @@ class CardController {
       .querySelector<HTMLElement>(`#${CARD_TITLE_ID}`)
       ?.focus({ preventScroll: true });
     document.dispatchEvent(new CustomEvent('card:open', { detail: { id } }));
+    emitConsoleEvent(document, { type: 'card-opened', itemId: id });
     return true;
   }
 

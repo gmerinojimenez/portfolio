@@ -71,7 +71,7 @@ const es: PrivacyContent = {
     {
       heading: 'Lo que se guarda en tu navegador',
       paragraphs: [
-        'Ninguna cookie y nada en localStorage. La consola usa sessionStorage solo para recordar el historial de comandos y que ya viste la animación de inicio; se queda en tu dispositivo, no se envía a ningún sitio y se borra al cerrar la pestaña.',
+        'Ninguna cookie. En localStorage solo se guarda el último idioma que viste (`es` o `en`), para que la portada te lleve a él. La consola usa sessionStorage para recordar el historial de comandos y que ya viste la animación de inicio, y se borra al cerrar la pestaña. Nada de esto se envía a ningún sitio.',
         'Las fuentes se sirven desde esta misma web, sin llamadas a Google Fonts.',
       ],
     },
@@ -140,7 +140,7 @@ const en: PrivacyContent = {
     {
       heading: 'What is stored in your browser',
       paragraphs: [
-        'No cookies and nothing in localStorage. The console uses sessionStorage only to remember your command history and that you already saw the intro animation; it stays on your device, is sent nowhere and is cleared when you close the tab.',
+        'No cookies. localStorage only keeps the last language you viewed (`es` or `en`), so the home page takes you back to it. The console uses sessionStorage to remember your command history and that you already saw the intro animation, cleared when you close the tab. None of this is sent anywhere.',
         'Fonts are served from this same site, with no calls to Google Fonts.',
       ],
     },
