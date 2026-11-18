@@ -1,0 +1,40 @@
+/*
+ * Design tokens (ADR 0012: Solarized-based palette, AA-adjusted).
+ * CSS custom properties are the web's equivalent of theme attributes:
+ * components read `var(--color-text)` instead of hard-coding colors.
+ */
+:root {
+  /* Backgrounds */
+  --color-page: #00212b;
+  --color-console: #002b36; /* base03 */
+  --color-surface: #073642; /* base02: inputs and cards */
+  --color-line: #0f4553;
+  --color-line-strong: #1e5866;
+
+  /* Text */
+  --color-title: #eee8d5; /* base2 */
+  --color-text: #93a1a1; /* base1 */
+  --color-dim: #839496; /* base0: secondary text */
+  --color-ornament: #586e75; /* base01: decoration only, never text */
+
+  /* Accents */
+  --color-accent: #2aa198; /* prompt and accent (cyan) */
+  --color-ai: #b58900; /* AI answers (yellow) */
+  --color-link: #4ea4e0; /* links and clickable commands (lightened blue) */
+  --color-error: #e0632e; /* gaps and errors (lightened orange, >= 14px) */
+
+  /* Map clusters: fill, and a lighter variant for text */
+  --color-cluster-android: #859900;
+  --color-cluster-android-text: #99ad1a;
+  --color-cluster-cloud: #268bd2;
+  --color-cluster-cloud-text: #4ea4e0;
+  --color-cluster-ai: #cb4b16;
+  --color-cluster-ai-text: #e0632e;
+  --color-cluster-base: #586e75;
+  --color-cluster-base-text: #839496;
+
+  /* Typography */
+  --font-mono:
+    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}

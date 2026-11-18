@@ -1,0 +1,158 @@
+---
+/**
+ * The console window. Everything it shows on load is rendered here at build
+ * time (real HTML, readable without JavaScript); `runtime.ts` then makes it
+ * interactive. This "static HTML + script that enhances it" split is
+ * progressive enhancement.
+ */
+import './console.css';
+import type { Locale } from '../../lib/locales';
+import { locales } from '../../lib/locales';
+import { localeHome } from '../../i18n/paths';
+import { useTranslations } from '../../i18n/ui';
+import { renderBoot } from './boot';
+import { createRegistry } from './commands';
+import { renderContact } from './commands/contact';
+import { getConsoleData } from './data';
+import { quickCommands } from './quick-commands';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const data = await getConsoleData(locale);
+const registry = createRegistry();
+const boot = await renderBoot({
+  registry,
+  locale,
+  data,
+  pathname: Astro.url.pathname,
+});
+const quick = quickCommands(registry, locale);
+const contactHtml = renderContact(data.contact, t.commands.contact.email);
+
+// "visitante@portfolio:" + "~$": the host part is hidden on small screens
+// to leave room for the input.
+const promptSplit = t.console.prompt.indexOf(':') + 1;
+const promptHost = t.console.prompt.slice(0, promptSplit);
+const promptPath = t.console.prompt.slice(promptSplit);
+
+// Data for the browser, embedded as JSON. `<` is escaped so no value can
+// close the <script> element early.
+const payload = JSON.stringify({ locale, data }).replace(/</g, '\\u003c');
+---
+
+<div class="c-wrap">
+  <script is:inline>
+    // Decide before the log is parsed whether the boot sequence will be
+    // animated, so the static output is hidden from the first paint and
+    // there is no flash. If the runtime never starts, show everything.
+    (() => {
+      const root = document.documentElement;
+      let seen;
+      try {
+        seen = sessionStorage.getItem('console:boot-seen') === '1';
+      } catch {
+        seen = false;
+      }
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (seen || reduce) return;
+      root.classList.add('boot-anim');
+      setTimeout(() => {
+        if (!root.hasAttribute('data-console-ready')) {
+          root.classList.remove('boot-anim');
+        }
+      }, 3000);
+    })();
+  </script>
+  <section class="c-console" aria-label={t.console.label} data-console>
+    <div class="c-bar">
+      <span class="c-dots" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </span>
+      <span class="c-title-bar">{t.console.windowTitle}</span>
+      <button type="button" class="c-skip" data-console-skip hidden>
+        {t.console.skipBoot}
+      </button>
+      <nav class="c-lang" aria-label={t.console.languageLabel}>
+        {locales.map((l, i) => (
+          <>
+            {i > 0 && <span aria-hidden="true">|</span>}
+            <a
+              href={localeHome(l)}
+              hreflang={l}
+              lang={l}
+              data-lang={l}
+              aria-current={l === locale ? 'page' : undefined}
+              aria-label={`${l.toUpperCase()} · ${t.commands.lang.names[l]}`}
+            >
+              {l.toUpperCase()}
+            </a>
+          </>
+        ))}
+      </nav>
+    </div>
+
+    <div
+      class="c-log"
+      role="log"
+      aria-live="polite"
+      aria-label={t.console.logLabel}
+      tabindex="-1"
+      data-console-log
+      set:html={boot.value}
+    />
+
+    <noscript>
+      <div class="c-noscript">
+        <p class="c-dim">{t.console.noscript}</p>
+        <Fragment set:html={contactHtml.value} />
+      </div>
+    </noscript>
+
+    <form class="c-inputrow c-js-only" data-console-form autocomplete="off">
+      <label for="console-input" class="c-prompt">
+        <span aria-hidden="true">
+          <span class="c-prompt-host">{promptHost}</span>
+          {promptPath}
+        </span>
+        <span class="sr-only">{t.console.inputLabel}</span>
+      </label>
+      <input
+        id="console-input"
+        type="text"
+        spellcheck="false"
+        autocapitalize="off"
+        autocorrect="off"
+        enterkeyhint="send"
+        placeholder={t.console.placeholder}
+        data-console-input
+      />
+    </form>
+
+    <div
+      class="c-chips c-js-only"
+      role="group"
+      aria-label={t.console.quickCommandsLabel}
+    >
+      {quick.map((q) => (
+        <button type="button" class="c-chip" data-cmd={q.input}>
+          {q.label}
+        </button>
+      ))}
+    </div>
+
+    <script type="application/json" data-console-data set:html={payload} />
+  </section>
+</div>
+
+<script>
+  import { startConsole } from './runtime';
+
+  const root = document.querySelector<HTMLElement>('[data-console]');
+  if (root) startConsole(root);
+</script>
