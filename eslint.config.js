@@ -12,6 +12,8 @@ export default [
       '.sst/',
       'node_modules/',
       'pnpm-lock.yaml',
+      '.ai-context/',
+      'evals/results/',
     ],
   },
   js.configs.recommended,

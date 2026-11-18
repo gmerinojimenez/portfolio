@@ -9,3 +9,5 @@ docs/
 content-inbox/
 CLAUDE.md
 .claude/worktrees/
+.ai-context/
+evals/results/

@@ -39,6 +39,19 @@ export default $config({
     const { createBudget } = await import('./infra/budget');
     createBudget(config);
 
-    return { url: site.url };
+    // AI backend (S09), only with PORTFOLIO_AI_ENABLED=true. The context
+    // document is rebuilt from src/content on every deploy and copied next to
+    // the Lambda.
+    const { resolveAiConfig } = await import('./infra/ai-config');
+    const aiConfig = resolveAiConfig(process.env, config);
+    if (!aiConfig.enabled) return { url: site.url };
+
+    const { writeAiContext, DEFAULT_CONTEXT_DIR } =
+      await import('./src/server/ai/context-builder');
+    writeAiContext('src/content', DEFAULT_CONTEXT_DIR);
+    const { createAi } = await import('./infra/ai');
+    const ai = createAi(aiConfig, DEFAULT_CONTEXT_DIR);
+
+    return { url: site.url, aiUrl: ai.url };
   },
 });
