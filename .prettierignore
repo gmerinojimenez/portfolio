@@ -10,3 +10,5 @@ content-inbox/
 CLAUDE.md
 .claude/worktrees/
 src/data/
+.ai-context/
+evals/results/

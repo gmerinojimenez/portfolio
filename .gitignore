@@ -16,3 +16,7 @@ CLAUDE.local.md
 
 # Agent worktrees
 .claude/worktrees/
+
+# Generated AI context (S09) and eval results
+.ai-context/
+evals/results/

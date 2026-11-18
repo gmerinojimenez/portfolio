@@ -9,19 +9,24 @@ Static site on S3 + CloudFront, deployed with [SST](https://sst.dev).
 | `site.ts`          | `sst.aws.StaticSite`: private bucket, OAC, cache, domain  |
 | `edge.ts`          | Security headers added by a CloudFront Function           |
 | `budget.ts`        | Monthly AWS Budget with email alerts at 50 % and 80 %     |
+| `ai.ts`            | AI backend: streaming Lambda, DynamoDB table, secrets     |
+| `ai-config.ts`     | Reads the `PORTFOLIO_AI_*` variables below                |
 
 ## Configuration (all optional)
 
 Exported in the shell before running `sst deploy`.
 
-| Name                         | Effect                                                             |
-| ---------------------------- | ------------------------------------------------------------------ |
-| `PORTFOLIO_DOMAIN`           | Custom domain for `production`. Unset = CloudFront default domain. |
-| `PORTFOLIO_DOMAIN_REDIRECTS` | Comma-separated extra hostnames that redirect to the domain.       |
-| `PORTFOLIO_CERT_ARN`         | Existing us-east-1 ACM certificate, when DNS is not in Route 53.   |
-| `PORTFOLIO_BUDGET_EMAIL`     | Budget alert recipient. Unset = no budget.                         |
-| `PORTFOLIO_BUDGET_LIMIT_USD` | Monthly limit, default 20.                                         |
-| `PORTFOLIO_AWS_REGION`       | Defaults to `eu-north-1`.                                          |
+| Name                           | Effect                                                             |
+| ------------------------------ | ------------------------------------------------------------------ |
+| `PORTFOLIO_DOMAIN`             | Custom domain for `production`. Unset = CloudFront default domain. |
+| `PORTFOLIO_DOMAIN_REDIRECTS`   | Comma-separated extra hostnames that redirect to the domain.       |
+| `PORTFOLIO_CERT_ARN`           | Existing us-east-1 ACM certificate, when DNS is not in Route 53.   |
+| `PORTFOLIO_BUDGET_EMAIL`       | Budget alert recipient. Unset = no budget.                         |
+| `PORTFOLIO_BUDGET_LIMIT_USD`   | Monthly limit, default 20.                                         |
+| `PORTFOLIO_AWS_REGION`         | Defaults to `eu-north-1`.                                          |
+| `PORTFOLIO_AI_ENABLED`         | `true` creates the AI backend (needs its three secrets set first). |
+| `PORTFOLIO_AI_ALLOWED_ORIGINS` | Extra origins allowed to call it, e.g. the CloudFront URL.         |
+| `PORTFOLIO_AI_DAILY_LIMIT_USD` | Daily spend brake for Claude calls, default 0.5.                   |
 
 ## Deploying
 
@@ -55,3 +60,17 @@ budget.
 `production` is the live site (removal `retain`, protected). Personal stages
 (`pnpm exec sst deploy --stage <name>`) never get the domain or the budget and
 are removed with `pnpm exec sst remove --stage <name>`.
+
+## AI backend
+
+Off unless `PORTFOLIO_AI_ENABLED=true`. Before enabling it on a stage, set its
+secrets (see the header of `ai.ts`):
+
+```sh
+pnpm exec sst secret set AnthropicApiKey <key> --stage production
+pnpm exec sst secret set TurnstileSecret <secret> --stage production
+pnpm exec sst secret set IpHashSalt "$(openssl rand -hex 32)" --stage production
+```
+
+Each deploy rebuilds `.ai-context/context.json` from `src/content` and ships it
+with the Lambda. The endpoint URL is the `aiUrl` output.
