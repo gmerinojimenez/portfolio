@@ -4,6 +4,7 @@
  * buttons and the animated boot. All command logic lives in `commands/` and
  * `core/`; this file only wires it to the DOM.
  */
+import { localeFromPath } from '../../i18n/paths';
 import type { Locale } from '../../lib/locales';
 import { useTranslations } from '../../i18n/ui';
 import { createRegistry } from './commands';
@@ -11,6 +12,7 @@ import type { ConsoleData } from './data';
 import { Animator, typeInto } from './core/animator';
 import { complete } from './core/complete';
 import { execute } from './core/execute';
+import { emitConsoleEvent, type ConsoleEvent } from './core/events';
 import { History } from './core/history';
 import { markup, type Html } from './core/html';
 import { FALLBACK_OUTPUT, echoLine, outputBlock } from './core/blocks';
@@ -75,6 +77,9 @@ export function startConsole(root: HTMLElement): void {
   const animator = new Animator(reducedMotion);
   const history = new History(loadHistory());
 
+  // Announces what happens to whoever listens (analytics). Ids only.
+  const emit = (event: ConsoleEvent) => emitConsoleEvent(root, event);
+
   // ---------- Output ----------
 
   const scrollToEnd = () => {
@@ -118,6 +123,10 @@ export function startConsole(root: HTMLElement): void {
       },
       navigate(url) {
         storage.set(BOOT_SEEN_KEY, '1');
+        const to = localeFromPath(url);
+        if (to && to !== locale) {
+          emit({ type: 'language-switched', from: locale, to });
+        }
         location.assign(url);
       },
       download(url, filename) {
@@ -166,7 +175,9 @@ export function startConsole(root: HTMLElement): void {
       const text = echo.querySelector('.c-echo-text');
       if (text) await whileBusy(() => typeInto(text, value, animator));
     }
-    await execute(value, registry, makeContext);
+    const run = await execute(value, registry, makeContext);
+    if (run?.command) emit({ type: 'command', command: run.command.name });
+    else if (run) emit({ type: 'unknown-input', length: value.length });
   }
 
   // ---------- Boot ----------
@@ -203,11 +214,13 @@ export function startConsole(root: HTMLElement): void {
 
     document.removeEventListener('keydown', stopOnKey);
     log.removeEventListener('pointerdown', stopOnPointer);
+    const skipped = animator.instant;
     const skipHadFocus = document.activeElement === skipButton;
     skipButton.hidden = true;
     docEl.classList.remove('boot-anim');
     animator.resume();
     if (skipHadFocus) input.focus();
+    emit({ type: 'boot', outcome: skipped ? 'skipped' : 'completed' });
     finishBoot();
   }
 
