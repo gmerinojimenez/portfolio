@@ -32,7 +32,8 @@ class CardController {
   private readonly content: HTMLElement;
   private readonly byId: Map<string, CardItem>;
   private readonly baseTitle: string;
-  private returnTo: HTMLElement | null = null;
+  // SVGElement too: the map's nodes are SVG links.
+  private returnTo: HTMLElement | SVGElement | null = null;
   private currentId: string | undefined;
   private updateHistoryOnClose = true;
 
@@ -101,7 +102,8 @@ class CardController {
     if (!wasOpen) {
       const active = document.activeElement;
       this.returnTo =
-        active instanceof HTMLElement && active !== document.body
+        (active instanceof HTMLElement || active instanceof SVGElement) &&
+        active !== document.body
           ? active
           : null;
     }

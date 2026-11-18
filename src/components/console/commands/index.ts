@@ -12,7 +12,7 @@ import { whoami } from './whoami';
 
 /**
  * The console's commands, in `help` order. Later specs plug in here:
- * `ls`/`cat` come from S05; S07 replaces `map`, S10 replaces the fallback.
+ * `ls`/`cat` come from S05, `map` is S07's semantic map, S10 replaces the fallback.
  */
 export function createRegistry(): CommandRegistry {
   return new CommandRegistry()

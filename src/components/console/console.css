@@ -238,39 +238,6 @@
   margin-right: 4px;
 }
 
-/* map placeholder (S07 replaces it) */
-.c-map-placeholder {
-  margin: 8px 0 4px;
-  padding: 14px 16px;
-  border: 1px dashed var(--color-line-strong);
-  border-radius: 8px;
-}
-
-.c-map-shapes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 24px;
-  margin-bottom: 8px;
-  font-size: 18px;
-  letter-spacing: 0.3em;
-}
-
-.c-cl-android {
-  color: var(--color-cluster-android-text);
-}
-
-.c-cl-cloud {
-  color: var(--color-cluster-cloud-text);
-}
-
-.c-cl-ai {
-  color: var(--color-cluster-ai-text);
-}
-
-.c-cl-base {
-  color: var(--color-cluster-base-text);
-}
-
 /* ---------- Input and quick commands ---------- */
 
 .c-inputrow {
