@@ -19,11 +19,12 @@ export default $config({
       home: 'aws',
       providers: {
         aws: {
-          // Ireland: every service we use, low prices and low latency from
-          // Spain. Change it only before the first deploy; on a deployed
-          // stage it moves the state.
+          // Stockholm: the AWS project this site deploys to only allows its
+          // assigned Region (us-east-1 is reserved for global services such
+          // as the CloudFront certificate). Change it only before the first
+          // deploy; on a deployed stage it moves the state.
           region: (process.env.PORTFOLIO_AWS_REGION ??
-            'eu-west-1') as aws.Region,
+            'eu-north-1') as aws.Region,
         },
       },
     };

@@ -1,6 +1,7 @@
 dist/
 .astro/
 .sst/
+sst-env.d.ts
 node_modules/
 pnpm-lock.yaml
 docs/design/prototypes/
