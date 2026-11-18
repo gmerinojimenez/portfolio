@@ -14,22 +14,22 @@ import type { Contact, SiteProfile } from './data';
  */
 
 const contact: Contact = {
-  email: 'hello@example.com',
+  email: 'gmerinojimenez@gmail.com',
   links: [
     {
       label: 'linkedin',
-      href: 'https://www.linkedin.com/in/your-handle',
-      text: 'linkedin.com/in/your-handle',
+      href: 'https://www.linkedin.com/in/gmerinojimenez/',
+      text: 'linkedin.com/in/gmerinojimenez/',
     },
     {
       label: 'github',
-      href: 'https://github.com/your-handle',
-      text: 'github.com/your-handle',
+      href: 'https://github.com/gmerinojimenez',
+      text: 'github.com/gmerinojimenez',
     },
     {
       label: 'medium',
-      href: 'https://medium.com/@your-handle',
-      text: 'medium.com/@your-handle',
+      href: 'https://medium.com/@gmerino',
+      text: 'medium.com/@gmerino',
     },
   ],
 };
@@ -37,7 +37,7 @@ const contact: Contact = {
 export const profiles: Record<Locale, SiteProfile> = {
   es: {
     profile: {
-      name: 'Nombre Apellido',
+      name: 'Guillermo Merino Jiménez',
       headline: 'Software engineer · Android · Full stack · IA aplicada',
       intro: [
         'Más de diez años construyendo apps que usan millones de personas.',
@@ -49,7 +49,7 @@ export const profiles: Record<Locale, SiteProfile> = {
   },
   en: {
     profile: {
-      name: 'Nombre Apellido',
+      name: 'Guillermo Merino Jiménez',
       headline: 'Software engineer · Android · Full stack · Applied AI',
       intro: [
         'Over ten years building apps used by millions of people.',
