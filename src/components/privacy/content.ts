@@ -64,7 +64,9 @@ const es: PrivacyContent = {
       heading: 'Preguntas a la IA',
       paragraphs: [
         'Si escribes una pregunta en lenguaje natural, se envía a Anthropic (API de Claude), que la procesa para generar la respuesta. Anthropic actúa como encargado del tratamiento y puede tratar los datos fuera de la UE.',
-        'Además, guardo en AWS (región eu-north-1, Estocolmo) la pregunta, la respuesta, el idioma, un identificador de sesión anónimo y tu IP convertida con un hash irreversible (no la IP en claro), para limitar abusos, controlar costes y mejorar el contenido. Estos registros se borran pasado un plazo de TODO días.',
+        'Además, guardo en AWS (región eu-north-1, Estocolmo) la pregunta, la respuesta, el idioma y el consumo de tokens, para controlar costes y mejorar el contenido. Este registro no incluye tu IP y se borra a los 90 días.',
+        'Para limitar abusos, tu IP se convierte con un hash irreversible (nunca se guarda en claro) y se usa solo como contador de peticiones por minuto y por día. Esos contadores se borran solos en menos de dos días.',
+        'Antes de enviar una pregunta, Cloudflare Turnstile comprueba que no eres un bot. Su script solo se carga cuando haces la primera pregunta, y Cloudflare procesa datos técnicos del navegador para esa comprobación.',
         'No escribas datos personales ni confidenciales en el campo de preguntas.',
       ],
     },
@@ -135,7 +137,9 @@ const en: PrivacyContent = {
       heading: 'Questions to the AI',
       paragraphs: [
         'If you type a question in natural language, it is sent to Anthropic (Claude API), which processes it to generate the answer. Anthropic acts as a processor and may process data outside the EU.',
-        'I also store in AWS (eu-north-1 region, Stockholm) the question, the answer, the language, an anonymous session identifier and your IP address turned into an irreversible hash (not the plain IP), to limit abuse, control costs and improve the content. These records are deleted after TODO days.',
+        'I also store in AWS (eu-north-1 region, Stockholm) the question, the answer, the language and token usage, to control costs and improve the content. This log does not include your IP address and is deleted after 90 days.',
+        'To limit abuse, your IP address is turned into an irreversible hash (it is never stored in plain form) and used only as a per-minute and per-day request counter. Those counters delete themselves within two days.',
+        'Before a question is sent, Cloudflare Turnstile checks that you are not a bot. Its script only loads when you ask your first question, and Cloudflare processes technical browser data for that check.',
         'Please do not type personal or confidential data into the question field.',
       ],
     },
