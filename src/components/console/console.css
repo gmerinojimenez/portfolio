@@ -1,0 +1,372 @@
+/*
+ * Console styles. They are global (not Astro-scoped) on purpose: most of the
+ * console's markup is injected at runtime with innerHTML, and Astro's scoped
+ * styles only reach elements written in the .astro template.
+ * Every class is prefixed with `c-` to avoid collisions.
+ */
+
+.c-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.c-console {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 920px;
+  height: calc(100vh - 48px);
+  height: calc(100dvh - 48px);
+  min-height: 420px;
+  background: var(--color-console);
+  color: var(--color-text);
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.65;
+  overflow: hidden;
+}
+
+.c-console p {
+  margin: 0;
+}
+
+/* ---------- Window bar ---------- */
+
+.c-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--color-line);
+  color: var(--color-dim);
+  font-size: 12px;
+}
+
+.c-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.c-dots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-line-strong);
+}
+
+.c-title-bar {
+  flex: 1;
+  margin-left: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.c-lang {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.c-lang a,
+.c-skip {
+  padding: 4px 6px;
+  color: var(--color-dim);
+  text-decoration: none;
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.c-lang a:hover,
+.c-skip:hover {
+  color: var(--color-title);
+}
+
+.c-lang a[aria-current='page'] {
+  color: var(--color-title);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.c-skip[hidden] {
+  display: none;
+}
+
+/* ---------- Output ---------- */
+
+.c-log {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px 18px;
+  overflow-wrap: anywhere;
+}
+
+.c-log:focus {
+  outline: none;
+}
+
+.c-step,
+.c-out {
+  margin-bottom: 4px;
+}
+
+.c-echo {
+  margin-top: 10px;
+  white-space: pre-wrap;
+}
+
+.c-prompt {
+  color: var(--color-accent);
+}
+
+.c-echo-text {
+  color: var(--color-title);
+}
+
+.c-dim {
+  color: var(--color-dim);
+}
+
+.c-small {
+  font-size: 12px;
+}
+
+.c-title {
+  color: var(--color-title);
+}
+
+.c-ai {
+  color: var(--color-ai);
+}
+
+.c-error {
+  color: var(--color-error);
+}
+
+.c-link {
+  color: var(--color-link);
+  text-underline-offset: 3px;
+}
+
+/* A command you can click: looks like a link, is a <button>. */
+.c-cmd {
+  padding: 0;
+  color: var(--color-link);
+  background: none;
+  border: none;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: var(--color-line-strong);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.c-cmd:hover {
+  text-decoration-color: currentColor;
+}
+
+.c-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0 16px;
+  margin: 2px 0 6px;
+}
+
+.c-candidates {
+  white-space: pre-wrap;
+}
+
+/* whoami: the hero */
+.c-hero {
+  margin: 4px 0 6px;
+}
+
+.c-hero-name {
+  margin: 6px 0 4px;
+  color: var(--color-title);
+  font-family: var(--font-sans);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.c-hero-headline {
+  color: var(--color-title);
+}
+
+/* map placeholder (S07 replaces it) */
+.c-map-placeholder {
+  margin: 8px 0 4px;
+  padding: 14px 16px;
+  border: 1px dashed var(--color-line-strong);
+  border-radius: 8px;
+}
+
+.c-map-shapes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  margin-bottom: 8px;
+  font-size: 18px;
+  letter-spacing: 0.3em;
+}
+
+.c-cl-android {
+  color: var(--color-cluster-android-text);
+}
+
+.c-cl-cloud {
+  color: var(--color-cluster-cloud-text);
+}
+
+.c-cl-ai {
+  color: var(--color-cluster-ai-text);
+}
+
+.c-cl-base {
+  color: var(--color-cluster-base-text);
+}
+
+/* ---------- Input and quick commands ---------- */
+
+.c-inputrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-top: 1px solid var(--color-line);
+}
+
+.c-inputrow:focus-within {
+  background: var(--color-surface);
+}
+
+.c-inputrow .c-prompt {
+  flex: none;
+  white-space: nowrap;
+}
+
+.c-inputrow input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  color: var(--color-title);
+  background: transparent;
+  border: none;
+  outline: none;
+  caret-color: var(--color-accent);
+  font: inherit;
+  /* 16px keeps iOS from zooming in when the input gets focus. */
+  font-size: 16px;
+}
+
+.c-inputrow input::placeholder {
+  color: var(--color-dim);
+  opacity: 1;
+}
+
+.c-chips {
+  display: flex;
+  gap: 8px;
+  padding: 2px 18px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.c-chip {
+  flex: none;
+  min-height: 32px;
+  padding: 2px 12px;
+  color: var(--color-text);
+  background: none;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.c-chip:hover {
+  color: var(--color-title);
+  border-color: var(--color-text);
+}
+
+.c-noscript {
+  padding: 10px 18px 14px;
+  border-top: 1px solid var(--color-line);
+}
+
+/* ---------- Progressive enhancement ---------- */
+
+/* Without JavaScript the prompt and buttons can't do anything: hide them. */
+.no-js .c-js-only {
+  display: none;
+}
+
+/*
+ * Animated boot: steps stay hidden until the runtime reveals them
+ * (`data-shown`). The class is only set when JS runs and motion is allowed.
+ */
+.boot-anim [data-boot]:not([data-shown]) {
+  display: none;
+}
+
+.boot-anim [data-boot][data-shown='echo'] > .c-out {
+  display: none;
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width: 720px) {
+  .c-wrap {
+    padding: 0;
+  }
+
+  .c-console {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    border: none;
+    border-radius: 0;
+    font-size: 13px;
+  }
+
+  .c-title-bar {
+    visibility: hidden;
+  }
+
+  .c-log {
+    padding: 12px 16px;
+  }
+
+  .c-inputrow {
+    padding: 10px 16px;
+  }
+
+  .c-prompt-host {
+    display: none;
+  }
+
+  .c-chips {
+    padding: 2px 16px 12px;
+  }
+
+  .c-chip {
+    min-height: 36px;
+  }
+
+  .c-hero-name {
+    font-size: 26px;
+  }
+}

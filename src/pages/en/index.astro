@@ -1,13 +1,11 @@
 ---
+import Console from '../../components/console/Console.astro';
+import { useTranslations } from '../../i18n/ui';
+import Base from '../../layouts/Base.astro';
+
+const t = useTranslations('en');
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>Portfolio</title>
-  </head>
-  <body>
-    <h1>Portfolio</h1>
-  </body>
-</html>
+<Base locale="en" title={t.meta.title} description={t.meta.description}>
+  <Console locale="en" />
+</Base>
