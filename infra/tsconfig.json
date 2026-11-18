@@ -1,0 +1,10 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "include": ["../sst.config.ts", "./**/*.ts"],
+  "exclude": ["../.sst"],
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true,
+    "verbatimModuleSyntax": false
+  }
+}
