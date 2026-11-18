@@ -12,3 +12,6 @@ dist/
 docs/
 content-inbox/
 CLAUDE.local.md
+
+# Agent worktrees
+.claude/worktrees/

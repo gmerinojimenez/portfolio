@@ -6,6 +6,7 @@ export default [
   {
     ignores: [
       'docs/',
+      '.claude/worktrees/',
       'dist/',
       '.astro/',
       '.sst/',
