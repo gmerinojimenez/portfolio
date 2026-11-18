@@ -1,19 +1,24 @@
+import mapJson from '../../../data/map.json';
 import { pick } from '../../../i18n/ui';
-import { markup } from '../core/html';
+import { enhanceMap } from '../../map/enhance';
+import { buildMapModel, type MapData } from '../../map/model';
+import { renderMap } from '../../map/render';
 import type { Command } from '../core/types';
 
+const mapData: MapData = mapJson;
+
 /**
- * Placeholder until S07 registers the real semantic map with
- * `registry.register(map, { replace: true })`.
+ * `map`: the semantic map (S07). `run` draws it as SVG (at build time for
+ * the boot, or in the browser), joining `map.json` with the visible items;
+ * `enhance` adds hover/focus connections and the legend filters.
  */
 export const map: Command = {
   name: 'map',
   summary: pick((t) => t.commands.map.summary),
   run(_input, ctx) {
-    const strings = ctx.t.commands.map;
-    const shapes = markup`<div class="c-map-shapes" aria-hidden="true"><span class="c-cl-android">○ ◎ △</span><span class="c-cl-cloud">○ □ ◇</span><span class="c-cl-ai">◎ ◇ △</span><span class="c-cl-base">□</span></div>`;
-    ctx.print(
-      markup`<div class="c-map-placeholder">${shapes}<p class="c-title">${strings.title}</p><p class="c-dim">${strings.body}</p></div><p class="c-dim c-small">${strings.legend}</p>`,
-    );
+    ctx.print(renderMap(buildMapModel(mapData, ctx.data.items), ctx.t));
+  },
+  enhance(output, ctx) {
+    enhanceMap(output, mapData, ctx.data.items, ctx.t);
   },
 };

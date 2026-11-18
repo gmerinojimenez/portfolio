@@ -1,0 +1,408 @@
+/*
+ * Semantic map (S07). Global like the console styles (the map is injected
+ * with innerHTML), every class prefixed with `m-`.
+ * Inside the SVG, CSS styles the shapes too: `fill` and `stroke` are the
+ * SVG equivalents of a drawable's fillColor and strokeColor.
+ */
+
+.m-cl-android {
+  --cl: var(--color-cluster-android);
+  --cl-text: var(--color-cluster-android-text);
+}
+
+.m-cl-cloud {
+  --cl: var(--color-cluster-cloud);
+  --cl-text: var(--color-cluster-cloud-text);
+}
+
+.m-cl-ai {
+  --cl: var(--color-cluster-ai);
+  --cl-text: var(--color-cluster-ai-text);
+}
+
+.m-cl-fundamentals {
+  --cl: var(--color-cluster-base);
+  --cl-text: var(--color-cluster-base-text);
+}
+
+.m-map {
+  --m-bg: var(--color-page);
+  margin: 6px 0 8px;
+}
+
+.m-hint-narrow {
+  display: none;
+}
+
+/* Touch screens: no hover, so the hint talks about tapping. */
+@media (hover: none) {
+  .m-hint-wide {
+    display: none;
+  }
+
+  .m-hint-narrow {
+    display: inline;
+  }
+}
+
+.m-layout {
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr);
+  grid-template-areas: 'legend canvas';
+  gap: 12px 16px;
+  align-items: start;
+  margin-top: 8px;
+}
+
+.m-canvas {
+  grid-area: canvas;
+  background: var(--m-bg);
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.m-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  font-family: var(--font-mono);
+}
+
+.m-svg-mobile {
+  display: none;
+}
+
+/* ---------- Regions and edges ---------- */
+
+.m-region {
+  fill: var(--cl);
+  fill-opacity: 0.07;
+  stroke: var(--cl);
+  stroke-opacity: 0.2;
+}
+
+.m-region-label {
+  fill: var(--cl-text);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.m-edge {
+  fill: none;
+  stroke: var(--color-ornament);
+  stroke-width: 1.2;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+/* Without JS only the bridges between topics show (ADR 0006). */
+.m-edge.is-bridge {
+  opacity: 0.8;
+}
+
+/* With JS, `enhance.ts` decides which edges show. */
+.m-map[data-ready] .m-edge {
+  opacity: 0;
+}
+
+.m-map[data-ready] .m-edge.is-shown {
+  opacity: 0.8;
+}
+
+.m-map[data-ready] .m-edge.is-hot {
+  stroke: var(--color-accent);
+  stroke-width: 1.6;
+  opacity: 1;
+}
+
+/* ---------- Nodes ---------- */
+
+.m-node {
+  cursor: pointer;
+}
+
+/* The ring below is the focus indicator; the default outline would draw
+   around the whole hit area. */
+.m-node:focus {
+  outline: none;
+}
+
+.m-hit {
+  fill: transparent;
+}
+
+.m-shape {
+  fill: var(--cl);
+  stroke: var(--m-bg);
+  stroke-width: 1.5;
+  transition: opacity 0.15s;
+}
+
+.m-dot {
+  fill: var(--m-bg);
+}
+
+.m-ring {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  opacity: 0;
+}
+
+.m-node:focus-visible .m-ring,
+.m-node.is-pinned .m-ring {
+  opacity: 1;
+}
+
+.m-node:hover .m-shape {
+  stroke: var(--color-title);
+}
+
+.m-label {
+  fill: var(--color-title);
+  paint-order: stroke;
+  stroke: var(--m-bg);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.m-node.is-labeled .m-label,
+.m-node:hover .m-label,
+.m-node:focus-visible .m-label,
+.m-node.is-linked .m-label {
+  opacity: 1;
+}
+
+/* A focused node: everything not connected to it fades. */
+.m-map.is-focusing .m-node:not(.is-linked) .m-shape {
+  opacity: 0.3;
+}
+
+.m-map.is-focusing .m-node:not(.is-linked) .m-label {
+  opacity: 0;
+}
+
+.m-node.is-active .m-label {
+  font-weight: 700;
+}
+
+/* Filtered out: barely visible and not interactive. */
+.m-node.is-out {
+  pointer-events: none;
+}
+
+.m-map .m-node.is-out .m-shape {
+  opacity: 0.1;
+}
+
+.m-map .m-node.is-out .m-label {
+  opacity: 0;
+}
+
+/* ---------- Legend and connections panel ---------- */
+
+.m-legend {
+  grid-area: legend;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.m-filters {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.m-legend-title {
+  color: var(--color-dim);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.m-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 2px 8px;
+  color: var(--color-text);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.m-filter:disabled {
+  cursor: default;
+}
+
+.m-filter:hover:not(:disabled) {
+  color: var(--color-title);
+  border-color: var(--color-line-strong);
+}
+
+.m-filter[aria-pressed='true'] {
+  color: var(--color-title);
+  background: var(--color-surface);
+  border-color: var(--color-accent);
+}
+
+.m-count {
+  color: var(--color-dim);
+}
+
+.m-swatch {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  fill: var(--cl, var(--color-text));
+}
+
+.m-swatch .m-dot {
+  fill: var(--color-console);
+}
+
+.m-color {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--cl);
+}
+
+.m-panel {
+  padding-top: 8px;
+  border-top: 1px solid var(--color-line);
+}
+
+.m-panel-open {
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
+.m-related {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.m-related li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---------- Text alternative ---------- */
+
+.m-list {
+  margin-top: 8px;
+}
+
+.m-list summary {
+  width: max-content;
+  color: var(--color-link);
+  cursor: pointer;
+}
+
+.m-list-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 8px 24px;
+  margin-top: 6px;
+}
+
+.m-list-title {
+  color: var(--cl-text);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.m-list ul {
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.m-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 6px;
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width: 720px) {
+  .m-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'canvas'
+      'legend';
+  }
+
+  .m-svg-desktop {
+    display: none;
+  }
+
+  .m-svg-mobile {
+    display: block;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  /* The legend becomes rows of filter chips under the map. */
+  .m-legend {
+    gap: 6px;
+  }
+
+  .m-filters {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .m-legend-title {
+    display: none;
+  }
+
+  .m-filter {
+    min-height: 32px;
+    border-color: var(--color-line-strong);
+    border-radius: 999px;
+  }
+
+  /* The connections panel becomes a line of chips. */
+  .m-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+  }
+
+  .m-related {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-edge,
+  .m-shape,
+  .m-label {
+    transition: none;
+  }
+}
