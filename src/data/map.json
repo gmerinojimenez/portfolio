@@ -1,0 +1,274 @@
+{
+  "version": 1,
+  "embeddings": {
+    "provider": "fake",
+    "model": "fake-bag-of-words-v1",
+    "dimensions": 256
+  },
+  "similarity": {
+    "k": 3,
+    "threshold": 0.3
+  },
+  "clusters": [
+    {
+      "id": "android",
+      "label": "Android",
+      "center": {
+        "x": 0.24,
+        "y": 0.34
+      },
+      "radius": 0.17,
+      "count": 5
+    },
+    {
+      "id": "cloud",
+      "label": "Cloud",
+      "center": {
+        "x": 0.74,
+        "y": 0.3
+      },
+      "radius": 0.17,
+      "count": 0
+    },
+    {
+      "id": "ai",
+      "label": "IA",
+      "center": {
+        "x": 0.56,
+        "y": 0.76
+      },
+      "radius": 0.17,
+      "count": 1
+    },
+    {
+      "id": "fundamentals",
+      "label": "Fundamentos",
+      "center": {
+        "x": 0.14,
+        "y": 0.78
+      },
+      "radius": 0.14,
+      "count": 1
+    }
+  ],
+  "nodes": [
+    {
+      "id": "demo-acme-banking-app",
+      "type": "app",
+      "cluster": "android",
+      "importance": 5,
+      "x": 0.3398,
+      "y": 0.4505,
+      "local": {
+        "x": 0.587,
+        "y": 0.6499
+      }
+    },
+    {
+      "id": "demo-compose-migration",
+      "type": "project",
+      "cluster": "android",
+      "importance": 4,
+      "x": 0.2427,
+      "y": 0.3316,
+      "local": {
+        "x": 0.0158,
+        "y": -0.0492
+      },
+      "app": "demo-globex-photo-app"
+    },
+    {
+      "id": "demo-computer-science-degree",
+      "type": "education",
+      "cluster": "fundamentals",
+      "importance": 2,
+      "x": 0.1181,
+      "y": 0.8456,
+      "local": {
+        "x": -0.1565,
+        "y": 0.4687
+      }
+    },
+    {
+      "id": "demo-globex-photo-app",
+      "type": "app",
+      "cluster": "android",
+      "importance": 4,
+      "x": 0.2596,
+      "y": 0.3896,
+      "local": {
+        "x": 0.1152,
+        "y": 0.2919
+      }
+    },
+    {
+      "id": "demo-kmp-library",
+      "type": "oss",
+      "cluster": "android",
+      "importance": 2,
+      "x": 0.3688,
+      "y": 0.4056,
+      "local": {
+        "x": 0.7574,
+        "y": 0.3859
+      }
+    },
+    {
+      "id": "demo-llm-evals-post",
+      "type": "post",
+      "cluster": "ai",
+      "importance": 3,
+      "x": 0.6055,
+      "y": 0.8267,
+      "local": {
+        "x": 0.2676,
+        "y": 0.3923
+      }
+    },
+    {
+      "id": "demo-offline-sync",
+      "type": "project",
+      "cluster": "android",
+      "importance": 3,
+      "x": 0.2947,
+      "y": 0.4267,
+      "local": {
+        "x": 0.3215,
+        "y": 0.5099
+      },
+      "app": "demo-acme-banking-app"
+    }
+  ],
+  "edges": [
+    {
+      "source": "demo-acme-banking-app",
+      "target": "demo-compose-migration",
+      "weight": 0.1909,
+      "reasons": [
+        "related"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "demo-acme-banking-app",
+      "target": "demo-globex-photo-app",
+      "weight": 0.4364,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "demo-acme-banking-app",
+      "target": "demo-kmp-library",
+      "weight": 0.4148,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "demo-acme-banking-app",
+      "target": "demo-llm-evals-post",
+      "weight": 0.294,
+      "reasons": [
+        "related"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "demo-acme-banking-app",
+      "target": "demo-offline-sync",
+      "weight": 0.4383,
+      "reasons": [
+        "related",
+        "app",
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "demo-compose-migration",
+      "target": "demo-computer-science-degree",
+      "weight": 0.3118,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "demo-compose-migration",
+      "target": "demo-globex-photo-app",
+      "weight": 0.4374,
+      "reasons": [
+        "related",
+        "app",
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "demo-computer-science-degree",
+      "target": "demo-globex-photo-app",
+      "weight": 0.3961,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "demo-computer-science-degree",
+      "target": "demo-kmp-library",
+      "weight": 0.3985,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "demo-computer-science-degree",
+      "target": "demo-llm-evals-post",
+      "weight": 0.3395,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "demo-computer-science-degree",
+      "target": "demo-offline-sync",
+      "weight": 0.47,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "demo-globex-photo-app",
+      "target": "demo-kmp-library",
+      "weight": 0.3727,
+      "reasons": [
+        "related"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "demo-globex-photo-app",
+      "target": "demo-offline-sync",
+      "weight": 0.6086,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "demo-kmp-library",
+      "target": "demo-offline-sync",
+      "weight": 0.4355,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    }
+  ]
+}

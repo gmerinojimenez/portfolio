@@ -9,3 +9,4 @@ docs/
 content-inbox/
 CLAUDE.md
 .claude/worktrees/
+src/data/
