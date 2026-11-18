@@ -1,0 +1,57 @@
+---
+/**
+ * Frame of the plain, readable pages (reading version and item articles):
+ * a top bar with navigation and language, the content, and a footer with
+ * the privacy note. It follows the system's light/dark mode (reading.css).
+ * It doesn't render <html>: wrap it in `Base`.
+ */
+import '../styles/reading.css';
+import { localeHome, sectionPath, switchLocalePath } from '../i18n/paths';
+import { useTranslations } from '../i18n/ui';
+import { locales, type Locale } from '../lib/locales';
+
+interface Props {
+  locale: Locale;
+  /** Extra class on the wrapper (e.g. `r-item` on item pages). */
+  class?: string;
+}
+
+const { locale, class: className } = Astro.props;
+const t = useTranslations(locale);
+const path = Astro.url.pathname.endsWith('/')
+  ? Astro.url.pathname
+  : `${Astro.url.pathname}/`;
+const reading = sectionPath('reading', locale);
+---
+
+<div class:list={['r-shell', className]}>
+  <header class="r-top">
+    <nav class="r-nav" aria-label={t.nav.label}>
+      <a href={localeHome(locale)}>{t.nav.console}</a>
+      <a href={reading} aria-current={path === reading ? 'page' : undefined}>
+        {t.nav.reading}
+      </a>
+    </nav>
+    <nav class="r-nav" aria-label={t.console.languageLabel}>
+      {locales.map((l) => (
+        <a
+          href={switchLocalePath(path, l)}
+          hreflang={l}
+          lang={l}
+          aria-current={l === locale ? 'page' : undefined}
+          aria-label={`${l.toUpperCase()} · ${t.commands.lang.names[l]}`}
+        >
+          {l.toUpperCase()}
+        </a>
+      ))}
+    </nav>
+  </header>
+  <main class="r-main">
+    <slot />
+  </main>
+  <footer class="r-footer">
+    <a href={sectionPath('privacy', locale)}>{t.nav.privacy}</a>
+    <span aria-hidden="true">·</span>
+    <a href={localeHome(locale)}>{t.nav.console}</a>
+  </footer>
+</div>

@@ -1,0 +1,85 @@
+---
+/**
+ * Reading version (`/es/lectura/`, `/en/reading/`): everything the console
+ * shows, as one ordinary page grouped by topic. It is also the accessible
+ * alternative to the map. No JavaScript.
+ */
+import { groupByTopic, TYPE_SHAPES } from '../components/card/model';
+import { getConsoleData } from '../components/console/data';
+import { useTranslations } from '../i18n/ui';
+import type { Locale } from '../lib/locales';
+import Base from './Base.astro';
+import ReadingShell from './ReadingShell.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const data = await getConsoleData(locale);
+const { profile, contact } = data;
+const groups = groupByTopic(data.items);
+const topicLabel = (topic: string): string =>
+  (t.reading.topics as Record<string, string>)[topic] ??
+  topic.charAt(0).toUpperCase() + topic.slice(1);
+---
+
+<Base
+  locale={locale}
+  title={t.reading.title}
+  description={t.reading.description}
+  theme="system"
+>
+  <ReadingShell locale={locale}>
+    <h1>{profile.name}</h1>
+    <p class="r-lead">{profile.headline}</p>
+    {profile.intro.map((line) => (
+      <p>{line}</p>
+    ))}
+    <p class="r-meta">{t.reading.intro}</p>
+
+    <h2 id="contact">{t.reading.contact}</h2>
+    <dl class="r-contact">
+      <dt>{t.commands.contact.email}</dt>
+      <dd>
+        <a href={`mailto:${contact.email}`}>{contact.email}</a>
+      </dd>
+      {contact.links.map((link) => (
+        <>
+          <dt>{link.label}</dt>
+          <dd>
+            <a href={link.href} rel="me noopener">
+              {link.text}
+            </a>
+          </dd>
+        </>
+      ))}
+    </dl>
+
+    {groups.map((group) => (
+      <section aria-labelledby={`topic-${group.topic}`}>
+        <h2 id={`topic-${group.topic}`}>{topicLabel(group.topic)}</h2>
+        <ul class="r-list">
+          {group.items.map((item) => (
+            <li lang={item.lang !== locale ? item.lang : undefined}>
+              <h3 class="r-item-title">
+                <span aria-hidden="true">{TYPE_SHAPES[item.type]} </span>
+                <a href={item.path}>{item.title}</a>
+              </h3>
+              <p class="r-meta">
+                {[t.card.types[item.type], item.context, item.dates]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+              {item.summary && <p>{item.summary}</p>}
+              {item.tags.length > 0 && (
+                <p class="r-meta">{item.tags.join(' · ')}</p>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </ReadingShell>
+</Base>

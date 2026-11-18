@@ -1,53 +1,92 @@
+/**
+ * Test fixture: console data built from a few fake items, so command tests
+ * don't depend on `astro:content` or on the real content.
+ */
+import { toCardItems } from '../card/model';
+import type { Localized } from '../../lib/content-core';
+import type { ItemData } from '../../lib/content-schema';
 import type { Locale } from '../../lib/locales';
-import type { ConsoleData, Contact } from './data';
+import type { ConsoleData } from './data';
+import { profiles } from './profile';
 
-// Hand-written placeholder data until the content layer (S01) exists.
-// Names, links and texts are made up: replace them, don't ship them.
+function item(
+  id: string,
+  data: Partial<ItemData> & Pick<ItemData, 'type' | 'title'>,
+  overrides: Partial<Localized<ItemData>> = {},
+): Localized<ItemData> {
+  return {
+    id,
+    lang: 'es',
+    fallback: false,
+    fixture: true,
+    body: '',
+    data: {
+      status: 'published',
+      tags: [],
+      review: 'pending',
+      importance: 3,
+      related: [],
+      links: [],
+      ...data,
+    },
+    ...overrides,
+  };
+}
 
-const contact: Contact = {
-  email: 'hello@example.com',
-  links: [
+export const sampleItems = (locale: Locale): Localized<ItemData>[] => [
+  item(
+    'test-bank-app',
     {
-      label: 'linkedin',
-      href: 'https://www.linkedin.com/in/your-handle',
-      text: 'linkedin.com/in/your-handle',
+      type: 'app',
+      title: 'Bank app',
+      summary: 'A banking app.',
+      tags: ['android', 'kotlin'],
+      from: '2019-03',
+      to: '2022-06',
+      company: 'test-acme',
+      importance: 5,
+      related: ['test-evals-post'],
+      links: [{ label: 'Case study', url: 'https://example.com/case' }],
     },
+    { lang: locale },
+  ),
+  item(
+    'test-offline-sync',
     {
-      label: 'github',
-      href: 'https://github.com/your-handle',
-      text: 'github.com/your-handle',
+      type: 'project',
+      title: 'Offline sync',
+      summary: 'Sync engine.',
+      tags: ['android'],
+      from: '2020',
+      app: 'test-bank-app',
     },
+    { lang: 'es', fallback: locale !== 'es' },
+  ),
+  item(
+    'test-evals-post',
     {
-      label: 'medium',
-      href: 'https://medium.com/@your-handle',
-      text: 'medium.com/@your-handle',
+      type: 'post',
+      title: 'LLM evals <post>',
+      summary: 'Evals.',
+      tags: ['ai'],
+      from: '2024-05',
     },
-  ],
-};
+    { lang: locale },
+  ),
+];
+
+function build(locale: Locale): ConsoleData {
+  return {
+    ...profiles[locale],
+    items: toCardItems({
+      items: sampleItems(locale),
+      companies: [{ id: 'test-acme', name: 'Acme' }],
+      locale,
+    }),
+  };
+}
 
 export const sampleData: Record<Locale, ConsoleData> = {
-  es: {
-    profile: {
-      name: 'Nombre Apellido',
-      headline: 'Software engineer · Android · Full stack · IA aplicada',
-      intro: [
-        'Más de diez años construyendo apps que usan millones de personas.',
-        'Ahora también llevo LLMs a producto, de la app al backend.',
-      ],
-    },
-    contact,
-    cv: null,
-  },
-  en: {
-    profile: {
-      name: 'Nombre Apellido',
-      headline: 'Software engineer · Android · Full stack · Applied AI',
-      intro: [
-        'Over ten years building apps used by millions of people.',
-        'These days I also ship LLMs into products, from the app to the backend.',
-      ],
-    },
-    contact,
-    cv: null,
-  },
+  es: build('es'),
+  en: build('en'),
 };

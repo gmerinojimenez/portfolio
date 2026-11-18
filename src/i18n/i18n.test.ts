@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { localeFromPath, localeHome, switchLocalePath } from './paths';
+import {
+  itemIdFromPath,
+  itemPath,
+  localeFromPath,
+  localeHome,
+  sectionPath,
+  switchLocalePath,
+} from './paths';
 import { pick, ui } from './ui';
 
 function leaves(value: unknown, path = ''): [string, unknown][] {
@@ -44,5 +51,30 @@ describe('locale paths', () => {
     expect(localeFromPath('/en/x')).toBe('en');
     expect(localeFromPath('/fr/')).toBeUndefined();
     expect(localeHome('es')).toBe('/es/');
+  });
+});
+
+describe('section paths', () => {
+  it('translates section segments when switching language', () => {
+    expect(switchLocalePath('/es/proyectos/my-app/', 'en')).toBe(
+      '/en/projects/my-app/',
+    );
+    expect(switchLocalePath('/en/reading/', 'es')).toBe('/es/lectura/');
+    expect(switchLocalePath('/en/privacy/', 'es')).toBe('/es/privacidad/');
+  });
+
+  it('builds item and section paths', () => {
+    expect(itemPath('x', 'es')).toBe('/es/proyectos/x/');
+    expect(itemPath('x', 'en')).toBe('/en/projects/x/');
+    expect(sectionPath('reading', 'en')).toBe('/en/reading/');
+  });
+
+  it('reads the item id of an item page only', () => {
+    expect(itemIdFromPath('/es/proyectos/my-app/')).toBe('my-app');
+    expect(itemIdFromPath('/en/projects/my-app')).toBe('my-app');
+    expect(itemIdFromPath('/en/proyectos/my-app/')).toBeUndefined();
+    expect(itemIdFromPath('/es/proyectos/')).toBeUndefined();
+    expect(itemIdFromPath('/es/proyectos/a/b')).toBeUndefined();
+    expect(itemIdFromPath('/es/')).toBeUndefined();
   });
 });

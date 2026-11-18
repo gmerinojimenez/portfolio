@@ -1,0 +1,15 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { getConsoleData } from '../../../components/console/data';
+import ItemPage from '../../../layouts/ItemPage.astro';
+
+// One static page per visible item. Same ids in both languages (ADR 0010).
+export const getStaticPaths = (async () => {
+  const { items } = await getConsoleData('es');
+  return items.map((item) => ({ params: { id: item.id }, props: { item } }));
+}) satisfies GetStaticPaths;
+
+const { item } = Astro.props as InferGetStaticPropsType<typeof getStaticPaths>;
+---
+
+<ItemPage locale="es" item={item} />

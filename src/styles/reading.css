@@ -1,0 +1,188 @@
+/*
+ * Plain, readable pages: reading version and item articles (ADR 0012).
+ * Dark by default (same tokens as the console); Solarized light when the
+ * system prefers light. Tokens are overridden only inside `.r-shell`, so the
+ * console on the same page stays dark.
+ */
+
+.r-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--color-text);
+  background: var(--color-console);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+@media (prefers-color-scheme: light) {
+  .r-shell {
+    --color-page: #fdf6e3; /* base3 */
+    --color-console: #fdf6e3;
+    --color-surface: #eee8d5; /* base2 */
+    --color-line: #e4dcc5;
+    --color-line-strong: #d6cdb3;
+    --color-title: #073642; /* base02 */
+    --color-text: #586e75; /* base01 */
+    --color-dim: #586e75;
+    --color-accent: #1f7a73;
+    --color-ai: #8a6800;
+    --color-link: #1f6fa8;
+
+    color-scheme: light;
+  }
+
+  .r-shell .k-notice {
+    background: rgb(181 137 0 / 12%);
+  }
+}
+
+.r-shell :focus-visible {
+  outline-color: var(--color-accent);
+}
+
+.r-top,
+.r-main,
+.r-footer {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding-inline: 16px;
+}
+
+.r-top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding-block: 16px;
+  border-bottom: 1px solid var(--color-line);
+  font-size: 13px;
+}
+
+.r-nav {
+  display: flex;
+  gap: 4px 14px;
+}
+
+.r-nav a,
+.r-footer a {
+  color: var(--color-link);
+  text-underline-offset: 3px;
+}
+
+.r-nav a[aria-current='page'] {
+  color: var(--color-title);
+  text-decoration: none;
+}
+
+.r-main {
+  padding-block: 28px 40px;
+}
+
+.r-footer {
+  display: flex;
+  gap: 8px;
+  padding-block: 16px 32px;
+  border-top: 1px solid var(--color-line);
+  color: var(--color-dim);
+  font-size: 13px;
+}
+
+.r-main h1,
+.r-main h2 {
+  color: var(--color-title);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.r-main h1 {
+  margin: 0 0 6px;
+  font-size: 30px;
+}
+
+.r-main h2 {
+  margin: 36px 0 12px;
+  padding-bottom: 4px;
+  font-size: 20px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.r-main p {
+  margin: 0 0 10px;
+}
+
+.r-main a {
+  color: var(--color-link);
+  text-underline-offset: 3px;
+}
+
+.r-lead {
+  color: var(--color-title);
+}
+
+.r-contact {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0 16px;
+  margin: 0;
+}
+
+.r-contact dt {
+  color: var(--color-dim);
+}
+
+.r-contact dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.r-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.r-list > li {
+  margin-bottom: 18px;
+}
+
+.r-item-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: normal;
+}
+
+.r-item-title a {
+  color: var(--color-title);
+  font-family: var(--font-sans);
+  font-weight: 600;
+}
+
+.r-meta {
+  color: var(--color-dim);
+  font-size: 13px;
+}
+
+/* Item article: the card template, laid out as a page. */
+.r-item .k-head {
+  padding-right: 0;
+}
+
+.r-item .k-title {
+  font-size: 30px;
+}
+
+/*
+ * Item pages hold both the console (with JS, the card opens over it) and
+ * the static article (without JS). `no-js`/`js` is set on <html> before the
+ * first paint, so only one of them is ever shown.
+ */
+.js .r-item {
+  display: none;
+}
+
+.no-js .c-wrap[data-card-page] {
+  display: none;
+}

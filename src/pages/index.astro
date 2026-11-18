@@ -1,0 +1,74 @@
+---
+/**
+ * `/`: sends the visitor to `/es/` or `/en/`.
+ *
+ * The site is static (no server to read the Accept-Language header), so a
+ * tiny inline script decides in the browser: the language saved by the last
+ * visit (see Base.astro), else the first of `navigator.languages` that we
+ * support, else Spanish. `location.replace` doesn't leave `/` in history, so
+ * Back doesn't bounce. Query string and hash are kept (`?ref=` for S08).
+ * Without JavaScript, a meta refresh goes to `/es/`, with visible links too.
+ */
+const site = Astro.site ?? new URL('http://localhost:4321');
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="robots" content="noindex" />
+    <title>Portfolio</title>
+    <link rel="alternate" hreflang="es" href={new URL('/es/', site).href} />
+    <link rel="alternate" hreflang="en" href={new URL('/en/', site).href} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script is:inline>
+      (() => {
+        const supported = ['es', 'en'];
+        let lang = null;
+        try {
+          lang = localStorage.getItem('lang');
+        } catch {
+          // Storage blocked: fall back to the browser language.
+        }
+        if (!supported.includes(lang)) {
+          const wanted = navigator.languages?.length
+            ? navigator.languages
+            : [navigator.language];
+          lang =
+            wanted
+              .map((tag) => String(tag).slice(0, 2).toLowerCase())
+              .find((base) => supported.includes(base)) ?? 'es';
+        }
+        location.replace(`/${lang}/${location.search}${location.hash}`);
+      })();
+    </script>
+    <noscript>
+      <meta http-equiv="refresh" content="0; url=/es/" />
+    </noscript>
+    <style>
+      body {
+        margin: 0;
+        padding: 24px 16px;
+        background: #00212b;
+        color: #93a1a1;
+        font-family: ui-monospace, monospace;
+      }
+      a {
+        color: #4ea4e0;
+      }
+    </style>
+  </head>
+  <body>
+    <p>
+      <a href="/es/" hreflang="es" lang="es">
+        Español
+      </a>{' '}
+      ·
+      <a href="/en/" hreflang="en" lang="en">
+        English
+      </a>
+    </p>
+  </body>
+</html>

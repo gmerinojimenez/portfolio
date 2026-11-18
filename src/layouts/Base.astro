@@ -6,31 +6,98 @@ import '@fontsource/jetbrains-mono/latin-400.css';
 import '@fontsource/inter/latin-600.css';
 import '../styles/tokens.css';
 import '../styles/global.css';
-import type { Locale } from '../lib/locales';
+import { switchLocalePath } from '../i18n/paths';
+import { locales, type Locale } from '../lib/locales';
 
 interface Props {
   locale: Locale;
   title: string;
   description: string;
+  /**
+   * `dark`: the console (always dark, it's the site's identity).
+   * `system`: long reads (reading version, item articles) follow the
+   * system's light/dark mode (ADR 0012).
+   */
+  theme?: 'dark' | 'system';
+  /** Open Graph type: `article` for item pages. */
+  ogType?: 'website' | 'article';
+  /** Keep the page out of search engines (404). */
+  noindex?: boolean;
 }
 
-const { locale, title, description } = Astro.props;
+const {
+  locale,
+  title,
+  description,
+  theme = 'dark',
+  ogType = 'website',
+  noindex = false,
+} = Astro.props;
+
+// SEO, in short:
+// - canonical: "this is the one true URL of this page" (avoids duplicates
+//   such as /es/x and /es/x/).
+// - hreflang alternates: "this same page exists in these languages", so a
+//   search engine shows each visitor the right one. x-default is the version
+//   for everyone else (Spanish, the source language).
+// Both need absolute URLs, hence `site` in astro.config.mjs.
+const path = Astro.url.pathname.endsWith('/')
+  ? Astro.url.pathname
+  : `${Astro.url.pathname}/`;
+const site = Astro.site ?? new URL('http://localhost:4321');
+const canonical = new URL(path, site).href;
+const alternates = locales.map((l) => ({
+  hreflang: l,
+  href: new URL(switchLocalePath(path, l), site).href,
+}));
+const xDefault = alternates.find((a) => a.hreflang === 'es')?.href;
+const ogLocales: Record<Locale, string> = { es: 'es_ES', en: 'en_US' };
 ---
 
 <!doctype html>
-<html lang={locale} class="no-js">
+<html lang={locale} class:list={['no-js', `theme-${theme}`]}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="dark" />
+    <meta
+      name="color-scheme"
+      content={theme === 'dark' ? 'dark' : 'light dark'}
+    />
     <meta name="theme-color" content="#00212b" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
+    {!noindex && <link rel="canonical" href={canonical} />}
+    {!noindex &&
+      alternates.map((a) => (
+        <link rel="alternate" hreflang={a.hreflang} href={a.href} />
+      ))}
+    {!noindex && <link rel="alternate" hreflang="x-default" href={xDefault} />}
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content="Portfolio" />
+    <meta property="og:locale" content={ogLocales[locale]} />
+    {locales
+      .filter((l) => l !== locale)
+      .map((l) => (
+        <meta property="og:locale:alternate" content={ogLocales[l]} />
+      ))}
+    <meta name="twitter:card" content="summary" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
     <script is:inline>
       // Runs before first paint: CSS can tell whether JS is available.
       document.documentElement.classList.replace('no-js', 'js');
+      // Remember the language of the last page seen, so `/` sends the
+      // visitor back to it (functional preference, see the privacy note).
+      try {
+        localStorage.setItem('lang', document.documentElement.lang);
+      } catch {
+        // Storage can be blocked: the browser language is used instead.
+      }
     </script>
     <script>
       import '../lib/analytics/client';

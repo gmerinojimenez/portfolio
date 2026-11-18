@@ -1,0 +1,44 @@
+---
+/**
+ * Not found. CloudFront serves it for any missing path (infra/site.ts), so it
+ * can't know the language from the URL with certainty: it speaks both.
+ */
+import { localeHome, sectionPath } from '../i18n/paths';
+import { useTranslations } from '../i18n/ui';
+import { locales } from '../lib/locales';
+import Base from '../layouts/Base.astro';
+import '../styles/reading.css';
+
+const es = useTranslations('es');
+---
+
+<Base
+  locale="es"
+  title={`404 · ${es.notFound.title}`}
+  description={es.notFound.body}
+  theme="system"
+  noindex
+>
+  <div class="r-shell">
+    <main class="r-main">
+      <p class="r-meta">404</p>
+      {locales.map((l) => {
+        const t = useTranslations(l);
+        return (
+          <section lang={l}>
+            {l === 'es' ? (
+              <h1>{t.notFound.title}</h1>
+            ) : (
+              <h2>{t.notFound.title}</h2>
+            )}
+            <p>{t.notFound.body}</p>
+            <p>
+              <a href={localeHome(l)}>{t.notFound.home}</a> ·{' '}
+              <a href={sectionPath('reading', l)}>{t.notFound.reading}</a>
+            </p>
+          </section>
+        );
+      })}
+    </main>
+  </div>
+</Base>
