@@ -8,7 +8,7 @@ Work in progress.
 
 - [Astro](https://astro.build) static site, bilingual (`/es/`, `/en/`)
 - AWS: S3 + CloudFront, Lambda, DynamoDB, provisioned with SST
-- Claude on Amazon Bedrock
+- Claude via the Anthropic API, embeddings with Voyage AI
 
 ## Development
 

@@ -19,8 +19,9 @@ export default $config({
       home: 'aws',
       providers: {
         aws: {
-          // Ireland: widest EU service and Bedrock model coverage. Overridable
-          // for experiments; changing it on a deployed stage moves the state.
+          // Ireland: every service we use, low prices and low latency from
+          // Spain. Change it only before the first deploy; on a deployed
+          // stage it moves the state.
           region: (process.env.PORTFOLIO_AWS_REGION ??
             'eu-west-1') as aws.Region,
         },

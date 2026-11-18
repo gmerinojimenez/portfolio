@@ -1,6 +1,6 @@
 # Portfolio
 
-Bilingual (ES/EN) portfolio site built with Astro, deployed on AWS with SST, with Claude features on Amazon Bedrock.
+Bilingual (ES/EN) portfolio site built with Astro, deployed on AWS with SST, with Claude features via the Anthropic API.
 
 ## Conventions
 

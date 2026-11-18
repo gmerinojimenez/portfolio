@@ -6,10 +6,8 @@ import type { PortfolioConfig } from './config';
  * A budget is account-wide (it watches the whole bill), so only the production
  * stage creates it, and only when PORTFOLIO_BUDGET_EMAIL is set.
  *
- * NOTE (S09): the automatic action that attaches an IAM deny on
- * `bedrock:InvokeModel*` to the portfolio roles (ADR 0009) is NOT here. It
- * needs the Lambda role from S09 to exist, so S09 adds an
- * `aws.budgets.BudgetAction` on this budget.
+ * It only covers the AWS bill. Claude runs on the Anthropic API, whose hard
+ * spend limit is prepaid credits with auto-reload off.
  */
 export function createBudget(config: PortfolioConfig) {
   if (!config.budget) return undefined;
