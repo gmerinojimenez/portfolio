@@ -17,10 +17,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "content:embed": "tsx scripts/embed.ts",
-    "content:translate": "tsx scripts/translate.ts",
-    "ai:context": "tsx scripts/build-ai-context.ts",
-    "eval": "tsx evals/run.ts"
+    "content:embed": "tsx --env-file-if-exists=.env.local scripts/embed.ts",
+    "content:translate": "tsx --env-file-if-exists=.env.local scripts/translate.ts",
+    "ai:context": "tsx --env-file-if-exists=.env.local scripts/build-ai-context.ts",
+    "eval": "tsx --env-file-if-exists=.env.local evals/run.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.10.0",
