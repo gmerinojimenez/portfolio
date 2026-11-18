@@ -58,6 +58,12 @@ export interface Command {
   readonly hidden?: boolean;
   /** Candidate values for the argument being completed (unfiltered). */
   complete?(request: CompletionRequest, ctx: CommandContext): readonly string[];
+  /**
+   * Whether these arguments are valid for the command. Input that starts
+   * with a command name but fails this ("help me with Kotlin") is a question
+   * for the AI, not a command. Without it, the command takes no arguments.
+   */
+  accepts?(input: ParsedInput): boolean;
   run(input: ParsedInput, ctx: CommandContext): void | Promise<void>;
   /**
    * Browser-only hook to make an output block interactive (event listeners,
@@ -67,7 +73,7 @@ export interface Command {
   enhance?(output: HTMLElement, ctx: CommandContext): void;
 }
 
-/** Handles input that isn't a command (S10 plugs the AI in here). */
+/** Handles input that isn't a command (the AI, from S10 on). */
 export type FallbackHandler = (
   input: ParsedInput,
   ctx: CommandContext,

@@ -160,6 +160,63 @@
   text-underline-offset: 3px;
 }
 
+/* ---------- AI answers ---------- */
+
+.c-ai-answer {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.c-ai-star {
+  flex: none;
+}
+
+.c-ai-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.c-ai-body p,
+.c-ai-content > p {
+  margin: 0 0 6px;
+}
+
+.c-ai-body > p:last-of-type {
+  margin-bottom: 6px;
+}
+
+.c-ai-list {
+  margin: 0 0 6px;
+  padding-left: 1.2em;
+}
+
+.c-code {
+  color: var(--color-title);
+  font: inherit;
+}
+
+/* Links to a card get a dotted underline; a source without a card is text. */
+a.c-cite {
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
+.c-ai-meta {
+  margin-top: 2px;
+}
+
+/* Cloudflare's widget: invisible unless a challenge needs a click. */
+.c-turnstile:not(:empty) {
+  padding: 8px 18px 0;
+}
+
+@media (max-width: 640px) {
+  .c-turnstile:not(:empty) {
+    padding: 8px 16px 0;
+  }
+}
+
 /* A command you can click: looks like a link, is a <button>. */
 .c-cmd {
   padding: 0;

@@ -60,6 +60,10 @@ export function toCapture(event: AnalyticsEvent, session: Session): Capture {
       return withBase('unknown_input', {
         length_bucket: lengthBucket(event.length),
       });
+    case 'ai-answered':
+      return withBase('ai_answered', { stop_reason: safeId(event.stopReason) });
+    case 'ai-error':
+      return withBase('ai_error', { code: safeId(event.code) });
     case 'card-opened':
       return withBase('card_opened', { item_id: safeId(event.itemId) });
     case 'link-clicked':

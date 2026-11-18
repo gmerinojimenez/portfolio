@@ -123,11 +123,11 @@ describe('built-in commands', () => {
     }
   });
 
-  it('anything else goes to the fallback (AI coming soon)', async () => {
+  it('anything else goes to the fallback (AI not configured)', async () => {
     const c = fakeConsole('es');
     const result = await c.run('¿Ha trabajado con IA?');
     expect(result?.command).toBeUndefined();
-    expect(c.text()).toContain('La IA aún no está conectada');
+    expect(c.text()).toContain('La IA todavía no está disponible');
   });
 
   it('empty input does nothing', async () => {
