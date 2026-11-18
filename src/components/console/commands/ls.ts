@@ -29,6 +29,10 @@ export const ls: Command = {
   name: 'ls',
   usage: '[--tag <tag>]',
   summary: pick((t) => t.commands.ls.summary),
+  // A single odd word (`ls android`) is a typo: show the usage. A longer
+  // sentence (`ls what is this`) is a question.
+  accepts: (input) =>
+    input.args.length === 1 || parseLsArgs(input.args).kind !== 'invalid',
   complete({ args }, ctx) {
     if (args.length === 0) return ['--tag'];
     if (args.length === 1 && TAG_FLAGS.includes(args[0] ?? '')) {

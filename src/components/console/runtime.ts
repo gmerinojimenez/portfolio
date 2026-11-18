@@ -4,6 +4,8 @@
  * buttons and the animated boot. All command logic lives in `commands/` and
  * `core/`; this file only wires it to the DOM.
  */
+import { createAiAssistant, type AiAssistant } from '../ai/controller';
+import { resolveAiConfig } from '../ai/config';
 import { localeFromPath } from '../../i18n/paths';
 import type { Locale } from '../../lib/locales';
 import { useTranslations } from '../../i18n/ui';
@@ -80,6 +82,33 @@ export function startConsole(root: HTMLElement): ConsoleHandle {
   // Announces what happens to whoever listens (analytics). Ids only.
   const emit = (event: ConsoleEvent) => emitConsoleEvent(root, event);
 
+  // The AI answers whatever isn't a command. Without a backend URL and a
+  // Turnstile key in the build, the registry keeps its "not configured"
+  // notice and nothing is ever requested.
+  const aiConfig = resolveAiConfig({
+    PUBLIC_AI_URL: import.meta.env.PUBLIC_AI_URL,
+    PUBLIC_TURNSTILE_SITE_KEY: import.meta.env.PUBLIC_TURNSTILE_SITE_KEY,
+  });
+  let assistant: AiAssistant | undefined;
+  if (aiConfig) {
+    assistant = createAiAssistant({
+      config: aiConfig,
+      log,
+      emit,
+      turnstileContainer: () => {
+        let host = root.querySelector<HTMLElement>('[data-turnstile]');
+        if (!host) {
+          host = document.createElement('div');
+          host.className = 'c-turnstile';
+          host.dataset['turnstile'] = '';
+          form.before(host);
+        }
+        return host;
+      },
+    });
+    registry.setFallback(assistant.fallback);
+  }
+
   // ---------- Output ----------
 
   const scrollToEnd = () => {
@@ -120,6 +149,7 @@ export function startConsole(root: HTMLElement): ConsoleHandle {
       },
       clear() {
         log.replaceChildren();
+        assistant?.reset(); // a new screen, a new conversation
       },
       navigate(url) {
         storage.set(BOOT_SEEN_KEY, '1');

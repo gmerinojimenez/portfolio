@@ -14,6 +14,10 @@ export type ConsoleEvent =
   | { readonly type: 'command'; readonly command: string }
   /** The input wasn't a command (the AI handles it). Only its length. */
   | { readonly type: 'unknown-input'; readonly length: number }
+  /** The AI answered. Only how it ended (`end_turn`, `max_tokens`…). */
+  | { readonly type: 'ai-answered'; readonly stopReason: string }
+  /** The AI failed. Only the error code, never the text. */
+  | { readonly type: 'ai-error'; readonly code: string }
   /** A card opened (dispatched by S05 with the item id). */
   | { readonly type: 'card-opened'; readonly itemId: string }
   /** The visitor is leaving for the other language version. */

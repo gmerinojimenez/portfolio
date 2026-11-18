@@ -8,6 +8,7 @@ export const lang: Command = {
   name: 'lang',
   usage: 'es|en',
   summary: pick((t) => t.commands.lang.summary),
+  accepts: (input) => input.args.length <= 1,
   complete({ args }) {
     return args.length === 0 ? [...locales] : [];
   },

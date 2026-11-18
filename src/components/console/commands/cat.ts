@@ -27,6 +27,7 @@ export const cat: Command = {
   name: 'cat',
   usage: '<id>',
   summary: pick((t) => t.commands.cat.summary),
+  accepts: (input) => input.args.length <= 1,
   complete({ args }, ctx) {
     return args.length === 0 ? ctx.data.items.map((item) => item.id) : [];
   },
