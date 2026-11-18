@@ -24,12 +24,12 @@ const es: PrivacyContent = {
   description:
     'Qué datos recoge esta web, para qué se usan y cómo ejercer tus derechos.',
   back: '← volver a la consola',
-  updated: 'Última actualización: TODO',
+  updated: 'Última actualización: 2026',
   sections: [
     {
       heading: 'Quién es el responsable',
       paragraphs: [
-        'Responsable del tratamiento: TODO (nombre y apellidos). Contacto: TODO (email).',
+        'Responsable del tratamiento: Guillermo Merino Jiménez. Contacto: gmerinojimenez@gmail.com.',
       ],
     },
     {
@@ -95,11 +95,13 @@ const en: PrivacyContent = {
   description:
     'What data this site collects, what it is used for and how to exercise your rights.',
   back: '← back to the console',
-  updated: 'Last updated: TODO',
+  updated: 'Last updated: 2026',
   sections: [
     {
       heading: 'Who is responsible',
-      paragraphs: ['Data controller: TODO (full name). Contact: TODO (email).'],
+      paragraphs: [
+        'Data controller: Guillermo Merino Jiménez. Contact: gmerinojimenez@gmail.com.',
+      ],
     },
     {
       heading: 'Summary',
