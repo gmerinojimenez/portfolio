@@ -205,6 +205,36 @@
   color: var(--color-title);
 }
 
+/* ls */
+.c-ls {
+  margin: 4px 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.c-ls li {
+  display: grid;
+  grid-template-columns: 1.5em 1fr auto;
+  gap: 0 8px;
+  align-items: baseline;
+}
+
+.c-ls-shape {
+  color: var(--color-dim);
+}
+
+.c-ls-id {
+  font-size: 12px;
+}
+
+.c-ls-date {
+  white-space: nowrap;
+}
+
+.c-ls-tags .c-cmd {
+  margin-right: 4px;
+}
+
 /* map placeholder (S07 replaces it) */
 .c-map-placeholder {
   margin: 8px 0 4px;
@@ -368,5 +398,9 @@
 
   .c-hero-name {
     font-size: 26px;
+  }
+
+  .c-ls-id {
+    display: none;
   }
 }

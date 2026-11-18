@@ -81,9 +81,9 @@ describe('built-in commands', () => {
   });
 
   it('lang navigates to the same page in the other language', async () => {
-    const c = fakeConsole('es', { pathname: '/es/proyectos/x' });
+    const c = fakeConsole('es', { pathname: '/es/proyectos/x/' });
     await c.run('lang EN');
-    expect(c.navigations).toEqual(['/en/proyectos/x']);
+    expect(c.navigations).toEqual(['/en/projects/x/']);
   });
 
   it('lang explains its usage and rejects unknown languages', async () => {
@@ -158,7 +158,7 @@ describe('complete', () => {
     const { registry, ctx } = fakeConsole('es');
     const result = complete('c', registry, ctx);
     expect(result.value).toBe('c');
-    expect(result.candidates).toEqual(['cv', 'contacto', 'clear']);
+    expect(result.candidates).toEqual(['cat', 'cv', 'contacto', 'clear']);
   });
 
   it('completes arguments through the command hook', () => {
@@ -205,6 +205,13 @@ describe('boot', () => {
 describe('quickCommands', () => {
   it('shows registered commands in order, with the sample question', () => {
     const labels = quickCommands(createRegistry(), 'en').map((q) => q.label);
-    expect(labels).toEqual(['map', 'cv', 'contact', 'AI experience?', 'help']);
+    expect(labels).toEqual([
+      'map',
+      'ls',
+      'cv',
+      'contact',
+      'AI experience?',
+      'help',
+    ]);
   });
 });

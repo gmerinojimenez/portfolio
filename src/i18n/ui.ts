@@ -57,6 +57,23 @@ const es = {
       missing: 'El CV en PDF aún no está publicado. Mientras, escríbeme:',
     },
     contact: { summary: 'cómo contactarme', email: 'email' },
+    ls: {
+      summary: 'lista de todo el contenido',
+      usage: 'uso: ls [--tag <tag>]',
+      empty: 'Aún no hay nada publicado.',
+      unknownTag: 'ls: no hay nada con el tag',
+      filteredBy: 'filtrado por',
+      showAll: 'ver todo',
+      tags: 'filtrar por tag:',
+      hint: 'Pulsa un título o escribe cat <id> para abrir su card.',
+    },
+    cat: {
+      summary: 'abre la card de un elemento',
+      usage: 'uso: cat <id>  (los ids salen en ls)',
+      unknown: 'cat: no existe',
+      suggestions: '¿quizá?',
+      opening: 'abriendo',
+    },
     map: {
       summary: 'mapa de todo lo que he hecho',
       title: 'mapa semántico · en construcción',
@@ -64,6 +81,34 @@ const es = {
       legend:
         '○ app · ◎ proyecto importante · □ estudios · ◇ librería · △ post',
     },
+  },
+  card: {
+    close: 'Cerrar',
+    inside: 'Dentro de:',
+    related: 'Relacionado',
+    links: 'Enlaces',
+    fallback:
+      'Este elemento aún no está traducido al inglés: se muestra en español.',
+    present: 'hoy',
+    types: {
+      app: 'App',
+      project: 'Proyecto',
+      education: 'Estudios',
+      post: 'Post',
+      oss: 'Librería OSS',
+    },
+    contexts: {
+      post: 'Blog',
+      medium: 'Medium',
+      oss: 'Open source',
+      education: 'Formación',
+      personal: 'Personal',
+    },
+  },
+  nav: {
+    console: 'consola',
+    reading: 'lectura',
+    privacy: 'privacidad',
   },
   fallback: {
     aiSoon: 'La IA aún no está conectada: llega muy pronto. Mientras, prueba ',
@@ -124,12 +169,57 @@ const en: UiStrings = {
       missing: "The PDF CV isn't published yet. Meanwhile, drop me a line:",
     },
     contact: { summary: 'how to reach me', email: 'email' },
+    ls: {
+      summary: 'list everything',
+      usage: 'usage: ls [--tag <tag>]',
+      empty: 'Nothing published yet.',
+      unknownTag: 'ls: nothing tagged',
+      filteredBy: 'filtered by',
+      showAll: 'show all',
+      tags: 'filter by tag:',
+      hint: 'Click a title or type cat <id> to open its card.',
+    },
+    cat: {
+      summary: "open an item's card",
+      usage: 'usage: cat <id>  (ids are listed by ls)',
+      unknown: 'cat: no such item',
+      suggestions: 'did you mean',
+      opening: 'opening',
+    },
     map: {
       summary: "map of everything I've done",
       title: 'semantic map · under construction',
       body: "Everything I've worked on will show up here, grouped by topic.",
       legend: '○ app · ◎ key project · □ education · ◇ library · △ post',
     },
+  },
+  card: {
+    close: 'Close',
+    inside: 'Part of:',
+    related: 'Related',
+    links: 'Links',
+    fallback:
+      "This item isn't translated into English yet, so it is shown in Spanish.",
+    present: 'present',
+    types: {
+      app: 'App',
+      project: 'Project',
+      education: 'Education',
+      post: 'Post',
+      oss: 'OSS library',
+    },
+    contexts: {
+      post: 'Blog',
+      medium: 'Medium',
+      oss: 'Open source',
+      education: 'Education',
+      personal: 'Personal',
+    },
+  },
+  nav: {
+    console: 'console',
+    reading: 'reading',
+    privacy: 'privacy',
   },
   fallback: {
     aiSoon:

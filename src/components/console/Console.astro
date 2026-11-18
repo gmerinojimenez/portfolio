@@ -6,9 +6,10 @@
  * progressive enhancement.
  */
 import './console.css';
+import '../card/card.css';
 import type { Locale } from '../../lib/locales';
 import { locales } from '../../lib/locales';
-import { localeHome } from '../../i18n/paths';
+import { itemIdFromPath, switchLocalePath } from '../../i18n/paths';
 import { useTranslations } from '../../i18n/ui';
 import { renderBoot } from './boot';
 import { createRegistry } from './commands';
@@ -22,6 +23,11 @@ interface Props {
 
 const { locale } = Astro.props;
 const t = useTranslations(locale);
+const pathname = Astro.url.pathname.endsWith('/')
+  ? Astro.url.pathname
+  : `${Astro.url.pathname}/`;
+// On an item page the card opens right away: no typing animation behind it.
+const cardPage = itemIdFromPath(pathname) !== undefined;
 const data = await getConsoleData(locale);
 const registry = createRegistry();
 const boot = await renderBoot({
@@ -44,7 +50,7 @@ const promptPath = t.console.prompt.slice(promptSplit);
 const payload = JSON.stringify({ locale, data }).replace(/</g, '\\u003c');
 ---
 
-<div class="c-wrap">
+<div class="c-wrap" data-card-page={cardPage ? '' : undefined}>
   <script is:inline>
     // Decide before the log is parsed whether the boot sequence will be
     // animated, so the static output is hidden from the first paint and
@@ -58,7 +64,9 @@ const payload = JSON.stringify({ locale, data }).replace(/</g, '\\u003c');
         seen = false;
       }
       const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (seen || reduce) return;
+      const cardPage =
+        document.currentScript?.parentElement?.hasAttribute('data-card-page');
+      if (seen || reduce || cardPage) return;
       root.classList.add('boot-anim');
       setTimeout(() => {
         if (!root.hasAttribute('data-console-ready')) {
@@ -83,7 +91,7 @@ const payload = JSON.stringify({ locale, data }).replace(/</g, '\\u003c');
           <>
             {i > 0 && <span aria-hidden="true">|</span>}
             <a
-              href={localeHome(l)}
+              href={switchLocalePath(pathname, l)}
               hreflang={l}
               lang={l}
               data-lang={l}
@@ -151,8 +159,12 @@ const payload = JSON.stringify({ locale, data }).replace(/</g, '\\u003c');
 </div>
 
 <script>
+  import { startCards } from '../card/controller';
   import { startConsole } from './runtime';
 
   const root = document.querySelector<HTMLElement>('[data-console]');
-  if (root) startConsole(root);
+  if (root) {
+    const { data, locale, focusTarget } = startConsole(root);
+    startCards(data.items, locale, focusTarget);
+  }
 </script>

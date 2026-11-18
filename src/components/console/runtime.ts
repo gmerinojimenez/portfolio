@@ -58,7 +58,7 @@ function required<T extends Element>(root: ParentNode, selector: string): T {
   return element;
 }
 
-export function startConsole(root: HTMLElement): void {
+export function startConsole(root: HTMLElement): ConsoleHandle {
   const payload = JSON.parse(
     required(root, '[data-console-data]').textContent ?? '{}',
   ) as Payload;
@@ -295,6 +295,19 @@ export function startConsole(root: HTMLElement): void {
       void submit(`lang ${langLink.dataset.lang ?? ''}`, true);
     }
   });
+
+  return {
+    locale,
+    data,
+    // Where focus goes when nothing better exists (e.g. closing a card the
+    // page opened on load): the prompt with a mouse, the log on touch
+    // screens so the keyboard doesn't pop up.
+    focusTarget: () => (matchMedia('(pointer: fine)').matches ? input : log),
+  };
+}
+
+export interface ConsoleHandle extends Payload {
+  readonly focusTarget: () => HTMLElement;
 }
 
 function isModified(event: MouseEvent): boolean {

@@ -1,17 +1,23 @@
+import { renderedBodies } from '../card/body';
+import { toCardItems, type CardItem } from '../card/model';
+import { getCompanies, getItems } from '../../lib/content';
 import type { Locale } from '../../lib/locales';
-import { sampleData } from './sample-data';
+import { profiles } from './profile';
 
 /**
  * Everything the console needs from the content layer, already localized.
  *
- * This is the only seam between the console and the content. Today it reads
- * hand-written sample data; when S01 lands, reimplement `getConsoleData` on
- * top of the content collections and nothing else has to change.
- *
- * It is called at build time (in `Console.astro`) and the result is embedded
- * in the page as JSON, so it must stay serializable (no functions, no Dates).
+ * This is the only seam between the console and the content: commands read
+ * `ctx.data`, never `astro:content`. `getConsoleData` is called at build time and the result is embedded in the page as JSON, so it
+ * must stay serializable (no functions, no Dates).
  */
-export interface ConsoleData {
+export interface ConsoleData extends SiteProfile {
+  /** Published items (drafts too in `astro dev`), sorted for `ls`. */
+  readonly items: readonly CardItem[];
+}
+
+/** Hand-written data about the author (see `profile.ts`). */
+export interface SiteProfile {
   readonly profile: Profile;
   readonly contact: Contact;
   /** `null` while the PDF isn't published. */
@@ -39,6 +45,19 @@ export interface ContactLink {
   readonly text: string;
 }
 
+/**
+ * Build time only: reads the content layer (S01) and the profile. Browser
+ * code must import this module with `import type` only, so `astro:content`
+ * never ends up in the client bundle.
+ */
 export async function getConsoleData(locale: Locale): Promise<ConsoleData> {
-  return sampleData[locale];
+  const [items, companies] = await Promise.all([
+    getItems(locale),
+    getCompanies(),
+  ]);
+  const bodies = await renderedBodies(items);
+  return {
+    ...profiles[locale],
+    items: toCardItems({ items, companies, locale, bodies }),
+  };
 }
