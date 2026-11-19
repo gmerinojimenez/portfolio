@@ -9,11 +9,17 @@ import { viewerResponse } from './edge';
  * Without `config.domain` the site is served from the *.cloudfront.net URL.
  * Setting PORTFOLIO_DOMAIN switches to the custom domain with no code change.
  */
-export function createSite(config: PortfolioConfig) {
+export function createSite(
+  config: PortfolioConfig,
+  // Build-time variables for Astro. PUBLIC_* ones end up in the browser bundle
+  // (the AI endpoint URL and the Turnstile site key are public by design).
+  environment: Record<string, $util.Input<string>> = {},
+) {
   const { domain } = config;
 
   return new sst.aws.StaticSite('Site', {
     build: { command: 'pnpm build', output: 'dist' },
+    environment,
     // Use the S04 404 page as soon as it exists; until then SST falls back to
     // the root index.html.
     errorPage: existsSync('src/pages/404.astro') ? '404.html' : undefined,
