@@ -1,5 +1,6 @@
 /**
- * The `content:embed` pipeline: content -> embeddings cache -> map.json.
+ * The `content:embed` pipeline: content -> embeddings cache, reserved for
+ * the semantic search (S14). The map no longer uses embeddings (ADR 0015).
  * Split from the CLI so tests can run it against a temp folder.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -19,7 +20,6 @@ import {
   type EmbeddingProvider,
   type EmbedJob,
 } from './embeddings';
-import { buildMap, serializeMap, type MapItem } from './map';
 
 export const dataDir = join(repoRoot, 'src/data');
 
@@ -32,7 +32,6 @@ export interface EmbedOptions {
   check?: boolean;
   /** Force the fake provider. */
   fake?: boolean;
-  threshold?: number;
   log?: (line: string) => void;
 }
 
@@ -84,7 +83,6 @@ export async function runEmbed(
   const log = options.log ?? (() => undefined);
   const out = options.dataDir ?? dataDir;
   const cachePath = join(out, 'embeddings.json');
-  const mapPath = join(out, 'map.json');
 
   const { items, notes } = loadContent(options.contentRoot);
   const itemsEs = items.filter(
@@ -123,31 +121,6 @@ export async function runEmbed(
   const provider = needsProvider ? chooseProvider(current, options) : undefined;
 
   const { cache, computed, reused } = await syncCache(jobs, current, provider);
-  const info = {
-    provider: cache.provider,
-    model: cache.model,
-    dimensions: cache.dimensions,
-  };
-  const threshold =
-    options.threshold ??
-    provider?.defaultThreshold ??
-    (cache.provider === 'voyage' ? 0.5 : createFakeProvider().defaultThreshold);
-
-  const mapItems: MapItem[] = itemsEs.map((e) => ({
-    id: e.id,
-    type: e.data.type,
-    topic: e.data.topic,
-    tags: e.data.tags,
-    app: e.data.app,
-    related: e.data.related,
-    importance: e.data.importance,
-  }));
-  const vectors = new Map(
-    itemsEs.map((e) => [e.id, cache.entries[`item/${e.id}`]!.vector]),
-  );
-  const mapText = serializeMap(
-    buildMap({ items: mapItems, vectors, embeddings: info, threshold }),
-  );
   const cacheOut = serializeCache(cache);
 
   log(
@@ -155,7 +128,7 @@ export async function runEmbed(
       `${cache.provider}, ${reused.length} reused from the cache.`,
   );
 
-  const upToDate = cacheOut === cacheText && mapText === readIfExists(mapPath);
+  const upToDate = cacheOut === cacheText;
   if (options.check) {
     log(
       upToDate
@@ -165,8 +138,7 @@ export async function runEmbed(
   } else if (!upToDate) {
     mkdirSync(dirname(cachePath), { recursive: true });
     writeFileSync(cachePath, cacheOut);
-    writeFileSync(mapPath, mapText);
-    log(`Wrote ${cachePath} and ${mapPath}.`);
+    log(`Wrote ${cachePath}.`);
   } else {
     log('Nothing changed.');
   }

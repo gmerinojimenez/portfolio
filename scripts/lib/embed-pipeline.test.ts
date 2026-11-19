@@ -1,4 +1,5 @@
 import {
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -42,20 +43,22 @@ const run = (extra: Parameters<typeof runEmbed>[0] = {}) =>
   runEmbed({ ...opts, contentRoot: content, dataDir: data, ...extra });
 
 describe('runEmbed', () => {
-  it('writes both files from published content only', async () => {
+  it('writes the cache from published content only', async () => {
     const result = await run();
     expect(result.computed).toEqual(['item/dos', 'item/uno']);
-    const map = JSON.parse(readFileSync(join(data, 'map.json'), 'utf8'));
-    expect(map.nodes.map((n: { id: string }) => n.id)).toEqual(['dos', 'uno']);
-    expect(map.edges[0]).toMatchObject({ source: 'dos', target: 'uno' });
+    const cache = JSON.parse(
+      readFileSync(join(data, 'embeddings.json'), 'utf8'),
+    );
+    expect(Object.keys(cache.entries).sort()).toEqual(['item/dos', 'item/uno']);
+    expect(existsSync(join(data, 'map.json'))).toBe(false);
   });
 
   it('is idempotent and needs no key when nothing changed', async () => {
     await run();
-    const before = readFileSync(join(data, 'map.json'), 'utf8');
+    const before = readFileSync(join(data, 'embeddings.json'), 'utf8');
     const result = await run({ env: { VOYAGE_API_KEY: undefined } });
     expect(result.computed).toEqual([]);
-    expect(readFileSync(join(data, 'map.json'), 'utf8')).toBe(before);
+    expect(readFileSync(join(data, 'embeddings.json'), 'utf8')).toBe(before);
     expect((await run({ check: true })).upToDate).toBe(true);
   });
 
