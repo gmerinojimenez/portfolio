@@ -1,13 +1,13 @@
 {
   "version": 1,
   "embeddings": {
-    "provider": "fake",
-    "model": "fake-bag-of-words-v1",
+    "provider": "voyage",
+    "model": "voyage-4-lite",
     "dimensions": 256
   },
   "similarity": {
     "k": 3,
-    "threshold": 0.3
+    "threshold": 0.5
   },
   "clusters": [
     {
@@ -18,7 +18,7 @@
         "y": 0.34
       },
       "radius": 0.17,
-      "count": 5
+      "count": 19
     },
     {
       "id": "cloud",
@@ -28,7 +28,7 @@
         "y": 0.3
       },
       "radius": 0.17,
-      "count": 0
+      "count": 5
     },
     {
       "id": "ai",
@@ -38,7 +38,7 @@
         "y": 0.76
       },
       "radius": 0.17,
-      "count": 1
+      "count": 8
     },
     {
       "id": "fundamentals",
@@ -48,138 +48,832 @@
         "y": 0.78
       },
       "radius": 0.14,
-      "count": 1
+      "count": 4
     }
   ],
   "nodes": [
     {
-      "id": "demo-acme-banking-app",
+      "id": "android-modularization-post",
+      "type": "post",
+      "cluster": "android",
+      "importance": 3,
+      "x": 0.3299,
+      "y": 0.4638,
+      "local": {
+        "x": 0.5286,
+        "y": 0.7284
+      }
+    },
+    {
+      "id": "cert-android-apps-1",
+      "type": "education",
+      "cluster": "android",
+      "importance": 1,
+      "x": 0.1697,
+      "y": 0.3415,
+      "local": {
+        "x": -0.4136,
+        "y": 0.009
+      }
+    },
+    {
+      "id": "cert-android-apps-2",
+      "type": "education",
+      "cluster": "android",
+      "importance": 1,
+      "x": 0.2981,
+      "y": 0.4239,
+      "local": {
+        "x": 0.3418,
+        "y": 0.4937
+      }
+    },
+    {
+      "id": "cert-android-concurrency",
+      "type": "education",
+      "cluster": "android",
+      "importance": 1,
+      "x": 0.2557,
+      "y": 0.2772,
+      "local": {
+        "x": 0.0922,
+        "y": -0.3694
+      }
+    },
+    {
+      "id": "cert-claude-api",
+      "type": "education",
+      "cluster": "ai",
+      "importance": 1,
+      "x": 0.6903,
+      "y": 0.8202,
+      "local": {
+        "x": 0.7666,
+        "y": 0.3542
+      }
+    },
+    {
+      "id": "cert-claude-code",
+      "type": "education",
+      "cluster": "ai",
+      "importance": 1,
+      "x": 0.7128,
+      "y": 0.7529,
+      "local": {
+        "x": 0.899,
+        "y": -0.0415
+      }
+    },
+    {
+      "id": "cert-model-context-protocol",
+      "type": "education",
+      "cluster": "ai",
+      "importance": 1,
+      "x": 0.6668,
+      "y": 0.7749,
+      "local": {
+        "x": 0.6283,
+        "y": 0.0877
+      }
+    },
+    {
+      "id": "cert-objective-c",
+      "type": "education",
+      "cluster": "fundamentals",
+      "importance": 1,
+      "x": 0.1551,
+      "y": 0.7966,
+      "local": {
+        "x": 0.108,
+        "y": 0.1188
+      }
+    },
+    {
+      "id": "cert-scala-functional-programming",
+      "type": "education",
+      "cluster": "cloud",
+      "importance": 1,
+      "x": 0.7805,
+      "y": 0.3428,
+      "local": {
+        "x": 0.2385,
+        "y": 0.2517
+      }
+    },
+    {
+      "id": "doboken-product-data",
+      "type": "project",
+      "cluster": "cloud",
+      "importance": 1,
+      "x": 0.7839,
+      "y": 0.4359,
+      "local": {
+        "x": 0.2585,
+        "y": 0.7994
+      }
+    },
+    {
+      "id": "erasmus-paris-sud",
+      "type": "education",
+      "cluster": "fundamentals",
+      "importance": 1,
+      "x": 0.1993,
+      "y": 0.8401,
+      "local": {
+        "x": 0.4234,
+        "y": 0.4291
+      }
+    },
+    {
+      "id": "goal-systems-optimization",
+      "type": "project",
+      "cluster": "cloud",
+      "importance": 1,
+      "x": 0.8277,
+      "y": 0.3623,
+      "local": {
+        "x": 0.5159,
+        "y": 0.3664
+      }
+    },
+    {
+      "id": "indexa-mcp",
+      "type": "oss",
+      "cluster": "ai",
+      "importance": 2,
+      "x": 0.5286,
+      "y": 0.8034,
+      "local": {
+        "x": -0.1845,
+        "y": 0.2555
+      }
+    },
+    {
+      "id": "madrid-photo-guide",
+      "type": "app",
+      "cluster": "android",
+      "importance": 3,
+      "x": 0.1378,
+      "y": 0.4001,
+      "local": {
+        "x": -0.6012,
+        "y": 0.3534
+      }
+    },
+    {
+      "id": "merlyn-ai-agent-tooling",
+      "type": "project",
+      "cluster": "ai",
+      "importance": 3,
+      "x": 0.5852,
+      "y": 0.7963,
+      "local": {
+        "x": 0.1484,
+        "y": 0.2134
+      }
+    },
+    {
+      "id": "merlyn-ai-assistant",
+      "type": "app",
+      "cluster": "ai",
+      "importance": 5,
+      "x": 0.5823,
+      "y": 0.725,
+      "local": {
+        "x": 0.1313,
+        "y": -0.2059
+      }
+    },
+    {
+      "id": "merlyn-cross-platform-clients",
+      "type": "project",
+      "cluster": "android",
+      "importance": 3,
+      "x": 0.2981,
+      "y": 0.3069,
+      "local": {
+        "x": 0.3416,
+        "y": -0.1945
+      },
+      "app": "merlyn-ai-assistant"
+    },
+    {
+      "id": "merlyn-gdpr-analytics",
+      "type": "project",
+      "cluster": "cloud",
+      "importance": 2,
+      "x": 0.7205,
+      "y": 0.3698,
+      "local": {
+        "x": -0.115,
+        "y": 0.4103
+      },
+      "app": "merlyn-ai-assistant"
+    },
+    {
+      "id": "merlyn-offline-nli",
+      "type": "project",
+      "cluster": "ai",
+      "importance": 4,
+      "x": 0.6333,
+      "y": 0.8134,
+      "local": {
+        "x": 0.4311,
+        "y": 0.314
+      },
+      "app": "merlyn-ai-assistant"
+    },
+    {
+      "id": "merlyn-rag-standards",
+      "type": "project",
+      "cluster": "ai",
+      "importance": 4,
+      "x": 0.6317,
+      "y": 0.7379,
+      "local": {
+        "x": 0.4216,
+        "y": -0.1298
+      },
+      "app": "merlyn-ai-assistant"
+    },
+    {
+      "id": "the-climbing-company",
+      "type": "app",
+      "cluster": "android",
+      "importance": 3,
+      "x": 0.2019,
+      "y": 0.3008,
+      "local": {
+        "x": -0.2239,
+        "y": -0.2303
+      }
+    },
+    {
+      "id": "tuenti-android-app",
       "type": "app",
       "cluster": "android",
       "importance": 5,
-      "x": 0.3398,
-      "y": 0.4505,
+      "x": 0.2798,
+      "y": 0.4737,
       "local": {
-        "x": 0.587,
-        "y": 0.6499
+        "x": 0.2341,
+        "y": 0.7863
       }
     },
     {
-      "id": "demo-compose-migration",
+      "id": "tuenti-android-wear",
+      "type": "app",
+      "cluster": "android",
+      "importance": 3,
+      "x": 0.1882,
+      "y": 0.4081,
+      "local": {
+        "x": -0.3049,
+        "y": 0.4004
+      }
+    },
+    {
+      "id": "tuenti-gradle-remote-compilation",
+      "type": "project",
+      "cluster": "android",
+      "importance": 3,
+      "x": 0.3417,
+      "y": 0.3373,
+      "local": {
+        "x": 0.5983,
+        "y": -0.0161
+      },
+      "app": "tuenti-android-app"
+    },
+    {
+      "id": "tuenti-kotlin-compose-migration",
       "type": "project",
       "cluster": "android",
       "importance": 4,
-      "x": 0.2427,
-      "y": 0.3316,
+      "x": 0.2512,
+      "y": 0.328,
       "local": {
-        "x": 0.0158,
-        "y": -0.0492
+        "x": 0.066,
+        "y": -0.0705
       },
-      "app": "demo-globex-photo-app"
+      "app": "tuenti-android-app"
     },
     {
-      "id": "demo-computer-science-degree",
+      "id": "tuenti-modularization",
+      "type": "project",
+      "cluster": "android",
+      "importance": 4,
+      "x": 0.2388,
+      "y": 0.4426,
+      "local": {
+        "x": -0.0071,
+        "y": 0.6035
+      },
+      "app": "tuenti-android-app"
+    },
+    {
+      "id": "tuenti-release-cicd",
+      "type": "project",
+      "cluster": "android",
+      "importance": 3,
+      "x": 0.385,
+      "y": 0.3889,
+      "local": {
+        "x": 0.8529,
+        "y": 0.2874
+      },
+      "app": "tuenti-android-app"
+    },
+    {
+      "id": "tuenti-security-audits",
+      "type": "project",
+      "cluster": "android",
+      "importance": 2,
+      "x": 0.334,
+      "y": 0.3877,
+      "local": {
+        "x": 0.5529,
+        "y": 0.2805
+      },
+      "app": "tuenti-android-app"
+    },
+    {
+      "id": "tuenti-voip-webrtc",
+      "type": "project",
+      "cluster": "android",
+      "importance": 3,
+      "x": 0.2153,
+      "y": 0.3643,
+      "local": {
+        "x": -0.1451,
+        "y": 0.1429
+      }
+    },
+    {
+      "id": "tweaks",
+      "type": "oss",
+      "cluster": "android",
+      "importance": 4,
+      "x": 0.2285,
+      "y": 0.4926,
+      "local": {
+        "x": -0.0674,
+        "y": 0.8975
+      }
+    },
+    {
+      "id": "tweaks-post",
+      "type": "post",
+      "cluster": "android",
+      "importance": 3,
+      "x": 0.1901,
+      "y": 0.4591,
+      "local": {
+        "x": -0.2937,
+        "y": 0.7004
+      }
+    },
+    {
+      "id": "ucm-computer-science",
       "type": "education",
       "cluster": "fundamentals",
       "importance": 2,
-      "x": 0.1181,
-      "y": 0.8456,
+      "x": 0.1814,
+      "y": 0.8781,
       "local": {
-        "x": -0.1565,
-        "y": 0.4687
+        "x": 0.2957,
+        "y": 0.7008
       }
     },
     {
-      "id": "demo-globex-photo-app",
-      "type": "app",
-      "cluster": "android",
-      "importance": 4,
-      "x": 0.2596,
-      "y": 0.3896,
-      "local": {
-        "x": 0.1152,
-        "y": 0.2919
-      }
-    },
-    {
-      "id": "demo-kmp-library",
-      "type": "oss",
-      "cluster": "android",
-      "importance": 2,
-      "x": 0.3688,
-      "y": 0.4056,
-      "local": {
-        "x": 0.7574,
-        "y": 0.3859
-      }
-    },
-    {
-      "id": "demo-llm-evals-post",
-      "type": "post",
-      "cluster": "ai",
-      "importance": 3,
-      "x": 0.6055,
-      "y": 0.8267,
-      "local": {
-        "x": 0.2676,
-        "y": 0.3923
-      }
-    },
-    {
-      "id": "demo-offline-sync",
+      "id": "zkteco-android-sdk",
       "type": "project",
       "cluster": "android",
-      "importance": 3,
-      "x": 0.2947,
-      "y": 0.4267,
+      "importance": 4,
+      "x": 0.2927,
+      "y": 0.3577,
       "local": {
-        "x": 0.3215,
-        "y": 0.5099
-      },
-      "app": "demo-acme-banking-app"
+        "x": 0.3102,
+        "y": 0.1039
+      }
+    },
+    {
+      "id": "zkteco-p200",
+      "type": "app",
+      "cluster": "android",
+      "importance": 3,
+      "x": 0.2568,
+      "y": 0.394,
+      "local": {
+        "x": 0.0987,
+        "y": 0.3178
+      }
+    },
+    {
+      "id": "zkteco-partner-training",
+      "type": "project",
+      "cluster": "fundamentals",
+      "importance": 2,
+      "x": 0.1465,
+      "y": 0.8378,
+      "local": {
+        "x": 0.0463,
+        "y": 0.4126
+      }
+    },
+    {
+      "id": "zkteco-sync-protocol",
+      "type": "project",
+      "cluster": "cloud",
+      "importance": 3,
+      "x": 0.7211,
+      "y": 0.3187,
+      "local": {
+        "x": -0.1111,
+        "y": 0.1102
+      }
     }
   ],
   "edges": [
     {
-      "source": "demo-acme-banking-app",
-      "target": "demo-compose-migration",
-      "weight": 0.1909,
+      "source": "android-modularization-post",
+      "target": "tuenti-kotlin-compose-migration",
+      "weight": 0.7094,
       "reasons": [
-        "related"
+        "similarity"
       ],
       "bridge": false
     },
     {
-      "source": "demo-acme-banking-app",
-      "target": "demo-globex-photo-app",
+      "source": "android-modularization-post",
+      "target": "tuenti-modularization",
+      "weight": 0.7909,
+      "reasons": [
+        "related",
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "android-modularization-post",
+      "target": "tweaks",
+      "weight": 0.6241,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "android-modularization-post",
+      "target": "tweaks-post",
+      "weight": 0.7215,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "cert-android-apps-1",
+      "target": "cert-android-apps-2",
+      "weight": 0.976,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "cert-android-apps-1",
+      "target": "cert-android-concurrency",
+      "weight": 0.8715,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "cert-android-apps-1",
+      "target": "cert-objective-c",
+      "weight": 0.8061,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "cert-android-apps-2",
+      "target": "cert-android-concurrency",
+      "weight": 0.8773,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "cert-android-apps-2",
+      "target": "cert-objective-c",
+      "weight": 0.8003,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "cert-android-apps-2",
+      "target": "zkteco-partner-training",
+      "weight": 0.5372,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "cert-android-concurrency",
+      "target": "cert-objective-c",
+      "weight": 0.7338,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "cert-android-concurrency",
+      "target": "cert-scala-functional-programming",
+      "weight": 0.7063,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "cert-claude-api",
+      "target": "cert-claude-code",
+      "weight": 0.9228,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "cert-claude-api",
+      "target": "cert-model-context-protocol",
+      "weight": 0.8545,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "cert-claude-api",
+      "target": "cert-scala-functional-programming",
+      "weight": 0.6717,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "cert-claude-api",
+      "target": "merlyn-rag-standards",
+      "weight": 0.5609,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "cert-claude-code",
+      "target": "cert-model-context-protocol",
+      "weight": 0.8827,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "cert-claude-code",
+      "target": "cert-scala-functional-programming",
+      "weight": 0.7085,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "cert-claude-code",
+      "target": "merlyn-ai-agent-tooling",
+      "weight": 0.5843,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "cert-model-context-protocol",
+      "target": "cert-scala-functional-programming",
+      "weight": 0.6666,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "cert-model-context-protocol",
+      "target": "indexa-mcp",
       "weight": 0.4364,
       "reasons": [
-        "similarity"
-      ],
-      "bridge": false
-    },
-    {
-      "source": "demo-acme-banking-app",
-      "target": "demo-kmp-library",
-      "weight": 0.4148,
-      "reasons": [
-        "similarity"
-      ],
-      "bridge": false
-    },
-    {
-      "source": "demo-acme-banking-app",
-      "target": "demo-llm-evals-post",
-      "weight": 0.294,
-      "reasons": [
         "related"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "cert-objective-c",
+      "target": "cert-scala-functional-programming",
+      "weight": 0.7513,
+      "reasons": [
+        "similarity"
       ],
       "bridge": true
     },
     {
-      "source": "demo-acme-banking-app",
-      "target": "demo-offline-sync",
-      "weight": 0.4383,
+      "source": "cert-objective-c",
+      "target": "ucm-computer-science",
+      "weight": 0.5622,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "cert-objective-c",
+      "target": "zkteco-partner-training",
+      "weight": 0.5487,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "cert-scala-functional-programming",
+      "target": "erasmus-paris-sud",
+      "weight": 0.5611,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "doboken-product-data",
+      "target": "goal-systems-optimization",
+      "weight": 0.5033,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "erasmus-paris-sud",
+      "target": "goal-systems-optimization",
+      "weight": 0.5455,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "erasmus-paris-sud",
+      "target": "ucm-computer-science",
+      "weight": 0.6665,
+      "reasons": [
+        "related",
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "goal-systems-optimization",
+      "target": "merlyn-gdpr-analytics",
+      "weight": 0.5568,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "goal-systems-optimization",
+      "target": "ucm-computer-science",
+      "weight": 0.5744,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "goal-systems-optimization",
+      "target": "zkteco-partner-training",
+      "weight": 0.5591,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "goal-systems-optimization",
+      "target": "zkteco-sync-protocol",
+      "weight": 0.5895,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "madrid-photo-guide",
+      "target": "the-climbing-company",
+      "weight": 0.5407,
+      "reasons": [
+        "related",
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "madrid-photo-guide",
+      "target": "tuenti-android-app",
+      "weight": 0.5938,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "madrid-photo-guide",
+      "target": "tuenti-kotlin-compose-migration",
+      "weight": 0.575,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "madrid-photo-guide",
+      "target": "tuenti-modularization",
+      "weight": 0.5588,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "merlyn-ai-agent-tooling",
+      "target": "merlyn-ai-assistant",
+      "weight": 0.5819,
+      "reasons": [
+        "related",
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "merlyn-ai-agent-tooling",
+      "target": "merlyn-offline-nli",
+      "weight": 0.5467,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "merlyn-ai-agent-tooling",
+      "target": "tuenti-release-cicd",
+      "weight": 0.6259,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "merlyn-ai-assistant",
+      "target": "merlyn-cross-platform-clients",
+      "weight": 0.6163,
+      "reasons": [
+        "related",
+        "app"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "merlyn-ai-assistant",
+      "target": "merlyn-gdpr-analytics",
+      "weight": 0.3778,
+      "reasons": [
+        "related",
+        "app"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "merlyn-ai-assistant",
+      "target": "merlyn-offline-nli",
+      "weight": 0.6586,
       "reasons": [
         "related",
         "app",
@@ -188,18 +882,9 @@
       "bridge": false
     },
     {
-      "source": "demo-compose-migration",
-      "target": "demo-computer-science-degree",
-      "weight": 0.3118,
-      "reasons": [
-        "similarity"
-      ],
-      "bridge": true
-    },
-    {
-      "source": "demo-compose-migration",
-      "target": "demo-globex-photo-app",
-      "weight": 0.4374,
+      "source": "merlyn-ai-assistant",
+      "target": "merlyn-rag-standards",
+      "weight": 0.6184,
       "reasons": [
         "related",
         "app",
@@ -208,67 +893,368 @@
       "bridge": false
     },
     {
-      "source": "demo-computer-science-degree",
-      "target": "demo-globex-photo-app",
-      "weight": 0.3961,
+      "source": "merlyn-ai-assistant",
+      "target": "tuenti-android-app",
+      "weight": 0.6443,
       "reasons": [
         "similarity"
       ],
       "bridge": true
     },
     {
-      "source": "demo-computer-science-degree",
-      "target": "demo-kmp-library",
-      "weight": 0.3985,
+      "source": "merlyn-cross-platform-clients",
+      "target": "tuenti-android-app",
+      "weight": 0.6802,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "merlyn-cross-platform-clients",
+      "target": "tuenti-gradle-remote-compilation",
+      "weight": 0.5976,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "merlyn-cross-platform-clients",
+      "target": "tuenti-kotlin-compose-migration",
+      "weight": 0.7133,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "merlyn-cross-platform-clients",
+      "target": "zkteco-android-sdk",
+      "weight": 0.62,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "merlyn-cross-platform-clients",
+      "target": "zkteco-sync-protocol",
+      "weight": 0.5487,
       "reasons": [
         "similarity"
       ],
       "bridge": true
     },
     {
-      "source": "demo-computer-science-degree",
-      "target": "demo-llm-evals-post",
-      "weight": 0.3395,
+      "source": "merlyn-gdpr-analytics",
+      "target": "merlyn-rag-standards",
+      "weight": 0.5559,
       "reasons": [
         "similarity"
       ],
       "bridge": true
     },
     {
-      "source": "demo-computer-science-degree",
-      "target": "demo-offline-sync",
-      "weight": 0.47,
+      "source": "merlyn-gdpr-analytics",
+      "target": "tuenti-release-cicd",
+      "weight": 0.5709,
       "reasons": [
         "similarity"
       ],
       "bridge": true
     },
     {
-      "source": "demo-globex-photo-app",
-      "target": "demo-kmp-library",
-      "weight": 0.3727,
+      "source": "merlyn-gdpr-analytics",
+      "target": "zkteco-sync-protocol",
+      "weight": 0.5132,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "merlyn-offline-nli",
+      "target": "merlyn-rag-standards",
+      "weight": 0.5753,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "the-climbing-company",
+      "target": "tuenti-release-cicd",
+      "weight": 0.5313,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "the-climbing-company",
+      "target": "zkteco-p200",
+      "weight": 0.5267,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-android-app",
+      "target": "tuenti-android-wear",
+      "weight": 0.6305,
+      "reasons": [
+        "related",
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-android-app",
+      "target": "tuenti-gradle-remote-compilation",
+      "weight": 0.5812,
+      "reasons": [
+        "app"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-android-app",
+      "target": "tuenti-kotlin-compose-migration",
+      "weight": 0.7169,
+      "reasons": [
+        "related",
+        "app",
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-android-app",
+      "target": "tuenti-modularization",
+      "weight": 0.7194,
+      "reasons": [
+        "related",
+        "app",
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-android-app",
+      "target": "tuenti-release-cicd",
+      "weight": 0.6488,
+      "reasons": [
+        "related",
+        "app",
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-android-app",
+      "target": "tuenti-security-audits",
+      "weight": 0.6543,
+      "reasons": [
+        "related",
+        "app"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-android-app",
+      "target": "tuenti-voip-webrtc",
+      "weight": 0.5254,
       "reasons": [
         "related"
       ],
       "bridge": false
     },
     {
-      "source": "demo-globex-photo-app",
-      "target": "demo-offline-sync",
-      "weight": 0.6086,
+      "source": "tuenti-android-app",
+      "target": "tweaks",
+      "weight": 0.5294,
+      "reasons": [
+        "related"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-android-app",
+      "target": "zkteco-android-sdk",
+      "weight": 0.6548,
       "reasons": [
         "similarity"
       ],
       "bridge": false
     },
     {
-      "source": "demo-kmp-library",
-      "target": "demo-offline-sync",
-      "weight": 0.4355,
+      "source": "tuenti-android-wear",
+      "target": "tuenti-voip-webrtc",
+      "weight": 0.6289,
+      "reasons": [
+        "related",
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-android-wear",
+      "target": "zkteco-android-sdk",
+      "weight": 0.6673,
       "reasons": [
         "similarity"
       ],
       "bridge": false
+    },
+    {
+      "source": "tuenti-android-wear",
+      "target": "zkteco-p200",
+      "weight": 0.7431,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-gradle-remote-compilation",
+      "target": "tuenti-kotlin-compose-migration",
+      "weight": 0.6259,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-gradle-remote-compilation",
+      "target": "tuenti-release-cicd",
+      "weight": 0.625,
+      "reasons": [
+        "related",
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-kotlin-compose-migration",
+      "target": "tuenti-modularization",
+      "weight": 0.723,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-kotlin-compose-migration",
+      "target": "tweaks",
+      "weight": 0.6753,
+      "reasons": [
+        "related",
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-kotlin-compose-migration",
+      "target": "tweaks-post",
+      "weight": 0.7427,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-modularization",
+      "target": "tuenti-release-cicd",
+      "weight": 0.6683,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-modularization",
+      "target": "tuenti-security-audits",
+      "weight": 0.681,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-modularization",
+      "target": "tuenti-voip-webrtc",
+      "weight": 0.5799,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-release-cicd",
+      "target": "tuenti-security-audits",
+      "weight": 0.6713,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-security-audits",
+      "target": "zkteco-p200",
+      "weight": 0.6663,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tuenti-voip-webrtc",
+      "target": "zkteco-p200",
+      "weight": 0.5863,
+      "reasons": [
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "tweaks",
+      "target": "tweaks-post",
+      "weight": 0.8615,
+      "reasons": [
+        "related",
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "zkteco-android-sdk",
+      "target": "zkteco-p200",
+      "weight": 0.7659,
+      "reasons": [
+        "related",
+        "similarity"
+      ],
+      "bridge": false
+    },
+    {
+      "source": "zkteco-android-sdk",
+      "target": "zkteco-partner-training",
+      "weight": 0.4066,
+      "reasons": [
+        "related"
+      ],
+      "bridge": true
+    },
+    {
+      "source": "zkteco-android-sdk",
+      "target": "zkteco-sync-protocol",
+      "weight": 0.443,
+      "reasons": [
+        "related"
+      ],
+      "bridge": true
     }
   ]
 }
