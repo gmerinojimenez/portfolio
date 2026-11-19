@@ -1,7 +1,7 @@
 ---
 type: app
 title: Tuenti Android App
-review: pending
+review: reviewed
 sourceHash: 900f0e9913758fe2
 summary: Architecture of a consumer Android app with about 40 million users, on the core team.
 tags: [android, kotlin, architecture, compose]

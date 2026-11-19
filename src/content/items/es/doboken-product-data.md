@@ -7,9 +7,9 @@ to: 2011
 topic: backend
 company: doboken
 importance: 1
-summary: Librería PHP que obtenía en inglés datos de producto de fuentes japonesas.
+summary: Librería PHP que buscaba información de productos japoneses para comercializarlos en mercados occidentales.
 tags: [php]
 role: PHP Developer
 ---
 
-Librería que obtenía en inglés datos de producto a partir de fuentes japonesas.
+Construí una librería que buscaba información de productos japoneses para que fueran comercializados en mercados occidentales.

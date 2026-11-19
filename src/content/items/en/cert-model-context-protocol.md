@@ -1,7 +1,7 @@
 ---
 type: education
 title: 'Claude Academy: Introduction to Model Context Protocol'
-review: pending
+review: reviewed
 sourceHash: 14d85f3425eca82a
 summary: Anthropic certification introducing the Model Context Protocol (MCP).
 tags: [certification, ai, mcp, claude]

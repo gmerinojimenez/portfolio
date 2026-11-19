@@ -1,7 +1,7 @@
 ---
 type: project
 title: Release management and CI/CD
-review: pending
+review: reviewed
 sourceHash: 40d75042aa37ba40
 summary: Responsible for release management and improvements to the CI/CD pipeline.
 tags: [android, ci-cd, release-management]

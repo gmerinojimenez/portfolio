@@ -1,7 +1,7 @@
 ---
 type: project
 title: Internal automation and AI agents
-review: pending
+review: reviewed
 sourceHash: 6e034ccc2c4ef640
 summary: Internal tools built with AI agents, such as automated tests for LLM Judge evaluations.
 tags: [ai, agents, automation, ci-cd]

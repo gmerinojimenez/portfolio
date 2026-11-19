@@ -1,7 +1,7 @@
 ---
 type: project
 title: Gradle Remote Build
-review: pending
+review: reviewed
 sourceHash: 7982726ad5b402d0
 summary: Remote Gradle build system, set up on a chat frontend that was being decommissioned, which drastically cut build times.
 tags: [android, gradle, build, ci-cd]

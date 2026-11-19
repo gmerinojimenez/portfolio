@@ -1,7 +1,7 @@
 ---
 type: oss
 title: indexa-mcp
-review: pending
+review: reviewed
 sourceHash: 6783ba3b823b3c16
 summary: Local, read-only MCP server to query Indexa Capital accounts from Claude.
 tags: [ai, mcp, python, open-source]

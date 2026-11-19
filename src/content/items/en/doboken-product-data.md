@@ -1,10 +1,10 @@
 ---
 type: project
 title: Product data from Japanese sources
-review: pending
-sourceHash: 811c3439a4b6a64d
-summary: PHP library that fetched product data from Japanese sources in English.
+review: reviewed
+sourceHash: d8f7bbb076ebda0c
+summary: PHP library that gathered information on Japanese products so they could be sold in Western markets.
 tags: [php]
 ---
 
-Library that fetched product data in English from Japanese sources.
+I built a library that gathered information on Japanese products so they could be marketed in Western markets.

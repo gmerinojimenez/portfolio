@@ -1,7 +1,7 @@
 ---
 type: project
 title: ZKTeco SDK for Android
-review: pending
+review: reviewed
 sourceHash: d25affa17a32e92c
 summary: Android SDK that partners use to integrate biometric time-and-attendance terminals.
 tags: [android, sdk, biometrics]

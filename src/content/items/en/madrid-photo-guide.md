@@ -1,7 +1,7 @@
 ---
 type: app
 title: Madrid Photo Guide
-review: pending
+review: reviewed
 sourceHash: c497d3ef366eb623
 summary: Madrid photography guide for Android and iOS, built with Expo and React Native to reuse code across both platforms.
 tags: [react-native, expo, android, ios, photography]

@@ -1,7 +1,7 @@
 ---
 type: app
 title: The Climbing Company
-review: pending
+review: reviewed
 sourceHash: 6dc8d62afe822cd5
 summary: Management video game about running a climbing gym chain for Android and iOS, built with Godot and currently in development.
 tags: [godot, gamedev, android, ios]

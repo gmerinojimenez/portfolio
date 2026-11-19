@@ -1,7 +1,7 @@
 ---
 type: app
 title: P200 Handheld Terminal
-review: pending
+review: reviewed
 sourceHash: 61b524f29a280b50
 summary: Development of the P200 handheld terminal and contribution to the ZPAD time and attendance solution.
 tags: [android, hardware, time-attendance]

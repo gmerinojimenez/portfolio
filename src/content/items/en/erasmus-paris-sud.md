@@ -1,7 +1,7 @@
 ---
 type: education
 title: Université Paris-Sud
-review: pending
+review: reviewed
 sourceHash: adebca016cdbd824
 summary: Erasmus year in Computer Science.
 tags: [education, computer-science]

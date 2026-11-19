@@ -1,7 +1,7 @@
 ---
 type: education
 title: 'Programming Mobile Applications for Android Handheld Systems: Part 2'
-review: pending
+review: reviewed
 sourceHash: 1a93722c0fd34321
 summary: Verified Coursera certificate on Android application development (part 2).
 tags: [certification, android]

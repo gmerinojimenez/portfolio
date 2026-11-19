@@ -1,7 +1,7 @@
 ---
 type: project
 title: Modularization and refactorings of the Android app
-review: pending
+review: reviewed
 sourceHash: 9daeee937039803d
 summary: Architecture decisions, modularization, and major refactorings of the main Android app.
 tags: [android, architecture, modularization]

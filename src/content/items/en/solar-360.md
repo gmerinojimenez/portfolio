@@ -1,7 +1,7 @@
 ---
 type: app
 title: Solar 360
-review: pending
+review: reviewed
 sourceHash: a65db5e8630a4ef1
 summary: App to monitor solar panel energy production and consumption; I led Android with Jetpack Compose and coordinated the iOS developer.
 tags: [android, jetpack-compose, webview, technical-leadership]

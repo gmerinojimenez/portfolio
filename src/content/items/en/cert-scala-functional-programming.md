@@ -1,7 +1,7 @@
 ---
 type: education
 title: Functional Programming Principles in Scala
-review: pending
+review: reviewed
 sourceHash: d9b845aa8f8aee95
 summary: Verified Coursera certificate on the principles of functional programming in Scala.
 tags: [certification, scala, functional-programming]

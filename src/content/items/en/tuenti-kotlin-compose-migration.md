@@ -1,7 +1,7 @@
 ---
 type: project
 title: Adoption of Kotlin and Jetpack Compose
-review: pending
+review: reviewed
 sourceHash: f1060c206691e053
 summary: Technology migrations of the Android app, including the adoption of Kotlin and Jetpack Compose.
 tags: [android, kotlin, compose, migration]

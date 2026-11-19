@@ -1,7 +1,7 @@
 ---
 type: app
 title: AI assistant for teachers
-review: pending
+review: reviewed
 sourceHash: bba63410e428311c
 summary: AI assistant for teachers on interactive whiteboards, deployed in hundreds of schools across the US.
 tags: [ai, llm, rag, android, kotlin, aws]
