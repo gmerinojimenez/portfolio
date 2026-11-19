@@ -11,6 +11,12 @@ export interface RateLimits {
 
 export const DEFAULT_RATE_LIMITS: RateLimits = { perMinute: 5, perDay: 40 };
 
+/**
+ * Job offer analyses (S11) are longer and cost more than a question, so they
+ * get their own, stricter counters: 5 a day per IP.
+ */
+export const OFFER_RATE_LIMITS: RateLimits = { perMinute: 2, perDay: 5 };
+
 export type RateLimitResult =
   { allowed: true } | { allowed: false; retryAfterSeconds: number };
 
@@ -18,6 +24,8 @@ export class RateLimiter {
   constructor(
     private readonly store: CounterStore,
     private readonly limits: RateLimits = DEFAULT_RATE_LIMITS,
+    /** Separates counters of different limiters in the same store. */
+    private readonly prefix = 'rate',
   ) {}
 
   async check(ipHash: string, now: Date): Promise<RateLimitResult> {
@@ -28,7 +36,7 @@ export class RateLimiter {
     const dayEnd = Math.floor(Date.parse(`${day}T00:00:00Z`) / 1000) + 86_400;
 
     const perMinute = await this.store.addIfWithin(
-      `rate#${ipHash}#m#${minute}`,
+      `${this.prefix}#${ipHash}#m#${minute}`,
       'count',
       1,
       this.limits.perMinute,
@@ -39,7 +47,7 @@ export class RateLimiter {
     }
 
     const perDay = await this.store.addIfWithin(
-      `rate#${ipHash}#d#${day}`,
+      `${this.prefix}#${ipHash}#d#${day}`,
       'count',
       1,
       this.limits.perDay,

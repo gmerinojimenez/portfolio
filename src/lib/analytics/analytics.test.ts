@@ -188,6 +188,29 @@ describe('toCapture', () => {
       properties: { from: 'es', to: 'en' },
     });
   });
+
+  it('adds the company to every event and maps the S11 events', () => {
+    const visit = { locale: 'en', company: 'procter & gamble' };
+    expect(toCapture({ type: 'pageview' }, visit).properties).toEqual({
+      locale: 'en',
+      company: 'procter & gamble',
+    });
+    expect(toCapture({ type: 'company-node-clicked' }, visit)).toEqual({
+      name: 'company_node_clicked',
+      properties: { locale: 'en', company: 'procter & gamble' },
+    });
+    expect(
+      toCapture({ type: 'offer-analyzed', matches: 4, gaps: 2 }, visit),
+    ).toEqual({
+      name: 'offer_analyzed',
+      properties: {
+        locale: 'en',
+        company: 'procter & gamble',
+        matches: 4,
+        gaps: 2,
+      },
+    });
+  });
 });
 
 describe('classifyLink', () => {

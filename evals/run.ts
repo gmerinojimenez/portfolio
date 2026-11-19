@@ -2,8 +2,11 @@
  * AI eval runner (S09; S14 compares v2 against it). Calls the real Anthropic
  * API, so it only runs when ANTHROPIC_API_KEY is set, and never in CI.
  *
- *   ANTHROPIC_API_KEY=... pnpm eval            all questions
+ *   ANTHROPIC_API_KEY=... pnpm eval            all questions and offers
  *   ANTHROPIC_API_KEY=... pnpm eval agg-kotlin only these ids
+ *   ANTHROPIC_API_KEY=... pnpm eval --offers   only the offers (S11)
+ *   ANTHROPIC_API_KEY=... pnpm eval --questions
+ *                                              only the questions
  *   pnpm eval --regrade evals/results/<file>.json
  *                                              re-grade saved answers with the
  *                                              current grader and questions,
@@ -23,13 +26,27 @@ import {
 } from '../src/server/ai/context-builder';
 import { DEFAULT_MAX_TOKENS } from '../src/server/ai/handler';
 import {
+  OFFER_MAX_TOKENS,
+  offerInstructions,
+  offerMessage,
+  offerSchema,
+} from '../src/server/ai/offer';
+import {
   costMicroUsd,
   emptyUsage,
   microUsdToUsd,
   type TokenUsage,
 } from '../src/server/ai/pricing';
 import { systemInstructions } from '../src/server/ai/prompt';
-import { grade, turnsOf, type EvalQuestion, type Grade } from './grade';
+import {
+  grade,
+  gradeOffer,
+  turnsOf,
+  type EvalOffer,
+  type EvalQuestion,
+  type Grade,
+  type OfferGrade,
+} from './grade';
 
 /** Questions with the file-wide `mustNotMentionAnywhere` added to each one. */
 function loadQuestions(): EvalQuestion[] {
@@ -89,10 +106,25 @@ if (!apiKey) {
 }
 
 const questions = loadQuestions();
-const only = process.argv.slice(2);
-const selected = only.length
-  ? questions.filter((q) => only.includes(q.id))
-  : questions;
+const offers = (
+  JSON.parse(readFileSync('evals/offers.json', 'utf8')) as {
+    offers: EvalOffer[];
+  }
+).offers;
+const args = process.argv.slice(2);
+const only = args.filter((a) => !a.startsWith('--'));
+const runQuestions = !args.includes('--offers');
+const runOffers = !args.includes('--questions');
+const selected = runQuestions
+  ? only.length
+    ? questions.filter((q) => only.includes(q.id))
+    : questions
+  : [];
+const selectedOffers = runOffers
+  ? only.length
+    ? offers.filter((o) => only.includes(o.id))
+    : offers
+  : [];
 
 const context = buildAiContext(readContentSnapshot('src/content'));
 const provider = new AnthropicProvider({ apiKey });
@@ -158,6 +190,60 @@ for (const q of selected) {
   );
 }
 
+// Offers (S11): same prompt, schema and limits as the Lambda's offer mode.
+interface OfferResult {
+  id: string;
+  locale: string;
+  answer: string;
+  stopReason: string;
+  usage: TokenUsage;
+  costUsd: number;
+  latencyMs: number;
+  grade: OfferGrade | null;
+  error?: string;
+}
+const offerResults: OfferResult[] = [];
+for (const o of selectedOffers) {
+  const known = context.locales[o.locale].sources;
+  const started = Date.now();
+  let answer = '';
+  let usage = emptyUsage();
+  let stopReason = 'error';
+  let error: string | undefined;
+  try {
+    for await (const event of provider.stream({
+      instructions: offerInstructions(o.locale),
+      context: context.locales[o.locale].document,
+      messages: [{ role: 'user', content: offerMessage(o.offer, o.company) }],
+      maxTokens: OFFER_MAX_TOKENS,
+      jsonSchema: offerSchema(known),
+    })) {
+      if (event.type === 'text') answer += event.text;
+      else {
+        usage = event.usage;
+        stopReason = event.stopReason;
+      }
+    }
+  } catch (e) {
+    error = e instanceof Error ? e.message : String(e);
+  }
+  const result: OfferResult = {
+    id: o.id,
+    locale: o.locale,
+    answer,
+    stopReason,
+    usage,
+    costUsd: microUsdToUsd(costMicroUsd(usage)),
+    latencyMs: Date.now() - started,
+    grade: error ? null : gradeOffer(o, answer, known),
+    ...(error ? { error } : {}),
+  };
+  offerResults.push(result);
+  console.log(
+    `${result.grade?.pass ? 'PASS' : 'FAIL'}  ${o.id.padEnd(28)} ${result.latencyMs} ms  $${result.costUsd.toFixed(5)}${error ? `  ${error}` : ''}`,
+  );
+}
+
 const byType = new Map<string, { pass: number; total: number }>();
 for (const r of results) {
   const entry = byType.get(r.type) ?? { pass: 0, total: 0 };
@@ -165,13 +251,17 @@ for (const r of results) {
   if (r.grade?.pass) entry.pass += 1;
   byType.set(r.type, entry);
 }
-const totalCost = results.reduce((sum, r) => sum + r.costUsd, 0);
+const totalCost =
+  results.reduce((sum, r) => sum + r.costUsd, 0) +
+  offerResults.reduce((sum, r) => sum + r.costUsd, 0);
 const summary = {
   model: provider.model,
   contextTokensEstimate: context.locales.es.estimatedTokens,
   questions: results.length,
   passed: results.filter((r) => r.grade?.pass).length,
   byType: Object.fromEntries(byType),
+  offers: offerResults.length,
+  offersPassed: offerResults.filter((r) => r.grade?.pass).length,
   totalCostUsd: totalCost,
   meanCostUsd: results.length ? totalCost / results.length : 0,
   meanLatencyMs: results.length
@@ -184,6 +274,9 @@ const file = join(
   'evals/results',
   `${new Date().toISOString().replace(/[:.]/g, '-')}.json`,
 );
-writeFileSync(file, `${JSON.stringify({ summary, results }, null, 2)}\n`);
+writeFileSync(
+  file,
+  `${JSON.stringify({ summary, results, offerResults }, null, 2)}\n`,
+);
 console.log(JSON.stringify(summary, null, 2));
 console.log(`Wrote ${file}`);

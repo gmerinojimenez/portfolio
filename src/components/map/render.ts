@@ -24,9 +24,15 @@ import {
   type PlacedLabel,
 } from './geometry';
 import { edgeKey } from './filters';
-import { layoutTree, type PlacedNode, type TreeLayout } from './layout';
+import {
+  layoutTree,
+  type FuturePlacement,
+  type PlacedNode,
+  type TreeLayout,
+} from './layout';
 import {
   countBy,
+  FUTURE_ID,
   labeledAtRest,
   ROOTS_SECTION,
   TYPE_ORDER,
@@ -139,6 +145,21 @@ function renderAnchor(
   const anchor = side === 1 ? 'start' : 'end';
   const period = section?.period ?? '';
   return markup`<g class="m-anchor ${isStem ? 'm-stem' : `m-stage m-cl-${node.cluster}`}" data-anchor="${node.id}" transform="translate(${at.x} ${at.y})"><g class="m-body" style="${delay(at.delay)}"><circle class="m-halo" r="${at.r + 8}" filter="url(#${glow})"/><circle class="m-shape m-badge m-anchor-badge" r="${at.r}"/><text class="m-badge-text" y="4" text-anchor="middle">${mark}</text><text class="m-anchor-label" x="${x}" y="-1" text-anchor="${anchor}">${node.title}</text>${period ? markup`<text class="m-anchor-period" x="${x}" y="12" text-anchor="${anchor}">${period}</text>` : ''}</g></g>`;
+}
+
+/**
+ * The future node (S11): a dashed pill with the company's name. It is a
+ * console command button, not a card link: clicking it (or Enter while
+ * focused) asks the AI the prefilled question through the runtime's
+ * `[data-cmd]` handler, like the command buttons. The label comes from the
+ * URL and is escaped like any other text.
+ */
+function renderFuture(node: TreeNode, at: FuturePlacement, t: Strings): Html {
+  const strings = t.commands.map;
+  const w = at.width;
+  const h = at.height;
+  const name = `${node.title} ${strings.nextChapter} ${strings.futureAction.replace('{question}', node.prompt ?? '')}`;
+  return markup`<a class="m-future m-cl-${node.cluster}" href="#" role="button" data-cmd="${node.prompt ?? ''}" data-company-node data-anchor="${FUTURE_ID}" aria-label="${name}" transform="translate(${at.x} ${at.y})"><title>${strings.nextChapter}</title><g class="m-body" style="${delay(at.delay)}"><rect class="m-hit" x="${-w / 2 - 4}" y="${-h / 2 - 4}" width="${w + 8}" height="${h + 8}" rx="${h / 2 + 4}"/><rect class="m-future-pill" x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" rx="${h / 2}"/><text class="m-future-label" y="4" text-anchor="middle">${node.title}</text></g></a>`;
 }
 
 /** Box of an anchor's two-line label, so item labels avoid it. */
@@ -310,7 +331,15 @@ export function renderSvg(model: MapModel, layout: Layout, t: Strings): Html {
     return markup`<g role="group" aria-label="${sectionName(section, t)}">${nodes}</g>`;
   });
 
-  return markup`<svg class="m-svg m-svg-${layout}" viewBox="0 0 ${canvas.width} ${canvas.height}" role="group" aria-label="${strings.label}">${defs}<g class="m-scenery" aria-hidden="true">${years}${ground}${trunkEls}${strokes}${related}${rootsAnchor}${anchorEls}${groupEls}</g>${sections}</svg>`;
+  const futureNode = model.tree.get(FUTURE_ID);
+  const future = L.future && futureNode ? L.future : null;
+  const futureLine = future
+    ? markup`<path class="m-future-line" d="${future.line.d}" style="${delay(future.delay)}"/>`
+    : '';
+  const futureEl =
+    future && futureNode ? renderFuture(futureNode, future, t) : '';
+
+  return markup`<svg class="m-svg m-svg-${layout}" viewBox="0 0 ${canvas.width} ${canvas.height}" role="group" aria-label="${strings.label}">${defs}<g class="m-scenery" aria-hidden="true">${years}${ground}${trunkEls}${strokes}${related}${rootsAnchor}${anchorEls}${groupEls}${futureLine}</g>${futureEl}${sections}</svg>`;
 }
 
 function renderLegend(model: MapModel, t: Strings): Html {

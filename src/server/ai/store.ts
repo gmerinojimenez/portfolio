@@ -36,6 +36,11 @@ export interface QuestionLogEntry {
   /** ISO timestamp. */
   at: string;
   locale: string;
+  /** `chat` (a question) or `offer` (a job offer analysis, S11). */
+  mode?: 'chat' | 'offer';
+  /** Offers only: the validated `?company=`, if the visit had one. */
+  company?: string;
+  /** The question, or the job offer text. */
   question: string;
   /** 1-based index of the question within the conversation. */
   turn: number;

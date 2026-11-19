@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { STATUS, type WireEvent } from '../../server/ai/messages';
 import { DEFAULT_INPUT_LIMITS } from '../../server/ai/validation';
+import { OFFER_RATE_LIMITS } from '../../server/ai/rate-limit';
 import { ui } from '../../i18n/ui';
 import { toCapture } from '../../lib/analytics/events';
 import type { ConsoleEvent } from '../console/core/events';
@@ -19,7 +20,14 @@ import {
 import { formatCost, formatLatency, transparencyLine } from './format';
 import { NdjsonParser } from './ndjson';
 import { LIMITS, isErrorCode, toWireEvent } from './protocol';
-import { AiSession, type AnswerResult, type AnswerView } from './session';
+import {
+  AiSession,
+  type AnswerResult,
+  type AnswerView,
+  type OfferResult,
+  type OfferView,
+} from './session';
+import { offerFailureText } from './offer-view';
 import { TurnstileTokens, type TurnstileApi } from './turnstile';
 
 const lines = (...events: unknown[]) =>
@@ -31,6 +39,8 @@ describe('protocol', () => {
       maxQuestions: DEFAULT_INPUT_LIMITS.maxQuestions,
       maxQuestionChars: DEFAULT_INPUT_LIMITS.maxQuestionChars,
       maxAnswerChars: DEFAULT_INPUT_LIMITS.maxAnswerChars,
+      maxOfferChars: DEFAULT_INPUT_LIMITS.maxOfferChars,
+      offersPerDay: OFFER_RATE_LIMITS.perDay,
     });
     for (const code of Object.keys(STATUS))
       expect(isErrorCode(code)).toBe(true);
@@ -601,7 +611,7 @@ function fakeView() {
 type Script = StreamEvent[];
 
 function session(scripts: Script[], options: { now?: () => number } = {}) {
-  const requests: { messages: unknown; turnstileToken: string }[] = [];
+  const requests: { messages?: unknown; turnstileToken: string }[] = [];
   const events: ConsoleEvent[] = [];
   let tokens = 0;
   const instance = new AiSession({
@@ -887,6 +897,95 @@ describe('TurnstileTokens', () => {
       () => Promise.resolve(api),
     );
     await expect(tokens.token()).rejects.toThrow('300030');
+  });
+});
+
+describe('AiSession, job offers (S11)', () => {
+  const analysis = {
+    summary: 'Fits.',
+    matches: [{ requirement: 'Kotlin', evidence: 'Yes.', sources: ['a'] }],
+    gaps: [{ requirement: 'Swift', detail: 'Not mentioned.' }],
+    questions: [],
+  };
+  function offerView() {
+    const calls: { finish?: OfferResult; fail?: AiFailure } = {};
+    const view: OfferView = {
+      finish: (r) => (calls.finish = r),
+      fail: (f) => (calls.fail = f),
+    };
+    return { view, calls };
+  }
+
+  it('sends the offer with the company and tracks only counts', async () => {
+    const s = session([
+      [
+        { type: 'analysis', analysis },
+        done([{ id: 'a', kind: 'item', title: 'A' }]),
+      ],
+    ]);
+    const v = offerView();
+    await s.instance.analyzeOffer(' An offer ', 'Zalando SE', 'en', v.view);
+    expect(s.requests[0]).toEqual({
+      mode: 'offer',
+      locale: 'en',
+      company: 'Zalando SE',
+      offer: 'An offer',
+      turnstileToken: 'token-1',
+    });
+    expect(v.calls.finish?.analysis).toEqual(analysis);
+    expect(v.calls.finish?.sources).toEqual([
+      { id: 'a', kind: 'item', title: 'A' },
+    ]);
+    expect(s.events).toEqual([{ type: 'offer-analyzed', matches: 1, gaps: 1 }]);
+    // The analysis is not part of the chat conversation.
+    expect(s.instance.conversation.questionsAsked).toBe(0);
+  });
+
+  it('refuses an offer over the limit without a request', async () => {
+    const s = session([]);
+    const v = offerView();
+    await s.instance.analyzeOffer('x'.repeat(8_001), undefined, 'es', v.view);
+    expect(v.calls.fail).toEqual({ code: 'too_long' });
+    expect(s.requests).toHaveLength(0);
+    expect(s.tokens).toBe(0);
+  });
+
+  it('fails readably when the server sends no analysis', async () => {
+    const s = session([[done()]]);
+    const v = offerView();
+    await s.instance.analyzeOffer('offer', undefined, 'es', v.view);
+    expect(v.calls.fail).toEqual({ code: 'bad_response' });
+    expect(s.events).toEqual([{ type: 'ai-error', code: 'bad_response' }]);
+  });
+
+  it('shows the per-day limit for analyses', async () => {
+    const s = session([
+      [failed({ code: 'rate_limited', message: 'x', retryAfterSeconds: 90 })],
+    ]);
+    const v = offerView();
+    await s.instance.analyzeOffer('offer', undefined, 'es', v.view);
+    expect(offerFailureText(v.calls.fail!, ui.es, 'es')).toBe(
+      'Has pedido muchos análisis seguidos (máximo 5 al día). Vuelve a intentarlo más tarde o escríbeme. Vuelve a intentarlo en 2 min.',
+    );
+    expect(offerFailureText({ code: 'too_long' }, ui.en, 'en')).toContain(
+      '8,000',
+    );
+  });
+
+  it('reads analysis events defensively', () => {
+    expect(
+      toWireEvent({
+        type: 'analysis',
+        analysis: { ...analysis, matches: [{ requirement: 1, sources: [2] }] },
+      }),
+    ).toEqual({
+      type: 'analysis',
+      analysis: {
+        ...analysis,
+        matches: [{ requirement: '', evidence: '', sources: [] }],
+      },
+    });
+    expect(toWireEvent({ type: 'analysis', analysis: {} })).toBeUndefined();
   });
 });
 

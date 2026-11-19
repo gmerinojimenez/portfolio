@@ -413,6 +413,25 @@
       "question": "Who is this portfolio about?",
       "expectSources": [],
       "mustMention": ["Guillermo"]
+    },
+    {
+      "id": "why-hire-es",
+      "type": "aggregate",
+      "locale": "es",
+      "question": "¿Por qué debería contratar Amazon a Guillermo?",
+      "minCited": 1,
+      "maxWords": 130,
+      "mustMention": ["analiza-oferta"],
+      "mustNotMention": ["AWS re:Invent", "Jeff Bezos"]
+    },
+    {
+      "id": "why-hire-en",
+      "type": "english",
+      "locale": "en",
+      "question": "Why should Spotify hire Guillermo?",
+      "minCited": 1,
+      "maxWords": 130,
+      "mustMention": ["analyze-job"]
     }
   ]
 }

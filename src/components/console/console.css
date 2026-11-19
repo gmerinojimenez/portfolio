@@ -206,6 +206,96 @@ a.c-cite {
   margin-top: 2px;
 }
 
+/* ---------- Job offer analyzer (S11) ---------- */
+
+.c-offer {
+  margin: 4px 0 8px;
+}
+
+.c-offer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 72ch;
+}
+
+.c-offer-label {
+  color: var(--color-dim);
+}
+
+.c-offer-text {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 9em;
+  padding: 8px 10px;
+  color: var(--color-title);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line-strong);
+  border-radius: 4px;
+  caret-color: var(--color-accent);
+  font: inherit;
+  /* 16px keeps iOS from zooming in when the field gets focus. */
+  font-size: 16px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.c-offer-text:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.c-offer-text[readonly] {
+  color: var(--color-dim);
+}
+
+.c-offer-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.c-offer-submit:disabled {
+  color: var(--color-dim);
+  cursor: default;
+}
+
+.c-offer-title {
+  margin: 0 0 6px;
+  color: var(--color-title);
+  font: inherit;
+  font-weight: 600;
+}
+
+.c-offer-h {
+  margin: 10px 0 4px;
+  color: var(--color-title);
+  font: inherit;
+}
+
+.c-offer-h-matches span {
+  color: var(--color-accent);
+}
+
+.c-offer-h-gaps span {
+  color: var(--color-error);
+}
+
+.c-offer-list {
+  margin: 0 0 6px;
+  padding-left: 1.2em;
+}
+
+.c-offer-list li {
+  margin-bottom: 4px;
+}
+
+.c-offer-sources {
+  white-space: normal;
+}
+
 /* Cloudflare's widget: invisible unless a challenge needs a click. */
 .c-turnstile:not(:empty) {
   padding: 8px 18px 0;

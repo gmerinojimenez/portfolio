@@ -15,6 +15,8 @@ export type AnalyticsEvent =
 export interface Session {
   readonly locale: string;
   readonly ref?: string | undefined;
+  /** Validated `?company=` (S11), lowercase. */
+  readonly company?: string | undefined;
 }
 
 export interface Capture {
@@ -42,6 +44,7 @@ export function toCapture(event: AnalyticsEvent, session: Session): Capture {
     locale: session.locale,
   };
   if (session.ref) base['ref'] = session.ref;
+  if (session.company) base['company'] = session.company;
   const withBase = (
     name: string,
     extra: Record<string, string | number | boolean> = {},
@@ -64,6 +67,13 @@ export function toCapture(event: AnalyticsEvent, session: Session): Capture {
       return withBase('ai_answered', { stop_reason: safeId(event.stopReason) });
     case 'ai-error':
       return withBase('ai_error', { code: safeId(event.code) });
+    case 'company-node-clicked':
+      return withBase('company_node_clicked');
+    case 'offer-analyzed':
+      return withBase('offer_analyzed', {
+        matches: event.matches,
+        gaps: event.gaps,
+      });
     case 'card-opened':
       return withBase('card_opened', { item_id: safeId(event.itemId) });
     case 'link-clicked':

@@ -13,7 +13,7 @@ import { createRegistry } from './index';
 
 function fakeConsole(
   locale: Locale = 'es',
-  options: { pathname?: string; data?: ConsoleData } = {},
+  options: { pathname?: string; data?: ConsoleData; company?: string } = {},
 ) {
   const registry = createRegistry();
   const output: string[] = [];
@@ -27,6 +27,7 @@ function fakeConsole(
     registry,
     pathname: options.pathname ?? `/${locale}/`,
     interactive: true,
+    company: options.company,
     print: (content: Html) => output.push(content.value),
     clear: () => {
       cleared += 1;
@@ -210,8 +211,51 @@ describe('quickCommands', () => {
       'ls',
       'cv',
       'contact',
+      'analyze-job',
       'AI experience?',
       'help',
     ]);
+  });
+});
+
+describe('S11: company link and offer analyzer', () => {
+  it('analiza-oferta prints a text area, in both languages', async () => {
+    const es = fakeConsole('es');
+    await es.run('analiza-oferta');
+    expect(es.text()).toContain('<textarea class="c-offer-text"');
+    expect(es.text()).not.toContain('maxlength');
+    expect(es.text()).toContain('0 / 8000');
+    expect(es.text()).toContain('Pega la descripción de una oferta');
+    const en = fakeConsole('en');
+    await en.run('analyze-job');
+    expect(en.text()).toContain('Job description');
+    expect(en.text()).toContain('0 / 8,000');
+    expect(en.registry.completionNames('en')).toContain('analyze-job');
+    expect(en.registry.completionNames('es')).toContain('analiza-oferta');
+  });
+
+  it('mentions the company, escaped, when the visit has one', async () => {
+    const c = fakeConsole('en', { company: 'Procter & Gamble' });
+    await c.run('analyze-job');
+    expect(c.text()).toContain(
+      'Paste Procter &amp; Gamble&#39;s job description',
+    );
+  });
+
+  it('adds the future node to a typed map only with a company', async () => {
+    const first = sampleData.es.profile.name.split(' ')[0] ?? '';
+    const plain = fakeConsole('es');
+    await plain.run('map');
+    expect(plain.text()).not.toContain('data-company-node');
+    const amazon = fakeConsole('es', { company: 'Amazon' });
+    await amazon.run('map');
+    expect(amazon.text()).toContain('>¿Amazon?</text>');
+    expect(amazon.text()).toContain(
+      `data-cmd="¿Por qué debería contratar Amazon a ${first}?"`,
+    );
+    const en = fakeConsole('en', { company: 'Amazon' });
+    await en.run('map');
+    expect(en.text()).toContain('>Amazon?</text>');
+    expect(en.text()).toContain('data-cmd="Why should Amazon hire ');
   });
 });

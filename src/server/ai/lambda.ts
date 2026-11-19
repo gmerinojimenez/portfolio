@@ -25,7 +25,7 @@ import {
 import { hashIp } from './ip-hash';
 import { NDJSON, errorEvent, line } from './messages';
 import { usdToMicroUsd } from './pricing';
-import { RateLimiter } from './rate-limit';
+import { OFFER_RATE_LIMITS, RateLimiter } from './rate-limit';
 import { SpendBrake } from './spend-brake';
 import { DynamoStore } from './store-dynamo';
 import { createTurnstileVerifier } from './turnstile';
@@ -81,6 +81,7 @@ function getHandler() {
     provider: new AnthropicProvider({ apiKey: secret('AnthropicApiKey') }),
     brake: new SpendBrake(store, usdToMicroUsd(limitUsd)),
     rateLimiter: new RateLimiter(store),
+    offerRateLimiter: new RateLimiter(store, OFFER_RATE_LIMITS, 'offer-rate'),
     log: store,
     verifyTurnstile: createTurnstileVerifier(
       secret('TurnstileSecret'),

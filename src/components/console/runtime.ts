@@ -7,9 +7,11 @@
 import { createAiAssistant, type AiAssistant } from '../ai/controller';
 import { resolveAiConfig } from '../ai/config';
 import { localeFromPath } from '../../i18n/paths';
+import { readCompany, withCompany } from '../../lib/company';
 import type { Locale } from '../../lib/locales';
 import { useTranslations } from '../../i18n/ui';
 import { createRegistry } from './commands';
+import { createOfferCommand } from './commands/offer';
 import type { ConsoleData } from './data';
 import { Animator, typeInto } from './core/animator';
 import { complete } from './core/complete';
@@ -82,6 +84,15 @@ export function startConsole(root: HTMLElement): ConsoleHandle {
   // Announces what happens to whoever listens (analytics). Ids only.
   const emit = (event: ConsoleEvent) => emitConsoleEvent(root, event);
 
+  // `?company=` (S11): validated once, kept in the URL (reload and share keep
+  // the future node) and carried over to the other language.
+  const company = readCompany(location.search);
+  if (company) {
+    root.querySelectorAll<HTMLAnchorElement>('a[data-lang]').forEach((link) => {
+      link.href = withCompany(link.getAttribute('href') ?? '', company);
+    });
+  }
+
   // The AI answers whatever isn't a command. Without a backend URL and a
   // Turnstile key in the build, the registry keeps its "not configured"
   // notice and nothing is ever requested.
@@ -107,6 +118,11 @@ export function startConsole(root: HTMLElement): ConsoleHandle {
       },
     });
     registry.setFallback(assistant.fallback);
+    const ai = assistant;
+    registry.register(
+      createOfferCommand((offer, ctx) => ai.analyzeOffer(offer, ctx)),
+      { replace: true },
+    );
   }
 
   // ---------- Output ----------
@@ -142,6 +158,7 @@ export function startConsole(root: HTMLElement): ConsoleHandle {
       registry,
       pathname: location.pathname,
       interactive: true,
+      company,
       print(content) {
         const name = command?.name ?? FALLBACK_OUTPUT;
         const element = append(outputBlock(name, content));
@@ -157,7 +174,7 @@ export function startConsole(root: HTMLElement): ConsoleHandle {
         if (to && to !== locale) {
           emit({ type: 'language-switched', from: locale, to });
         }
-        location.assign(url);
+        location.assign(to ? withCompany(url, company) : url);
       },
       download(url, filename) {
         const link = document.createElement('a');
@@ -340,8 +357,13 @@ export function startConsole(root: HTMLElement): ConsoleHandle {
   // output added later (event delegation).
   root.addEventListener('click', (event) => {
     const target = event.target as Element | null;
-    const button = target?.closest<HTMLElement>('[data-cmd]');
+    const button = target?.closest<HTMLElement | SVGElement>('[data-cmd]');
     if (button?.dataset.cmd) {
+      // The map's future node is an SVG link (focusable, Enter clicks it).
+      if (button.tagName.toLowerCase() === 'a') event.preventDefault();
+      if (button.hasAttribute('data-company-node')) {
+        emit({ type: 'company-node-clicked' });
+      }
       void submit(button.dataset.cmd, true).then(() => {
         // If the button disappeared (e.g. after `clear`), keep focus usable.
         if (!button.isConnected) input.focus({ preventScroll: true });

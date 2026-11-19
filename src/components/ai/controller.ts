@@ -1,8 +1,9 @@
 import type { ConsoleEvent } from '../console/core/events';
-import type { FallbackHandler } from '../console/core/types';
+import type { CommandContext, FallbackHandler } from '../console/core/types';
 import type { AiConfig } from './config';
 import { AiSession } from './session';
 import { TurnstileTokens } from './turnstile';
+import { createOfferView } from './offer-view';
 import { createAnswerView } from './view';
 
 export interface AiAssistant {
@@ -10,6 +11,8 @@ export interface AiAssistant {
   readonly fallback: FallbackHandler;
   /** `clear` starts a new conversation. */
   reset(): void;
+  /** `analiza-oferta` (S11): analyzes a pasted job offer. */
+  analyzeOffer(offer: string, ctx: CommandContext): Promise<void>;
 }
 
 /**
@@ -33,6 +36,15 @@ export function createAiAssistant(options: {
 
   return {
     reset: () => session.reset(),
+    async analyzeOffer(offer, ctx) {
+      const view = createOfferView(ctx, log);
+      log.setAttribute('aria-busy', 'true');
+      try {
+        await session.analyzeOffer(offer, ctx.company, ctx.locale, view);
+      } finally {
+        log.removeAttribute('aria-busy');
+      }
+    },
     async fallback(input, ctx) {
       const view = createAnswerView(ctx, log);
       log.setAttribute('aria-busy', 'true');

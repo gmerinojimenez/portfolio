@@ -420,6 +420,12 @@ describe('geometry', () => {
 describe('renderMap', () => {
   const html = renderMap(model, t).value;
 
+  it('renders exactly the same map as before S11 without a company', () => {
+    // Guard for S11: the future node must not change the tree without
+    // `?company=`. A content-independent fixture, so the snapshot is stable.
+    expect(html).toMatchSnapshot();
+  });
+
   it('renders every item as a link in both SVGs', () => {
     for (const { id } of items) {
       expect(html.match(new RegExp(`data-node="${id}"`, 'g'))).toHaveLength(2);
@@ -487,5 +493,58 @@ describe('renderMap', () => {
     const panel = renderPanel(post!, [side!], t).value;
     expect(panel).toContain('data-card-open="post">abrir card</a>');
     expect(renderPanel(side!, [], t).value).toContain('sin conexiones');
+  });
+});
+
+describe('future node (S11)', () => {
+  const future = {
+    label: '¿Procter & Gamble?',
+    prompt: '¿Por qué debería contratar Procter & Gamble a Guillermo?',
+  };
+  const withFuture = buildTreeModel(items, stages, t, { future });
+
+  it('changes nothing without a company', () => {
+    const plain = buildTreeModel(items, stages, t, {});
+    expect(plain.tree.has('f:future')).toBe(false);
+    expect(renderMap(plain, t).value).toBe(renderMap(model, t).value);
+    expect(layoutTree(plain, 'desktop').future).toBeNull();
+  });
+
+  it('adds a future node outside every section', () => {
+    const node = withFuture.tree.get('f:future')!;
+    expect(node.kind).toBe('future');
+    expect(node.parent).toBeNull();
+    expect(node.title).toBe(future.label);
+    expect(node.prompt).toBe(future.prompt);
+    expect(withFuture.nodes).toEqual(model.nodes);
+    expect(withFuture.sections).toEqual(model.sections);
+  });
+
+  for (const layout of ['desktop', 'mobile'] as const) {
+    it(`${layout}: sits above the whole tree, inside the canvas`, () => {
+      const L = layoutTree(withFuture, layout);
+      const { width } = CANVAS[layout];
+      const f = L.future!;
+      expect(f.x - f.width / 2).toBeGreaterThanOrEqual(0);
+      expect(f.x + f.width / 2).toBeLessThanOrEqual(width);
+      expect(f.y - f.height / 2).toBeGreaterThanOrEqual(0);
+      for (const p of L.nodes.values()) {
+        expect(p.y - p.r).toBeGreaterThan(f.y + f.height / 2);
+      }
+      expect(L.nodes.has('f:future')).toBe(false);
+      expect(f.delay).toBeGreaterThanOrEqual(L.trunk!.delay);
+    });
+  }
+
+  it('renders an accessible command button with escaped text', () => {
+    const html = renderMap(withFuture, t).value;
+    expect(html.match(/data-company-node/g)).toHaveLength(2);
+    expect(html).toContain(
+      'data-cmd="¿Por qué debería contratar Procter &amp; Gamble a Guillermo?"',
+    );
+    expect(html).toContain('role="button"');
+    expect(html).toContain('<title>¿Siguiente capítulo?</title>');
+    expect(html).toContain('>¿Procter &amp; Gamble?</text>');
+    expect(html).toContain('class="m-future-line"');
   });
 });

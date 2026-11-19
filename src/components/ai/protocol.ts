@@ -7,15 +7,35 @@
  */
 import type { ErrorCode, WireEvent, WireUsage } from '../../server/ai/messages';
 import type { SourceRef } from '../../server/ai/context';
-import type { AiRequest, ChatTurn } from '../../server/ai/validation';
+import type { OfferAnalysis } from '../../server/ai/offer';
+import type {
+  AiRequest,
+  AnyAiRequest,
+  ChatTurn,
+  OfferRequest,
+} from '../../server/ai/validation';
 
-export type { AiRequest, ChatTurn, ErrorCode, SourceRef, WireEvent, WireUsage };
+export type {
+  AiRequest,
+  AnyAiRequest,
+  ChatTurn,
+  ErrorCode,
+  OfferAnalysis,
+  OfferRequest,
+  SourceRef,
+  WireEvent,
+  WireUsage,
+};
 
 /** Same numbers as the server's `DEFAULT_INPUT_LIMITS` (checked by a test). */
 export const LIMITS = {
   maxQuestions: 6,
   maxQuestionChars: 500,
   maxAnswerChars: 4_000,
+  /** Job offer text (S11). */
+  maxOfferChars: 8_000,
+  /** Analyses per IP and day (server's `OFFER_RATE_LIMITS`). */
+  offersPerDay: 5,
 } as const;
 
 /** `Record` (not an array) so the compiler flags a code the server adds. */
@@ -56,6 +76,36 @@ function parseSources(value: unknown): SourceRef[] {
   });
 }
 
+const text = (value: unknown): string =>
+  typeof value === 'string' ? value : '';
+
+/** An analysis as the browser trusts it: strings and string lists only. */
+function parseAnalysis(value: unknown): OfferAnalysis | undefined {
+  if (!isRecord(value) || !text(value['summary'])) return undefined;
+  const list = (v: unknown) => (Array.isArray(v) ? v : []);
+  return {
+    summary: text(value['summary']),
+    matches: list(value['matches'])
+      .filter(isRecord)
+      .map((m) => ({
+        requirement: text(m['requirement']),
+        evidence: text(m['evidence']),
+        sources: list(m['sources']).filter(
+          (id): id is string => typeof id === 'string',
+        ),
+      })),
+    gaps: list(value['gaps'])
+      .filter(isRecord)
+      .map((g) => ({
+        requirement: text(g['requirement']),
+        detail: text(g['detail']),
+      })),
+    questions: list(value['questions']).filter(
+      (q): q is string => typeof q === 'string',
+    ),
+  };
+}
+
 /**
  * Turns one parsed JSON value into a wire event, or `undefined` if it isn't
  * one. The server is ours, but a proxy or a future version could send
@@ -74,6 +124,10 @@ export function toWireEvent(value: unknown): WireEvent | undefined {
       return typeof value['text'] === 'string'
         ? { type: 'delta', text: value['text'] }
         : undefined;
+    case 'analysis': {
+      const analysis = parseAnalysis(value['analysis']);
+      return analysis ? { type: 'analysis', analysis } : undefined;
+    }
     case 'done': {
       const usage = isRecord(value['usage']) ? value['usage'] : {};
       return {

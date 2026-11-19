@@ -51,13 +51,16 @@ const es: PrivacyContent = {
         'que escribiste algo que no era un comando (solo una franja de longitud, no el texto);',
         'qué tarjeta de contenido se abrió;',
         'qué tipo de enlace se pulsó (correo, GitHub, LinkedIn, CV u otro), sin la dirección;',
-        'si cambiaste de idioma.',
+        'si cambiaste de idioma;',
+        'que pulsaste el nodo de la empresa en el mapa;',
+        'que se completó un análisis de oferta (solo cuántas coincidencias y carencias, no el texto).',
       ],
     },
     {
       heading: 'Enlaces con código (?ref=)',
       paragraphs: [
         'Si llegaste desde un enlace con un código corto (por ejemplo ?ref=empresa-x), ese código se guarda junto a tus eventos de esa visita y se quita de la barra de direcciones. Sirve para saber a qué candidatura corresponde el enlace: identifica el enlace que compartí, no a ti.',
+        'Si el enlace lleva el nombre de una empresa (por ejemplo ?company=Amazon), ese nombre se muestra en la página, se mantiene en la dirección y también se guarda junto a tus eventos. Igual que el código, identifica el enlace que compartí, no a ti.',
       ],
     },
     {
@@ -65,6 +68,7 @@ const es: PrivacyContent = {
       paragraphs: [
         'Si escribes una pregunta en lenguaje natural, se envía a Anthropic (API de Claude), que la procesa para generar la respuesta. Anthropic actúa como encargado del tratamiento y puede tratar los datos fuera de la UE.',
         'Además, guardo en AWS (región eu-north-1, Estocolmo) la pregunta, la respuesta, el idioma y el consumo de tokens, para controlar costes y mejorar el contenido. Este registro no incluye tu IP y se borra a los 90 días.',
+        'Lo mismo vale para el comando analiza-oferta: el texto de la oferta que pegues se envía a Anthropic para analizarlo, y la oferta, el análisis y el nombre de la empresa (si el enlace lo traía) se guardan en ese mismo registro durante 90 días. Cada IP puede pedir como mucho 5 análisis al día.',
         'Para limitar abusos, tu IP se convierte con un hash irreversible (nunca se guarda en claro) y se usa solo como contador de peticiones por minuto y por día. Esos contadores se borran solos en menos de dos días.',
         'Antes de enviar una pregunta, Cloudflare Turnstile comprueba que no eres un bot. Su script solo se carga cuando haces la primera pregunta, y Cloudflare procesa datos técnicos del navegador para esa comprobación.',
         'No escribas datos personales ni confidenciales en el campo de preguntas.',
@@ -124,13 +128,16 @@ const en: PrivacyContent = {
         'that you typed something that was not a command (only a length range, not the text);',
         'which content card was opened;',
         'which kind of link was clicked (email, GitHub, LinkedIn, CV or other), without the address;',
-        'whether you switched language.',
+        'whether you switched language;',
+        'that you clicked the company node in the map;',
+        'that a job description analysis finished (only how many matches and gaps, not the text).',
       ],
     },
     {
       heading: 'Links with a code (?ref=)',
       paragraphs: [
         'If you arrived through a link with a short code (for example ?ref=company-x), that code is stored with your events for that visit and removed from the address bar. It tells me which application the link belonged to: it identifies the link I shared, not you.',
+        'If the link carries a company name (for example ?company=Amazon), that name is shown on the page, kept in the address and also stored with your events. Like the code, it identifies the link I shared, not you.',
       ],
     },
     {
@@ -138,6 +145,7 @@ const en: PrivacyContent = {
       paragraphs: [
         'If you type a question in natural language, it is sent to Anthropic (Claude API), which processes it to generate the answer. Anthropic acts as a processor and may process data outside the EU.',
         'I also store in AWS (eu-north-1 region, Stockholm) the question, the answer, the language and token usage, to control costs and improve the content. This log does not include your IP address and is deleted after 90 days.',
+        'The same applies to the analyze-job command: the job description you paste is sent to Anthropic to be analyzed, and the description, the analysis and the company name (if the link had one) are kept in that same log for 90 days. Each IP address can ask for at most 5 analyses a day.',
         'To limit abuse, your IP address is turned into an irreversible hash (it is never stored in plain form) and used only as a per-minute and per-day request counter. Those counters delete themselves within two days.',
         'Before a question is sent, Cloudflare Turnstile checks that you are not a bot. Its script only loads when you ask your first question, and Cloudflare processes technical browser data for that check.',
         'Please do not type personal or confidential data into the question field.',
