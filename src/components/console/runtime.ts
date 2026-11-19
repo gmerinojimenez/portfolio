@@ -287,9 +287,28 @@ export function startConsole(root: HTMLElement): ConsoleHandle {
     log.scrollTop = canvasBottom + margin - log.clientHeight;
   }
 
+  /**
+   * With `?company=` (S11) the visitor came for the future node at the top of
+   * the tree, so show that end instead of the base.
+   */
+  function scrollToFutureNode(): boolean {
+    // There is one tree per layout; only the visible one has a box.
+    const node = [
+      ...log.querySelectorAll<SVGGraphicsElement>('.m-future'),
+    ].find((el) => el.getClientRects().length > 0);
+    if (!node) return false;
+    const margin = 24;
+    const nodeTop =
+      node.getBoundingClientRect().top -
+      log.getBoundingClientRect().top +
+      log.scrollTop;
+    log.scrollTop = Math.max(0, nodeTop - margin);
+    return true;
+  }
+
   function finishBoot(): void {
     storage.set(BOOT_SEEN_KEY, '1');
-    scrollToTreeBase();
+    if (!scrollToFutureNode()) scrollToTreeBase();
     // Focus the prompt on devices with a mouse; on touch screens this would
     // pop up the keyboard and hide the hero.
     const nothingFocused =
