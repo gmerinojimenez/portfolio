@@ -2,7 +2,8 @@
 type: project
 title: Llamadas de voz con WebRTC
 status: published
-from: 2015-04 # provisional: company start date
+from: 2018
+to: 2018
 topic: android
 company: tuenti
 importance: 3

@@ -2,7 +2,7 @@
 type: project
 title: Formación técnica a partners
 status: published
-from: 2012-08 # provisional: company start date
+from: 2012
 topic: training
 company: zkteco
 importance: 2

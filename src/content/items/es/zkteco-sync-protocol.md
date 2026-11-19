@@ -2,7 +2,7 @@
 type: project
 title: Protocolo de sincronización de bases de datos
 status: published
-from: 2012-08 # provisional: company start date
+from: 2012
 topic: backend
 company: zkteco
 importance: 3

@@ -2,7 +2,8 @@
 type: project
 title: Modularización y refactorizaciones de la app Android
 status: published
-from: 2015-04 # provisional: company start date
+from: 2015-04
+to: 2023-10
 topic: android
 company: tuenti
 app: tuenti-android-app
@@ -12,4 +13,4 @@ tags: [android, architecture, modularization]
 related: [tuenti-android-app, android-modularization-post]
 ---
 
-Lideré las decisiones de arquitectura, la modularización y las grandes refactorizaciones de la app Android principal.
+Lideré las decisiones de arquitectura y las grandes refactorizaciones de la app Android principal durante todos mis años en Tuenti. En 2021 llevamos a cabo la modularización de la app.

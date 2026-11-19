@@ -60,7 +60,7 @@ describe('command or question', () => {
   it('sends unknown words and sentences to the AI', () => {
     for (const line of [
       'hello',
-      '¿Ha trabajado con apps reguladas?',
+      '¿Ha trabajado en apps con millones de usuarios?',
       'what do you do',
     ]) {
       expect(isCommand(line), line).toBe(false);

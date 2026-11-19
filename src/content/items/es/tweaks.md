@@ -2,7 +2,7 @@
 type: oss
 title: Tweaks
 status: published
-from: 2015-04 # provisional: company start date
+from: 2022
 topic: android
 company: tuenti
 importance: 4

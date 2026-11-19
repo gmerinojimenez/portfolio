@@ -2,7 +2,7 @@
 type: app
 title: Terminal portátil P200
 status: published
-from: 2012-08 # provisional: company start date
+from: 2012
 topic: android
 company: zkteco
 importance: 3

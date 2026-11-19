@@ -2,7 +2,8 @@
 type: project
 title: Auditorías de seguridad de la app
 status: published
-from: 2015-04 # provisional: company start date
+from: 2019
+to: 2023-10
 topic: android
 company: tuenti
 app: tuenti-android-app
