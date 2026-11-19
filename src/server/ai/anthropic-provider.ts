@@ -64,7 +64,19 @@ export class AnthropicProvider implements AiProvider {
         {
           model: this.model,
           max_tokens: request.maxTokens,
-          output_config: { effort: this.effort },
+          output_config: {
+            effort: this.effort,
+            // Structured outputs work with streaming: the deltas are pieces
+            // of the JSON document, complete at `message_stop`.
+            ...(request.jsonSchema
+              ? {
+                  format: {
+                    type: 'json_schema' as const,
+                    schema: request.jsonSchema,
+                  },
+                }
+              : {}),
+          },
           system: [
             { type: 'text', text: request.instructions },
             {

@@ -5,6 +5,7 @@
  */
 import type { Locale } from '../../lib/locales';
 import type { SourceRef } from './context';
+import type { OfferAnalysis } from './offer';
 
 export type ErrorCode =
   | 'invalid_request'
@@ -71,6 +72,8 @@ export interface WireUsage {
 export type WireEvent =
   | { type: 'meta'; requestId: string; model: string }
   | { type: 'delta'; text: string }
+  /** Offer mode (S11): the whole analysis, right before `done`. */
+  | { type: 'analysis'; analysis: OfferAnalysis }
   | {
       type: 'done';
       sources: SourceRef[];

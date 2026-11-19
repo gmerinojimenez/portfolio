@@ -178,7 +178,7 @@ describe('validateRequest', () => {
       'non-string content',
       body({ ...ok, messages: [{ role: 'user', content: 1 }] }),
     ],
-    ['body too large', body({ ...ok, padding: 'x'.repeat(40_000) })],
+    ['body too large', body({ ...ok, padding: 'x'.repeat(50_000) })],
   ])('rejects %s', (_name, raw) => {
     expect(validateRequest(raw).ok).toBe(false);
   });

@@ -6,6 +6,11 @@
  * Order of checks, cheapest and most protective first:
  *   method -> origin -> body -> per-IP limit -> Turnstile -> spend brake
  *   -> model (streamed) -> settle the brake -> question log.
+ *
+ * Two modes share that pipeline: questions (`chat`, S09), whose answer
+ * streams as `delta` lines, and job offers (`offer`, S11), whose structured
+ * answer is parsed when complete and sent as one `analysis` line. Offers have
+ * their own, stricter per-IP limit.
  */
 import { randomUUID } from 'node:crypto';
 import type { Locale } from '../../lib/locales';
@@ -26,6 +31,15 @@ import {
   microUsdToUsd,
   type TokenUsage,
 } from './pricing';
+import {
+  OFFER_MAX_TOKENS,
+  analysisSources,
+  offerInstructions,
+  offerMessage,
+  offerSchema,
+  parseAnalysis,
+  type OfferAnalysis,
+} from './offer';
 import { extractSources, systemInstructions } from './prompt';
 import { ProviderError, type AiProvider } from './provider';
 import type { RateLimiter } from './rate-limit';
@@ -35,6 +49,7 @@ import type { TurnstileVerifier } from './turnstile';
 import {
   DEFAULT_INPUT_LIMITS,
   validateRequest,
+  type ChatTurn,
   type InputLimits,
 } from './validation';
 
@@ -57,6 +72,8 @@ export interface HandlerDeps {
   provider: AiProvider;
   brake: SpendBrake;
   rateLimiter: RateLimiter;
+  /** Per-IP limit for job offer analyses (S11). */
+  offerRateLimiter: RateLimiter;
   log: QuestionLog;
   verifyTurnstile: TurnstileVerifier;
   hashIp: (ip: string) => string;
@@ -64,6 +81,7 @@ export interface HandlerDeps {
   /** Exact `Origin` values allowed. Empty = reject everything (fail closed). */
   allowedOrigins: string[];
   maxTokens?: number;
+  offerMaxTokens?: number;
   inputLimits?: InputLimits;
   logTtlDays?: number;
   now?: () => Date;
@@ -75,6 +93,8 @@ export interface HandlerDeps {
 export const DEFAULT_MAX_TOKENS = 1024;
 export const DEFAULT_LOG_TTL_DAYS = 90;
 const MAX_LOGGED_ANSWER = 2_000;
+/** An analysis is JSON with several lists: keep more of it. */
+const MAX_LOGGED_ANALYSIS = 6_000;
 
 const baseHeaders = {
   'content-type': NDJSON,
@@ -88,6 +108,7 @@ export function createAiHandler(deps: HandlerDeps) {
   const logger =
     deps.logger ?? ((record) => console.log(JSON.stringify(record)));
   const maxTokens = deps.maxTokens ?? DEFAULT_MAX_TOKENS;
+  const offerMaxTokens = deps.offerMaxTokens ?? OFFER_MAX_TOKENS;
   const logTtlDays = deps.logTtlDays ?? DEFAULT_LOG_TTL_DAYS;
 
   return async function handle(
@@ -136,9 +157,12 @@ export function createAiHandler(deps: HandlerDeps) {
       if (!parsed.ok) {
         return reject('invalid_request', parsed.locale ?? 'es');
       }
-      const { locale, messages, turnstileToken } = parsed.value;
+      const value = parsed.value;
+      const { locale, turnstileToken } = value;
+      const isOffer = value.mode === 'offer';
+      const limiter = isOffer ? deps.offerRateLimiter : deps.rateLimiter;
 
-      const limit = await deps.rateLimiter.check(
+      const limit = await limiter.check(
         deps.hashIp(request.sourceIp),
         startedAt,
       );
@@ -151,9 +175,40 @@ export function createAiHandler(deps: HandlerDeps) {
       }
 
       const context = deps.context.locales[locale];
-      const instructions = systemInstructions(locale);
-      const question = messages[messages.length - 1]?.content ?? '';
-      const turn = Math.ceil(messages.length / 2);
+      // What each mode sends to the model. The company of an offer only
+      // goes in the user message (see offer.ts).
+      const plan: {
+        instructions: string;
+        messages: ChatTurn[];
+        maxTokens: number;
+        jsonSchema?: Record<string, unknown>;
+        question: string;
+        turn: number;
+      } =
+        value.mode === 'offer'
+          ? {
+              instructions: offerInstructions(locale),
+              messages: [
+                {
+                  role: 'user',
+                  content: offerMessage(value.offer, value.company),
+                },
+              ],
+              maxTokens: offerMaxTokens,
+              jsonSchema: offerSchema(context.sources),
+              question: value.offer,
+              turn: 1,
+            }
+          : {
+              instructions: systemInstructions(locale),
+              messages: value.messages,
+              maxTokens,
+              question: value.messages.at(-1)?.content ?? '',
+              turn: Math.ceil(value.messages.length / 2),
+            };
+      const { instructions, messages, question, turn } = plan;
+      const mode = isOffer ? 'offer' : 'chat';
+      const company = value.mode === 'offer' ? value.company : undefined;
 
       const writeLog = async (
         outcome: Outcome,
@@ -170,9 +225,14 @@ export function createAiHandler(deps: HandlerDeps) {
               requestId,
               at: startedAt.toISOString(),
               locale,
+              mode,
+              ...(company ? { company } : {}),
               question,
               turn,
-              answer: answer.slice(0, MAX_LOGGED_ANSWER),
+              answer: answer.slice(
+                0,
+                isOffer ? MAX_LOGGED_ANALYSIS : MAX_LOGGED_ANSWER,
+              ),
               sources,
               outcome,
               model,
@@ -197,7 +257,7 @@ export function createAiHandler(deps: HandlerDeps) {
           messages.map((m) => m.content).join('\n'),
       );
       const reservation = await deps.brake.reserve(
-        maxCostMicroUsd(estimatedInput, maxTokens),
+        maxCostMicroUsd(estimatedInput, plan.maxTokens),
         startedAt,
       );
       if (!reservation) {
@@ -222,7 +282,8 @@ export function createAiHandler(deps: HandlerDeps) {
           instructions,
           context: context.document,
           messages,
-          maxTokens,
+          maxTokens: plan.maxTokens,
+          ...(plan.jsonSchema ? { jsonSchema: plan.jsonSchema } : {}),
         })) {
           if (!produced) {
             produced = true;
@@ -231,7 +292,8 @@ export function createAiHandler(deps: HandlerDeps) {
           }
           if (event.type === 'text') {
             answer += event.text;
-            send({ type: 'delta', text: event.text });
+            // An analysis is JSON: half of it is useless to the browser.
+            if (!isOffer) send({ type: 'delta', text: event.text });
           } else {
             end = event;
           }
@@ -281,7 +343,15 @@ export function createAiHandler(deps: HandlerDeps) {
       }
 
       const cost = costMicroUsd(end.usage);
-      const sources = extractSources(answer, context.sources);
+      let analysis: OfferAnalysis | undefined;
+      let sources;
+      if (isOffer) {
+        analysis = parseAnalysis(answer, context.sources);
+        sources = analysis ? analysisSources(analysis, context.sources) : [];
+        if (analysis) send({ type: 'analysis', analysis });
+      } else {
+        sources = extractSources(answer, context.sources);
+      }
       const latencyMs = now().getTime() - startedAt.getTime();
       send({
         type: 'done',
@@ -320,6 +390,8 @@ export function createAiHandler(deps: HandlerDeps) {
       logger({
         requestId,
         outcome,
+        mode,
+        ...(isOffer ? { analysis: analysis !== undefined } : {}),
         locale,
         turn,
         latencyMs,

@@ -13,6 +13,11 @@ export interface ProviderRequest {
   context: string;
   messages: ChatTurn[];
   maxTokens: number;
+  /**
+   * Structured output (S11): the answer is JSON that follows this schema.
+   * The text still streams, as JSON fragments.
+   */
+  jsonSchema?: Record<string, unknown>;
   signal?: AbortSignal;
 }
 
