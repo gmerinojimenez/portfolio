@@ -3,7 +3,7 @@ type: education
 title: 'Foundations of Objective-C App Development'
 status: published
 from: 2016-01
-company: coursera
+company: university-of-california
 importance: 1
 summary: Curso certificado de Coursera sobre los fundamentos del desarrollo de apps con Objective-C.
 tags: [certification, ios, objective-c]

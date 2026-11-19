@@ -3,7 +3,7 @@ type: education
 title: 'Functional Programming Principles in Scala'
 status: published
 from: 2014-11
-company: coursera
+company: epfl
 topic: backend
 importance: 1
 summary: Certificado verificado de Coursera sobre los principios de la programación funcional en Scala.

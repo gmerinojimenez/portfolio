@@ -1,12 +1,12 @@
 ---
 type: education
-title: Erasmus en Informática
+title: Université Paris-Sud
 status: published
 from: 2009
 to: 2010
 company: paris-sud
 importance: 1
-summary: Año de Erasmus de Informática en la Université Paris-Sud.
+summary: Año de Erasmus en Informática.
 tags: [education, computer-science]
 related: [ucm-computer-science]
 ---

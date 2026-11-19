@@ -82,7 +82,6 @@ const es = {
       hintTouch:
         'Crece de abajo arriba, de la formación a hoy. Toca un elemento para ver sus conexiones y abrir su card.',
       stages: {
-        early: 'Primeros pasos',
         tuenti: 'Tuenti',
         merlyn: 'Merlyn',
       } as Record<string, string>,
@@ -92,7 +91,7 @@ const es = {
       rootsBadge: 'Ed',
       rootsCount: '{n} títulos y certificados',
       ordinal: '{n}º',
-      personal: 'Por mi cuenta',
+      personal: 'Proyectos personales',
       replay: 'repetir',
       replayLabel: 'Repetir la animación del árbol',
       types: 'tipos',
@@ -280,7 +279,6 @@ const en: UiStrings = {
       hintTouch:
         'It grows bottom to top, from education to today. Tap an item to see its connections and open its card.',
       stages: {
-        early: 'First steps',
         tuenti: 'Tuenti',
         merlyn: 'Merlyn',
       } as Record<string, string>,
@@ -290,7 +288,7 @@ const en: UiStrings = {
       rootsBadge: 'Ed',
       rootsCount: '{n} degrees and certificates',
       ordinal: '{n}',
-      personal: 'On my own',
+      personal: 'Personal projects',
       replay: 'replay',
       replayLabel: 'Replay the tree animation',
       types: 'types',
