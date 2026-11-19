@@ -216,6 +216,13 @@ describe('runTranslate', () => {
     expect(body).toContain('Cuerpo uno.');
   });
 
+  it('writes tags the way Prettier formats them', async () => {
+    esItem('uno');
+    await run(createFakeTranslator());
+    const raw = readFileSync(join(root, 'items/en', 'uno.md'), 'utf8');
+    expect(raw).toContain('\ntags: [android, kotlin]\n');
+  });
+
   it('does not call the translator again for an unchanged source', async () => {
     esItem('uno');
     const t = counting();

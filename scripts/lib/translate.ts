@@ -228,7 +228,10 @@ export function renderEnglishFile(
   const doc = new Document(data);
   const tags = doc.get('tags', true);
   if (isSeq(tags)) tags.flow = true;
-  const frontmatter = doc.toString({ lineWidth: 0 });
+  const frontmatter = doc.toString({
+    lineWidth: 0,
+    flowCollectionPadding: false,
+  });
   return `---\n${frontmatter}---\n\n${fields.body.trim()}\n`;
 }
 
