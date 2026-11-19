@@ -27,7 +27,7 @@ set -a
 # shellcheck source=/dev/null
 source "$ENV_FILE"
 set +a
-export AWS_PROFILE="${AWS_PROFILE:-gmj}"
+export AWS_PROFILE="${AWS_PROFILE:-gmj-sst}"
 
 missing=()
 for var in PORTFOLIO_DOMAIN PORTFOLIO_BUDGET_EMAIL; do
