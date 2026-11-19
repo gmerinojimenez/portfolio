@@ -20,6 +20,7 @@
     "content:embed": "tsx --env-file-if-exists=.env.local scripts/embed.ts",
     "content:translate": "tsx --env-file-if-exists=.env.local scripts/translate.ts",
     "ai:context": "tsx --env-file-if-exists=.env.local scripts/build-ai-context.ts",
+    "ai:questions": "tsx --env-file-if-exists=.env.local scripts/ai-questions.ts",
     "eval": "tsx --env-file-if-exists=.env.local evals/run.ts",
     "deploy:prod": "bash scripts/deploy-prod.sh"
   },
