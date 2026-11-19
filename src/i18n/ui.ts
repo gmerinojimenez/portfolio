@@ -104,6 +104,40 @@ const es = {
       openCard: 'abrir card',
       list: 'ver como lista',
       empty: 'Aún no hay nada en el mapa. Prueba ',
+      future: '¿{company}?',
+      nextChapter: '¿Siguiente capítulo?',
+      futureAction: 'Pregunta a la IA: {question}',
+    },
+    offer: {
+      summary: 'analiza cómo encajo en una oferta',
+      intro:
+        'Pega la descripción de una oferta y la IA la compara con mi experiencia: qué encaja, con proyectos concretos, y qué huecos hay.',
+      introCompany:
+        'Pega la descripción de la oferta de {company} y la IA la compara con mi experiencia: qué encaja, con proyectos concretos, y qué huecos hay.',
+      label: 'Descripción de la oferta',
+      placeholder: 'Pega aquí el texto de la oferta…',
+      submit: 'analizar',
+      hint: 'Ctrl/⌘ + Enter para enviar · máximo {max} caracteres',
+      counter: '{n} / {max}',
+      privacy:
+        'El texto se envía a Anthropic para analizarlo y se guarda 90 días en el registro de preguntas, como las preguntas a la IA.',
+      empty: 'Pega primero el texto de la oferta.',
+      tooLong:
+        'La oferta es demasiado larga (máximo {max} caracteres). Recórtala y vuelve a intentarlo.',
+      invalid:
+        'No he podido leer la oferta. Revisa que no supere los {max} caracteres y vuelve a intentarlo.',
+      rateLimited:
+        'Has pedido muchos análisis seguidos (máximo {perDay} al día). Vuelve a intentarlo más tarde o escríbeme.',
+      analyzing: 'analizando la oferta…',
+      heading: 'Análisis de la oferta',
+      headingCompany: 'Análisis de la oferta de {company}',
+      matches: 'Lo que encaja',
+      gaps: 'Huecos',
+      questions: 'Preguntas para la entrevista',
+      noMatches: 'El portfolio no muestra experiencia directa con lo que pide.',
+      noGaps: 'No veo huecos claros con lo que cuenta el portfolio.',
+      unreadable:
+        'La IA no ha devuelto un análisis válido. Inténtalo de nuevo más tarde.',
     },
   },
   card: {
@@ -158,6 +192,7 @@ const es = {
   },
   ai: {
     thinking: 'pensando…',
+    whyHire: '¿Por qué debería contratar {company} a {name}?',
     sources: 'Fuentes:',
     meanwhile: 'Mientras, prueba:',
     notConfigured:
@@ -301,6 +336,40 @@ const en: UiStrings = {
       openCard: 'open card',
       list: 'view as a list',
       empty: 'Nothing on the map yet. Try ',
+      future: '{company}?',
+      nextChapter: 'Next chapter?',
+      futureAction: 'Ask the AI: {question}',
+    },
+    offer: {
+      summary: 'see how I fit a job offer',
+      intro:
+        'Paste a job description and the AI compares it with my experience: what fits, with concrete projects, and where the gaps are.',
+      introCompany:
+        "Paste {company}'s job description and the AI compares it with my experience: what fits, with concrete projects, and where the gaps are.",
+      label: 'Job description',
+      placeholder: 'Paste the job description here…',
+      submit: 'analyze',
+      hint: 'Ctrl/⌘ + Enter to send · {max} characters at most',
+      counter: '{n} / {max}',
+      privacy:
+        'The text is sent to Anthropic for the analysis and kept for 90 days in the question log, like questions to the AI.',
+      empty: 'Paste the job description first.',
+      tooLong:
+        'The job description is too long ({max} characters at most). Trim it and try again.',
+      invalid:
+        "I couldn't read the job description. Check it isn't over {max} characters and try again.",
+      rateLimited:
+        'Too many analyses in a row ({perDay} a day at most). Try again later or reach out to me.',
+      analyzing: 'analyzing the job offer…',
+      heading: 'Job offer analysis',
+      headingCompany: "{company}'s job offer analysis",
+      matches: 'What fits',
+      gaps: 'Gaps',
+      questions: 'Questions for the interview',
+      noMatches:
+        "The portfolio doesn't show direct experience with what it asks for.",
+      noGaps: "I don't see clear gaps with what the portfolio covers.",
+      unreadable: "The AI didn't return a valid analysis. Try again later.",
     },
   },
   card: {
@@ -355,6 +424,7 @@ const en: UiStrings = {
   },
   ai: {
     thinking: 'thinking…',
+    whyHire: 'Why should {company} hire {name}?',
     sources: 'Sources:',
     meanwhile: 'Meanwhile, try:',
     notConfigured:

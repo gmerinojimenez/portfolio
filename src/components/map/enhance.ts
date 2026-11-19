@@ -23,18 +23,20 @@ import {
   visibleIds,
   type MapFilter,
 } from './filters';
-import { buildTreeModel } from './model';
+import { buildTreeModel, type MapModel } from './model';
 import { renderPanel } from './render';
 
 export function enhanceMap(
   output: HTMLElement,
   data: Pick<ConsoleData, 'items' | 'stages'>,
   t: UiStrings,
+  /** The model the HTML was drawn from, when it isn't the default one. */
+  drawn?: MapModel,
 ): void {
   const found = output.querySelector<HTMLElement>('[data-map]');
   if (!found) return;
   const root: HTMLElement = found;
-  const model = buildTreeModel(data.items, data.stages, t);
+  const model = drawn ?? buildTreeModel(data.items, data.stages, t);
   const byId = new Map(model.nodes.map((node) => [node.id, node]));
   const nodeEls = [...root.querySelectorAll<SVGAElement>('[data-node]')];
   const anchorEls = [...root.querySelectorAll<SVGGElement>('[data-anchor]')];

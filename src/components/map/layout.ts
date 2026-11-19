@@ -15,6 +15,7 @@
  */
 import { CANVAS, nodeRadius, type Canvas, type Point } from './geometry';
 import {
+  FUTURE_ID,
   ROOTS_SECTION,
   STEM_ID,
   byStageOrder,
@@ -49,6 +50,15 @@ export interface Stroke {
   readonly cluster: ClusterId;
 }
 
+/** The future node (S11): a dashed pill above the trunk's tip. */
+export interface FuturePlacement extends Point {
+  readonly width: number;
+  readonly height: number;
+  readonly delay: number;
+  /** Dashed line from the trunk's tip to the pill. */
+  readonly line: { readonly d: string };
+}
+
 export interface TreeLayout {
   readonly canvas: Canvas;
   readonly nodes: ReadonlyMap<string, PlacedNode>;
@@ -71,6 +81,8 @@ export interface TreeLayout {
   readonly years: readonly { y: number; label: string }[];
   /** Which side of its node each stage's label goes. */
   readonly stageLabelSide: ReadonlyMap<string, -1 | 1>;
+  /** Only with `?company=`; `null` keeps the tree exactly as before. */
+  readonly future: FuturePlacement | null;
 }
 
 const DURATION = 4.2;
@@ -161,7 +173,10 @@ export function layoutTree(model: MapModel, layout: Layout): TreeLayout {
   const { width: W, height: H } = canvas;
   const mobile = layout === 'mobile';
   const tree = model.tree;
-  const all = [...tree.values()];
+  // The future node is placed on its own, after everything else, so the rest
+  // of the tree doesn't depend on it.
+  const futureNode = tree.get(FUTURE_ID) ?? null;
+  const all = [...tree.values()].filter((n) => n.kind !== 'future');
   const get = (id: string) => tree.get(id)!;
 
   const stages = all.filter((n) => n.kind === 'stage').sort(byStageOrder);
@@ -172,7 +187,9 @@ export function layoutTree(model: MapModel, layout: Layout): TreeLayout {
   const hasRoots = rootsTop.length > 0;
 
   // ---- Vertical: time above the ground, order below it.
-  const top = mobile ? 34 : 38;
+  // With a future node, the tree starts lower to leave it room on top.
+  const futureRoom = futureNode ? (mobile ? 46 : 50) : 0;
+  const top = (mobile ? 34 : 38) + futureRoom;
   const bottom = 14;
   const rootShare = hasRoots ? 0.3 : 0;
   const groundY = r1(top + (H - top - bottom) * (1 - rootShare));
@@ -680,6 +697,25 @@ export function layoutTree(model: MapModel, layout: Layout): TreeLayout {
     years.push({ y: yy, label: String(year) });
   }
 
+  // ---- Future node: a pill centered on the trunk, above its tip.
+  let future: FuturePlacement | null = null;
+  if (futureNode && trunk) {
+    const height = 26;
+    const width = Math.min(
+      W - 2 * margin,
+      Math.ceil(futureNode.title.length * 12 * 0.62 + 28),
+    );
+    const fy = r1(tip.y - (mobile ? 30 : 32));
+    future = {
+      x: cx,
+      y: fy,
+      width,
+      height,
+      delay: r2(trunkEnd + 0.2),
+      line: { d: `M${P(tip)}L${P({ x: cx, y: fy + height / 2 })}` },
+    };
+  }
+
   const nodes = new Map<string, PlacedNode>();
   for (const n of all) {
     const m = placed.get(n.id)!;
@@ -701,5 +737,6 @@ export function layoutTree(model: MapModel, layout: Layout): TreeLayout {
     groundDelay: r2(Math.max(0, trunkStart - 0.3)),
     years,
     stageLabelSide,
+    future,
   };
 }

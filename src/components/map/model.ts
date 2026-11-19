@@ -64,8 +64,9 @@ export type MapItem = Pick<
  * - `stage`: a career stage on the trunk.
  * - `group`: a company inside a stage, or the issuer of several certificates.
  * - `stem`: where the personal stem starts.
+ * - `future`: the "next chapter" above "now", only with `?company=` (S11).
  */
-export type NodeKind = 'item' | 'stage' | 'group' | 'stem';
+export type NodeKind = 'item' | 'stage' | 'group' | 'stem' | 'future';
 
 export type SectionKind = 'stage' | 'stem' | 'roots';
 
@@ -92,6 +93,8 @@ export interface TreeNode {
    * issuer groups and top-level roots. Undefined for the rest.
    */
   readonly badge?: string;
+  /** Future node only: the question it sends to the console. */
+  readonly prompt?: string;
 }
 
 /** An item as the legend, panel and list see it. */
@@ -144,6 +147,18 @@ export const GROUP_PREFIX = 'g:';
 export const STEM_ID = 'p:stem';
 export const ROOTS_SECTION = 'roots';
 export const STEM_SECTION = 'stem';
+export const FUTURE_ID = 'f:future';
+
+/** Extras that depend on the visit, not on the content (S11). */
+export interface TreeOptions {
+  /** A company from `?company=`: adds the future node. */
+  readonly future?: {
+    /** e.g. "¿Amazon?". */
+    readonly label: string;
+    /** e.g. "¿Por qué debería contratar Amazon a Guillermo?". */
+    readonly prompt: string;
+  };
+}
 
 // ---------------------------------------------------------------- dates
 
@@ -275,6 +290,7 @@ export function buildTreeModel(
   items: readonly MapItem[],
   stages: readonly StageRef[],
   t: Strings,
+  options: TreeOptions = {},
 ): MapModel {
   const now = contentNow(items);
   const strings = t.commands.map;
@@ -541,6 +557,25 @@ export function buildTreeModel(
       children: (children.get(d.id) ?? []).map((c) => c.id),
       depth: depthOf(d),
       ...(badge ? { badge } : {}),
+    });
+  }
+  // The next chapter: above the newest stage, outside every section, so it
+  // never changes how the rest of the tree is built.
+  const latest = [...stageDrafts].sort(byStageOrder).at(-1);
+  if (options.future && latest) {
+    tree.set(FUTURE_ID, {
+      id: FUTURE_ID,
+      kind: 'future',
+      parent: null,
+      children: [],
+      depth: 0,
+      section: '',
+      t: now,
+      t1: null,
+      cluster: latest.cluster,
+      title: options.future.label,
+      importance: 5,
+      prompt: options.future.prompt,
     });
   }
 

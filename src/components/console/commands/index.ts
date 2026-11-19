@@ -8,11 +8,13 @@ import { help } from './help';
 import { lang } from './lang';
 import { ls } from './ls';
 import { map } from './map';
+import { analyzeOffer } from './offer';
 import { whoami } from './whoami';
 
 /**
  * The console's commands, in `help` order. Later specs plug in here:
- * `ls`/`cat` come from S05; `map` is S07's semantic map. The fallback is the "AI not configured" notice;
+ * `ls`/`cat` come from S05; `map` is S07's semantic map; `analiza-oferta`
+ * is S11's offer analyzer. The fallback is the "AI not configured" notice;
  * the browser runtime swaps in the real AI (S10) when the build has it.
  */
 export function createRegistry(): CommandRegistry {
@@ -24,6 +26,7 @@ export function createRegistry(): CommandRegistry {
     .register(cat)
     .register(cv)
     .register(contact)
+    .register(analyzeOffer)
     .register(lang)
     .register(clear)
     .setFallback(aiUnavailable);

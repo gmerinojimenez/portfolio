@@ -1,6 +1,6 @@
 import type { AiFailure } from './errors';
 import { NdjsonParser } from './ndjson';
-import type { AiRequest, ErrorCode, WireEvent } from './protocol';
+import type { AnyAiRequest, ErrorCode, WireEvent } from './protocol';
 
 /** What the controller sees: successful events as they come, or a failure. */
 export type StreamEvent =
@@ -9,7 +9,7 @@ export type StreamEvent =
 
 export interface StreamOptions {
   readonly url: string;
-  readonly request: AiRequest;
+  readonly request: AnyAiRequest;
   /** Whole-answer deadline. */
   readonly timeoutMs?: number;
   /** Injected in tests. */

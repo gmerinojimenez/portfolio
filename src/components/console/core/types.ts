@@ -21,6 +21,11 @@ export interface CommandContext {
   readonly pathname: string;
   /** `false` while rendering static HTML at build time. */
   readonly interactive: boolean;
+  /**
+   * The validated `?company=` of this visit (S11). Browser only: the build
+   * never knows it, so static output is always the same.
+   */
+  readonly company?: string | undefined;
   /** Appends an output block to the console. */
   print(content: Html): void;
   /** Removes all output. */

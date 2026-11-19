@@ -124,6 +124,18 @@ export function renderAnswer(text: string, options: RenderOptions): Html {
   );
 }
 
+/** Sources as card links separated by `separator` (S11's analysis card). */
+export function sourceLinks(
+  sources: readonly SourceRef[],
+  options: RenderOptions,
+  separator = ', ',
+): Html {
+  return join(
+    sources.map((s) => citation(s, options)),
+    separator,
+  );
+}
+
 /** "Sources: [title] · [title]", each a link that opens its card. */
 export function renderSources(
   sources: readonly SourceRef[],

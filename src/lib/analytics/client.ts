@@ -18,6 +18,7 @@ import { toCapture, type AnalyticsEvent, type Session } from './events';
 import { classifyLink } from './links';
 import { isOptedOut, readPrivacySignals } from './privacy';
 import { captureRef } from './ref';
+import { companyProperty, readCompany } from '../company';
 
 function start(): void {
   // Always strip `?ref=` from the address bar (it's read only once), even
@@ -30,7 +31,13 @@ function start(): void {
   if (isOptedOut(readPrivacySignals(navigator, window))) return;
 
   const lang = document.documentElement.lang;
-  const session: Session = { locale: isLocale(lang) ? lang : 'es', ref };
+  // `?company=` stays in the URL (S11), so every page of the visit has it.
+  const company = readCompany(location.search);
+  const session: Session = {
+    locale: isLocale(lang) ? lang : 'es',
+    ref,
+    ...(company ? { company: companyProperty(company) } : {}),
+  };
 
   // The library loads as a separate chunk, after the page is usable.
   const posthog = import('posthog-js').then(({ default: ph }) => {
