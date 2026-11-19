@@ -261,6 +261,16 @@ function spreadDates(parent: Draft, children: Draft[]): void {
   });
 }
 
+/**
+ * Stages oldest first: by start, then by end (a short stage that overlaps a
+ * longer one goes below it), then by id.
+ */
+export const byStageOrder = (
+  a: { id: string; t: number; t1: number | null },
+  b: { id: string; t: number; t1: number | null },
+): number =>
+  a.t - b.t || (a.t1 ?? a.t) - (b.t1 ?? b.t) || a.id.localeCompare(b.id);
+
 export function buildTreeModel(
   items: readonly MapItem[],
   stages: readonly StageRef[],
@@ -347,7 +357,8 @@ export function buildTreeModel(
         t: starts.length ? Math.min(...starts) : now,
         t1: ends.length ? Math.max(...ends) : null,
         cluster: dominant(members),
-        title: named ?? (companies.length === 1 ? companies[0]! : id),
+        // Unnamed stages are called after their companies.
+        title: named ?? (companies.sort().join(' · ') || id),
         importance: 5,
       },
     ];
@@ -451,9 +462,8 @@ export function buildTreeModel(
         byItem.get(d.id)?.cert &&
         byItem.get(d.id)?.companyId === item.companyId,
     );
-    if (certs.length > 1) {
-      draft.parent = groupFor(ROOTS_SECTION, item.companyId, certs);
-    }
+    // Under their issuer, even a single one: the root shows who issued it.
+    draft.parent = groupFor(ROOTS_SECTION, item.companyId, certs);
   }
 
   // Break any cycle (`app` pointing at each other) at the section anchor.
@@ -542,9 +552,7 @@ export function buildTreeModel(
       .sort((a, b) => b.t - a.t || a.id.localeCompare(b.id))
       .map((d) => d.id);
   const ordinals = new Map(
-    [...stageDrafts]
-      .sort((a, b) => a.t - b.t || a.id.localeCompare(b.id))
-      .map((s, k) => [s.id, k + 1]),
+    [...stageDrafts].sort(byStageOrder).map((s, k) => [s.id, k + 1]),
   );
   const sections: MapSection[] = [
     ...stem.map((s) => ({
@@ -556,7 +564,7 @@ export function buildTreeModel(
       items: itemsIn(STEM_SECTION),
     })),
     ...[...stageDrafts]
-      .sort((a, b) => b.t - a.t || a.id.localeCompare(b.id))
+      .sort((a, b) => byStageOrder(b, a))
       .map((s) => ({
         id: s.id,
         kind: 'stage' as const,

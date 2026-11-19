@@ -18,6 +18,7 @@ import {
   LABEL_FONT_SIZE,
   labelText,
   placeLabels,
+  ROOT_LABEL_CHARS,
   textBox,
   type Box,
   type PlacedLabel,
@@ -27,6 +28,7 @@ import { layoutTree, type PlacedNode, type TreeLayout } from './layout';
 import {
   countBy,
   labeledAtRest,
+  ROOTS_SECTION,
   TYPE_ORDER,
   usedClusters,
   type ClusterId,
@@ -91,6 +93,13 @@ export function swatch(type: ItemType): Html {
 
 const delay = (seconds: number) => `--d:${seconds}s`;
 
+/** Label text; roots get more characters for university names. */
+const rootAware = (n: { title: string; section: string }) =>
+  labelText(
+    n.title,
+    n.section === ROOTS_SECTION ? ROOT_LABEL_CHARS : undefined,
+  );
+
 function renderNode(
   node: MapNode,
   at: PlacedNode,
@@ -111,7 +120,7 @@ function renderNode(
     .filter(Boolean)
     .join(' ');
   const text = label
-    ? markup`<text class="m-label" x="${label.dx}" y="${label.dy}" text-anchor="${label.anchor}" font-size="${LABEL_FONT_SIZE}" aria-hidden="true">${labelText(node.title)}</text>`
+    ? markup`<text class="m-label" x="${label.dx}" y="${label.dy}" text-anchor="${label.anchor}" font-size="${LABEL_FONT_SIZE}" aria-hidden="true">${rootAware(node)}</text>`
     : '';
   return markup`<a class="${classes}" href="${node.path}" data-card-open="${node.id}" data-node="${node.id}" data-type="${node.type}" data-cluster="${node.cluster}" aria-label="${nodeName(node, t)}" transform="translate(${at.x} ${at.y})"><g class="m-body" style="${delay(at.delay)}"><circle class="m-hit" r="${hit}"/><circle class="m-halo" r="${r + 5}" filter="url(#${glow})"/><circle class="m-ring" r="${r + 4.5}"/>${nodeMarks(node.type, r, badge)}${text}</g></a>`;
 }
@@ -183,7 +192,7 @@ export function renderSvg(model: MapModel, layout: Layout, t: Strings): Html {
     [
       ...groups.map((g) => ({
         id: g.id,
-        text: labelText(g.title),
+        text: rootAware(g),
         at: at(g.id),
         r: at(g.id).r,
         atRest: true,
@@ -191,7 +200,7 @@ export function renderSvg(model: MapModel, layout: Layout, t: Strings): Html {
       })),
       ...model.nodes.map((node) => ({
         id: node.id,
-        text: labelText(node.title),
+        text: rootAware(node),
         at: at(node.id),
         r: at(node.id).r,
         // Degrees and other top-level roots too: there are only a few.
@@ -279,7 +288,7 @@ export function renderSvg(model: MapModel, layout: Layout, t: Strings): Html {
     const p = at(g.id);
     const label = labels.get(g.id);
     const text = label
-      ? markup`<text class="m-label" x="${label.dx}" y="${label.dy}" text-anchor="${label.anchor}" font-size="${LABEL_FONT_SIZE}">${labelText(g.title)}</text>`
+      ? markup`<text class="m-label" x="${label.dx}" y="${label.dy}" text-anchor="${label.anchor}" font-size="${LABEL_FONT_SIZE}">${rootAware(g)}</text>`
       : '';
     return markup`<g class="m-anchor m-group m-cl-${g.cluster}${label?.atRest ? ' is-labeled' : ''}" data-anchor="${g.id}" transform="translate(${p.x} ${p.y})"><g class="m-body" style="${delay(p.delay)}"><circle class="m-halo" r="${p.r + 5}" filter="url(#${glow})"/>${nodeMarks('project', p.r, g.badge ?? '')}${text}</g></g>`;
   });

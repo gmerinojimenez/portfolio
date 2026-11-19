@@ -57,10 +57,11 @@ const LABEL_HEIGHT = LABEL_FONT_SIZE + 4;
 const MAX_LABEL_CHARS = 26;
 
 /** Labels are short: the full title is in the node's accessible name. */
-export function labelText(title: string): string {
-  return title.length > MAX_LABEL_CHARS
-    ? `${title.slice(0, MAX_LABEL_CHARS - 1).trimEnd()}…`
-    : title;
+/** Roots have few labels and long names (universities), so more room. */
+export const ROOT_LABEL_CHARS = 40;
+
+export function labelText(title: string, max = MAX_LABEL_CHARS): string {
+  return title.length > max ? `${title.slice(0, max - 1).trimEnd()}…` : title;
 }
 
 export type Anchor = 'start' | 'middle' | 'end';

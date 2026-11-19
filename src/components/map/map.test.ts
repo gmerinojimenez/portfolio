@@ -16,6 +16,7 @@ import { CANVAS, labelText, nodeRadius, placeLabels } from './geometry';
 import { layoutTree } from './layout';
 import {
   buildTreeModel,
+  byStageOrder,
   contentNow,
   countBy,
   labeledAtRest,
@@ -189,6 +190,13 @@ describe('inferCluster', () => {
 });
 
 describe('buildTreeModel', () => {
+  it('puts a short stage below a longer one that starts the same year', () => {
+    const goal = { id: 's:goal', t: 2011, t1: 2012 };
+    const doboken = { id: 's:doboken', t: 2011, t1: 2011.5 };
+    const zk = { id: 's:zk', t: 2012, t1: null };
+    expect([zk, goal, doboken].sort(byStageOrder)).toEqual([doboken, goal, zk]);
+  });
+
   it('orders sections: stem, stages newest first, roots', () => {
     expect(model.sections.map((s) => s.id)).toEqual([
       'stem',
@@ -197,14 +205,14 @@ describe('buildTreeModel', () => {
       'roots',
     ]);
     const [stem, tuenti, early] = model.sections;
-    expect(stem!.title).toBe('Por mi cuenta');
+    expect(stem!.title).toBe('Proyectos personales');
     expect(tuenti).toMatchObject({
       title: 'Tuenti',
       ordinal: 2,
       period: '2015 – 2023',
     });
     expect(early).toMatchObject({
-      title: 'Primeros pasos',
+      title: 'acme · beta',
       ordinal: 1,
       period: '2011 – 2015',
     });
@@ -231,7 +239,7 @@ describe('buildTreeModel', () => {
     expect(node('degree')).toMatchObject({ parent: null, section: 'roots' });
     expect(node('c1').parent).toBe('g:coursera');
     expect(node('c2').parent).toBe('g:coursera');
-    expect(node('c3').parent).toBeNull(); // a single certificate: no group
+    expect(node('c3').parent).toBe('g:anthropic'); // even a single one
   });
 
   it('spreads shared placeholder dates, keeping the most important', () => {
@@ -461,7 +469,7 @@ describe('renderMap', () => {
   it('includes a text alternative grouped by stage', () => {
     expect(html).toContain('<details class="m-list">');
     expect(html).toContain(
-      '<ul aria-label="Etapa 1: Primeros pasos, 2011 – 2015">',
+      '<ul aria-label="Etapa 1: acme · beta, 2011 – 2015">',
     );
     expect(html).toContain('<ul aria-label="Formación">');
     expect(html).toContain('data-card-open="post">post</a>');

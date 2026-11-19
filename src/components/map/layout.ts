@@ -17,6 +17,7 @@ import { CANVAS, nodeRadius, type Canvas, type Point } from './geometry';
 import {
   ROOTS_SECTION,
   STEM_ID,
+  byStageOrder,
   type ClusterId,
   type Layout,
   type MapModel,
@@ -163,9 +164,7 @@ export function layoutTree(model: MapModel, layout: Layout): TreeLayout {
   const all = [...tree.values()];
   const get = (id: string) => tree.get(id)!;
 
-  const stages = all
-    .filter((n) => n.kind === 'stage')
-    .sort((a, b) => a.t - b.t || a.id.localeCompare(b.id));
+  const stages = all.filter((n) => n.kind === 'stage').sort(byStageOrder);
   const stem = tree.get(STEM_ID) ?? null;
   const rootsTop = all.filter(
     (n) => n.section === ROOTS_SECTION && n.parent === null,
@@ -316,6 +315,59 @@ export function layoutTree(model: MapModel, layout: Layout): TreeLayout {
   if (stem) placeChildren(stem);
   // Children of groups were placed with their group; deeper ones too.
 
+  // ---- Stage labels go opposite their first branch (right while the stem
+  // owns the right side, since branches then grow left).
+  // With branches on both sides, the side with more free room at the
+  // label's height wins.
+  const clearance = (stage: TreeNode, s: -1 | 1) => {
+    const at = placed.get(stage.id)!;
+    let room = Number.POSITIVE_INFINITY;
+    for (const n of all) {
+      if (n.kind === 'stage' || n.kind === 'stem') continue;
+      const m = placed.get(n.id)!;
+      const dx = (m.x - at.x) * s;
+      if (dx > 0 && Math.abs(m.y - at.y) < 16) room = Math.min(room, dx);
+    }
+    return room;
+  };
+  const stageLabelSide = new Map<string, -1 | 1>();
+  for (const stage of stages) {
+    const first = childrenOf(stage)[0];
+    const fallback: -1 | 1 = first && sideOf(first.id) === 1 ? -1 : 1;
+    const right = clearance(stage, 1);
+    const left = clearance(stage, -1);
+    const s: -1 | 1 = leftOnly(stage)
+      ? 1
+      : right === left
+        ? fallback
+        : right > left
+          ? 1
+          : -1;
+    stageLabelSide.set(stage.id, s);
+  }
+
+  // Stage labels are obstacles too: nodes move out of their way.
+  // Stage titles are 12px (map.css), wider than node labels.
+  const charW = 12 * 0.62;
+  const labelBoxes = stages.map((stage) => {
+    const at = placed.get(stage.id)!;
+    const side = stageLabelSide.get(stage.id)!;
+    const near = at.x + side * (at.r + 4);
+    const far = near + side * (Math.max(stage.title.length, 11) * charW + 10);
+    return {
+      x0: Math.min(near, far),
+      x1: Math.max(near, far),
+      y0: at.y - 13,
+      y1: at.y + 16,
+    };
+  });
+
+  const hits = (
+    m: { r: number },
+    x: number,
+    y: number,
+    b: (typeof labelBoxes)[number],
+  ) => x + m.r > b.x0 && x - m.r < b.x1 && y + m.r > b.y0 && y - m.r < b.y1;
   // ---- Collision relaxation (fixed order, fixed iterations).
   const movers = [...placed.values()].sort((a, b) => a.id.localeCompare(b.id));
   const pad = mobile ? 5 : 8;
@@ -354,6 +406,23 @@ export function layoutTree(model: MapModel, layout: Layout): TreeLayout {
       m.y += (m.ty - m.y) * 0.18;
       m.x = Math.max(margin, Math.min(W - margin, m.x));
       m.y = Math.max(top - 10, Math.min(H - bottom, m.y));
+      for (const b of labelBoxes) {
+        if (!hits(m, m.x, m.y, b)) continue;
+        // Smallest move (up, down or away from the trunk) that clears
+        // every label; away from the trunk always does.
+        const out = m.x < cx ? b.x0 - m.r - 1 - m.x : b.x1 + m.r + 1 - m.x;
+        const moves = [
+          { dx: 0, dy: b.y0 - m.r - 1 - m.y },
+          { dx: 0, dy: b.y1 + m.r + 1 - m.y },
+          { dx: out, dy: 0 },
+        ].sort((p, q) => Math.hypot(p.dx, p.dy) - Math.hypot(q.dx, q.dy));
+        const move =
+          moves.find(
+            (v) => !labelBoxes.some((o) => hits(m, m.x + v.dx, m.y + v.dy, o)),
+          ) ?? moves.find((v) => v.dx !== 0)!;
+        m.x += move.dx;
+        m.y += move.dy;
+      }
     }
   }
 
@@ -609,21 +678,6 @@ export function layoutTree(model: MapModel, layout: Layout): TreeLayout {
     const last = years[years.length - 1];
     if (last && yy - last.y < minGap) continue;
     years.push({ y: yy, label: String(year) });
-  }
-
-  // ---- Stage labels go opposite their first branch (right while the stem
-  // owns the right side, since branches then grow left).
-  const stageLabelSide = new Map<string, -1 | 1>();
-  for (const stage of stages) {
-    const first = childrenOf(stage)[0];
-    const s: -1 | 1 = leftOnly(stage)
-      ? 1
-      : first
-        ? sideOf(first.id) === 1
-          ? -1
-          : 1
-        : 1;
-    stageLabelSide.set(stage.id, s);
   }
 
   const nodes = new Map<string, PlacedNode>();
