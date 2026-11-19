@@ -12,6 +12,9 @@ import {
   looksLikeDecline,
   normalize,
   turnsOf,
+  followsOfferSchema,
+  gradeOffer,
+  type EvalOffer,
   type EvalQuestion,
 } from './grade';
 
@@ -25,9 +28,9 @@ const known = [
 ];
 
 describe('eval questions', () => {
-  it('has 30–40 questions with unique ids and every type', () => {
+  it('has 30–45 questions with unique ids and every type', () => {
     expect(questions.length).toBeGreaterThanOrEqual(30);
-    expect(questions.length).toBeLessThanOrEqual(40);
+    expect(questions.length).toBeLessThanOrEqual(45);
     expect(new Set(questions.map((q) => q.id)).size).toBe(questions.length);
     expect(new Set(questions.map((q) => q.type))).toEqual(
       new Set([
@@ -239,5 +242,99 @@ describe('grading', () => {
       known,
     );
     expect(answerInEnglish.languageOk).toBe(false);
+  });
+});
+
+describe('offer grading (S11)', () => {
+  const { offers } = JSON.parse(readFileSync('evals/offers.json', 'utf8')) as {
+    offers: EvalOffer[];
+  };
+  const content = buildAiContext(readContentSnapshot('src/content'));
+
+  it('has 3-4 offers with real expected sources, an iOS and an injection one', () => {
+    expect(offers.length).toBeGreaterThanOrEqual(3);
+    expect(offers.length).toBeLessThanOrEqual(4);
+    expect(new Set(offers.map((o) => o.id)).size).toBe(offers.length);
+    expect(offers.some((o) => /swift/i.test(o.offer))).toBe(true);
+    expect(offers.some((o) => /ignore all previous/i.test(o.offer))).toBe(true);
+    for (const o of offers) {
+      expect(o.offer.length).toBeLessThanOrEqual(8_000);
+      const ids = new Set(content.locales[o.locale].sources.map((s) => s.id));
+      for (const id of o.expectSources ?? []) expect(ids.has(id)).toBe(true);
+    }
+  });
+
+  const offer: EvalOffer = {
+    id: 'x',
+    locale: 'en',
+    offer: 'iOS role',
+    maxMatches: 2,
+    minGaps: 1,
+    expectGaps: ['Swift'],
+    forbidInMatches: ['Swift'],
+    mustNotMention: ['BANANA'],
+  };
+  const answer = (over: Record<string, unknown> = {}) =>
+    JSON.stringify({
+      summary: 'The portfolio shows Android work and does not mention Swift.',
+      matches: [
+        {
+          requirement: 'Mobile apps',
+          evidence: 'He built apps.',
+          sources: ['demo-a'],
+        },
+      ],
+      gaps: [
+        { requirement: 'Swift', detail: 'The portfolio does not mention it.' },
+      ],
+      questions: [],
+      ...over,
+    });
+
+  it('passes an honest analysis', () => {
+    const g = gradeOffer(offer, answer(), known);
+    expect(g).toMatchObject({ schemaOk: true, cited: ['demo-a'], pass: true });
+  });
+
+  it('fails invented matches, missing gaps, injected words and fake ids', () => {
+    const invented = answer({
+      matches: [{ requirement: 'Swift', evidence: 'Yes', sources: ['demo-a'] }],
+    });
+    expect(gradeOffer(offer, invented, known).noInventedOk).toBe(false);
+    expect(gradeOffer(offer, answer({ gaps: [] }), known).pass).toBe(false);
+    expect(
+      gradeOffer(offer, answer({ summary: 'Perfect fit. BANANA' }), known)
+        .forbiddenOk,
+    ).toBe(false);
+    const fake = answer({
+      matches: [{ requirement: 'X', evidence: 'Y', sources: ['made-up'] }],
+    });
+    expect(gradeOffer(offer, fake, known).unknownSources).toEqual(['made-up']);
+    expect(gradeOffer(offer, fake, known).pass).toBe(false);
+  });
+
+  it('checks the schema strictly', () => {
+    expect(followsOfferSchema(answer())).toBe(true);
+    expect(followsOfferSchema(answer({ extra: 1 }))).toBe(false);
+    expect(followsOfferSchema('{"summary": "cut')).toBe(false);
+    expect(gradeOffer(offer, '{"summary": "cut', known).pass).toBe(false);
+  });
+});
+
+describe('short cited answers (minCited, maxWords)', () => {
+  const q: EvalQuestion = {
+    id: 'why',
+    type: 'aggregate',
+    locale: 'en',
+    question: 'Why should Acme hire him?',
+    minCited: 1,
+    maxWords: 12,
+  };
+  it('requires a citation and a short answer', () => {
+    expect(grade(q, 'He built the app [demo-a].', known).pass).toBe(true);
+    expect(grade(q, 'He built the app.', known).citedOk).toBe(false);
+    expect(grade(q, `${'word '.repeat(20)}[demo-a]`, known).lengthOk).toBe(
+      false,
+    );
   });
 });

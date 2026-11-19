@@ -3,6 +3,7 @@
  * Pure functions, unit tested in grade.test.ts.
  */
 import type { SourceRef } from '../src/server/ai/context';
+import { parseAnalysis, type OfferAnalysis } from '../src/server/ai/offer';
 import { extractSources } from '../src/server/ai/prompt';
 import type { ChatTurn } from '../src/server/ai/validation';
 
@@ -25,6 +26,10 @@ export interface EvalQuestion {
    * answer is fine (decline the opinion, still state the facts with sources).
    */
   declineMayCite?: boolean;
+  /** At least this many real citations (when no exact ids are expected). */
+  minCited?: number;
+  /** At most this many words (e.g. "a short summary"). */
+  maxWords?: number;
 }
 
 export interface Grade {
@@ -38,6 +43,9 @@ export interface Grade {
   forbiddenOk: boolean;
   declineOk: boolean | null;
   languageOk: boolean | null;
+  /** `null` when the question sets no `minCited` / `maxWords`. */
+  citedOk: boolean | null;
+  lengthOk: boolean | null;
   pass: boolean;
 }
 
@@ -275,7 +283,13 @@ export function grade(
   const answerLang = guessLanguage(withoutTitles(answer, known));
   const languageOk = answerLang === null || answerLang === expectedLanguage(q);
 
+  const citedOk = q.minCited === undefined ? null : cited.length >= q.minCited;
+  const words = answer.replace(CITATION, ' ').split(/\s+/).filter(Boolean);
+  const lengthOk = q.maxWords === undefined ? null : words.length <= q.maxWords;
+
   const pass =
+    citedOk !== false &&
+    lengthOk !== false &&
     unknownCitations.length === 0 &&
     mentionsOk &&
     forbiddenOk &&
@@ -294,6 +308,167 @@ export function grade(
     mentionsOk,
     forbiddenOk,
     declineOk,
+    languageOk,
+    citedOk,
+    lengthOk,
+    pass,
+  };
+}
+
+// ---------------------------------------------------------------- offers
+
+/** A sample job offer for the analyzer (S11), with what a good answer has. */
+export interface EvalOffer {
+  id: string;
+  locale: 'es' | 'en';
+  company?: string;
+  offer: string;
+  /** At least this many matches (a good fit), or at most (a bad one). */
+  minMatches?: number;
+  maxMatches?: number;
+  minGaps?: number;
+  /** Ids that at least one match should cite (recall >= 0.5). */
+  expectSources?: string[];
+  /** Each entry must appear in some gap (`a|b` = alternatives). */
+  expectGaps?: string[];
+  /** Words that must not appear in any match's requirement or evidence. */
+  forbidInMatches?: string[];
+  /** Words that must not appear anywhere in the analysis. */
+  mustNotMention?: string[];
+}
+
+export interface OfferGrade {
+  /** The raw answer parsed and followed the schema. */
+  schemaOk: boolean;
+  /** Ids in `sources` that aren't real (the schema should prevent any). */
+  unknownSources: string[];
+  cited: string[];
+  sourceRecall: number | null;
+  countsOk: boolean;
+  gapsOk: boolean;
+  /** No match claims experience the offer's forbidden words describe. */
+  noInventedOk: boolean;
+  forbiddenOk: boolean;
+  languageOk: boolean | null;
+  pass: boolean;
+}
+
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/** Strict check of the raw JSON against the schema in offer.ts. */
+export function followsOfferSchema(raw: string): boolean {
+  let data: unknown;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    return false;
+  }
+  const keys = (o: Record<string, unknown>, expected: string[]) =>
+    Object.keys(o).sort().join() === [...expected].sort().join();
+  const str = (v: unknown) => typeof v === 'string';
+  if (!isObject(data)) return false;
+  if (!keys(data, ['summary', 'matches', 'gaps', 'questions'])) return false;
+  const { summary, matches, gaps, questions } = data;
+  return (
+    str(summary) &&
+    Array.isArray(matches) &&
+    matches.every(
+      (m) =>
+        isObject(m) &&
+        keys(m, ['requirement', 'evidence', 'sources']) &&
+        str(m['requirement']) &&
+        str(m['evidence']) &&
+        Array.isArray(m['sources']) &&
+        m['sources'].every(str),
+    ) &&
+    Array.isArray(gaps) &&
+    gaps.every(
+      (g) =>
+        isObject(g) &&
+        keys(g, ['requirement', 'detail']) &&
+        str(g['requirement']) &&
+        str(g['detail']),
+    ) &&
+    Array.isArray(questions) &&
+    questions.every(str)
+  );
+}
+
+function rawSources(raw: string): string[] {
+  try {
+    const data = JSON.parse(raw) as { matches?: { sources?: unknown }[] };
+    return (data.matches ?? []).flatMap((m) =>
+      Array.isArray(m.sources)
+        ? m.sources.filter((id): id is string => typeof id === 'string')
+        : [],
+    );
+  } catch {
+    return [];
+  }
+}
+
+const has = (text: string, entry: string) =>
+  entry.split('|').some((alt) => normalize(text).includes(normalize(alt)));
+
+export function gradeOffer(
+  o: EvalOffer,
+  raw: string,
+  known: SourceRef[],
+): OfferGrade {
+  const knownIds = new Set(known.map((s) => s.id));
+  const unknownSources = [
+    ...new Set(rawSources(raw).filter((id) => !knownIds.has(id))),
+  ];
+  const analysis: OfferAnalysis | undefined = parseAnalysis(raw, known);
+  const schemaOk = followsOfferSchema(raw) && analysis !== undefined;
+  const a = analysis ?? { summary: '', matches: [], gaps: [], questions: [] };
+
+  const cited = [...new Set(a.matches.flatMap((m) => m.sources))];
+  const expected = o.expectSources ?? [];
+  const sourceRecall = expected.length
+    ? expected.filter((id) => cited.includes(id)).length / expected.length
+    : null;
+  const countsOk =
+    a.matches.length >= (o.minMatches ?? 0) &&
+    a.matches.length <= (o.maxMatches ?? Number.POSITIVE_INFINITY) &&
+    a.gaps.length >= (o.minGaps ?? 0);
+  const gapText = a.gaps
+    .map((g) => `${g.requirement} ${g.detail}`)
+    .join(' \n ');
+  const gapsOk = (o.expectGaps ?? []).every((entry) => has(gapText, entry));
+  // Only the requirement: the evidence may legitimately say "no SwiftUI".
+  const noInventedOk = !a.matches.some((m) =>
+    (o.forbidInMatches ?? []).some((word) => has(m.requirement, word)),
+  );
+  const all = [
+    a.summary,
+    ...a.matches.flatMap((m) => [m.requirement, m.evidence]),
+    ...a.gaps.flatMap((g) => [g.requirement, g.detail]),
+    ...a.questions,
+  ].join(' \n ');
+  const forbiddenOk = !(o.mustNotMention ?? []).some((w) => has(all, w));
+  const lang = guessLanguage(withoutTitles(`${a.summary} ${gapText}`, known));
+  const languageOk = lang === null ? null : lang === o.locale;
+
+  const pass =
+    schemaOk &&
+    unknownSources.length === 0 &&
+    countsOk &&
+    gapsOk &&
+    noInventedOk &&
+    forbiddenOk &&
+    languageOk !== false &&
+    (sourceRecall === null || sourceRecall >= 0.5);
+  return {
+    schemaOk,
+    unknownSources,
+    cited,
+    sourceRecall,
+    countsOk,
+    gapsOk,
+    noInventedOk,
+    forbiddenOk,
     languageOk,
     pass,
   };
