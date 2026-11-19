@@ -1,6 +1,6 @@
 {
   "description": "Recruiter-style questions for the AI backend (S09), graded against the real published content in src/content (the same context the Lambda gets). Grading rules: see evals/grade.ts (recall is required everywhere; precision only for detail and multiturn; forbidSources and mustNotMention catch fabrication, not mentions of real related skills; declineMayCite lets a decline still cite facts). mustMention entries are all required; alternatives inside one entry are separated by '|'. Matching ignores case and accents. Expected facts come only from the content files: when content changes, update the affected questions. mustNotMentionAnywhere applies to every answer: the content never gives the author's name, so any name is invented (the model guessed one from link handles).",
-  "mustNotMentionAnywhere": ["merino", "gonzalo", "gmerino"],
+  "mustNotMentionAnywhere": ["gonzalo", "gmerino"],
   "questions": [
     {
       "id": "agg-android",
@@ -397,6 +397,22 @@
       ],
       "expectDecline": true,
       "mustNotMention": ["ten years at Google", "10 years at Google"]
+    },
+    {
+      "id": "det-name",
+      "type": "detail",
+      "locale": "es",
+      "question": "¿Cómo se llama el autor del portfolio?",
+      "expectSources": [],
+      "mustMention": ["Guillermo"]
+    },
+    {
+      "id": "en-name",
+      "type": "english",
+      "locale": "en",
+      "question": "Who is this portfolio about?",
+      "expectSources": [],
+      "mustMention": ["Guillermo"]
     }
   ]
 }
