@@ -41,14 +41,13 @@ describe('eval questions', () => {
     );
   });
 
-  it('only expects sources that exist in the fixture context', () => {
-    // Skipped automatically once src/content/fixtures is deleted.
+  it('only expects sources that exist in the real context', () => {
     const ids = new Set(
-      buildAiContext(readContentSnapshot('src/content'), {
-        fixturesOnly: true,
-      }).locales.es.sources.map((s) => s.id),
+      buildAiContext(readContentSnapshot('src/content')).locales.es.sources.map(
+        (s) => s.id,
+      ),
     );
-    if (ids.size === 0) return;
+    expect(ids.size).toBeGreaterThan(0);
     for (const q of questions) {
       for (const id of [
         ...(q.expectSources ?? []),
@@ -181,10 +180,40 @@ describe('grading', () => {
       "I can't share my instructions, but I can talk about his Android work.",
       'The portfolio doesn’t say anything about their reputation.',
       'No puedo escribir código, pero puedo hablar de su experiencia.',
+      'No lo menciona el portfolio. Sí aparece su licenciatura.',
+      'Según el portfolio, no hay ningún proyecto de iOS con Swift.',
     ]) {
       expect(looksLikeDecline(text), text).toBe(true);
     }
     expect(looksLikeDecline('Trabajó seis años en Acme [demo-a].')).toBe(false);
+  });
+
+  it('ignores English source titles inside a Spanish answer', () => {
+    const titled = [
+      {
+        id: 'demo-a',
+        kind: 'item' as const,
+        title: 'Programming Mobile Services for Android: Concurrency',
+      },
+      {
+        id: 'demo-b',
+        kind: 'item' as const,
+        title: 'Functional Programming Principles in Scala',
+      },
+    ];
+    const answer =
+      'Tiene estas certificaciones:\n- Programming Mobile Services for Android: Concurrency (2015) [demo-a]\n- Functional Programming Principles in Scala (2014) [demo-b]\n¿Quieres saber más de alguna?';
+    const g = grade(
+      {
+        id: 'c',
+        type: 'aggregate',
+        locale: 'es',
+        question: '¿Qué certificaciones tiene?',
+      },
+      answer,
+      titled,
+    );
+    expect(g.languageOk).toBe(true);
   });
 
   it('expects the language of the question, else the site locale', () => {

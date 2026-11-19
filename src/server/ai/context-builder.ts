@@ -32,7 +32,7 @@ import {
 } from './context';
 
 export interface BuildOptions {
-  /** Only sample data (src/content/fixtures). Used by the eval. */
+  /** Only sample data (src/content/fixtures). */
   fixturesOnly?: boolean;
 }
 

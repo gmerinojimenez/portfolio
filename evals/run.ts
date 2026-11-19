@@ -9,9 +9,10 @@
  *                                              current grader and questions,
  *                                              offline (no key, no API calls)
  *
- * Uses the same prompt, model and provider as the Lambda, with a context built
- * only from src/content/fixtures so results stay comparable as real content
- * grows. Writes evals/results/<timestamp>.json (gitignored).
+ * Uses the same prompt, model, provider and context as the Lambda: every
+ * published item and note in src/content. The questions in questions.json are
+ * written against that content, so update them when the content changes.
+ * Writes evals/results/<timestamp>.json (gitignored).
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -30,16 +31,25 @@ import {
 import { systemInstructions } from '../src/server/ai/prompt';
 import { grade, turnsOf, type EvalQuestion, type Grade } from './grade';
 
+/** Questions with the file-wide `mustNotMentionAnywhere` added to each one. */
+function loadQuestions(): EvalQuestion[] {
+  const file = JSON.parse(readFileSync('evals/questions.json', 'utf8')) as {
+    mustNotMentionAnywhere?: string[];
+    questions: EvalQuestion[];
+  };
+  const everywhere = file.mustNotMentionAnywhere ?? [];
+  return file.questions.map((q) => ({
+    ...q,
+    mustNotMention: [...(q.mustNotMention ?? []), ...everywhere],
+  }));
+}
+
 function regrade(file: string): void {
-  const { questions } = JSON.parse(
-    readFileSync('evals/questions.json', 'utf8'),
-  ) as { questions: EvalQuestion[] };
+  const questions = loadQuestions();
   const saved = JSON.parse(readFileSync(file, 'utf8')) as {
     results: { id: string; answer: string; grade: Grade | null }[];
   };
-  const context = buildAiContext(readContentSnapshot('src/content'), {
-    fixturesOnly: true,
-  });
+  const context = buildAiContext(readContentSnapshot('src/content'));
   let before = 0;
   let after = 0;
   let total = 0;
@@ -78,17 +88,13 @@ if (!apiKey) {
   process.exit(0);
 }
 
-const { questions } = JSON.parse(
-  readFileSync('evals/questions.json', 'utf8'),
-) as { questions: EvalQuestion[] };
+const questions = loadQuestions();
 const only = process.argv.slice(2);
 const selected = only.length
   ? questions.filter((q) => only.includes(q.id))
   : questions;
 
-const context = buildAiContext(readContentSnapshot('src/content'), {
-  fixturesOnly: true,
-});
+const context = buildAiContext(readContentSnapshot('src/content'));
 const provider = new AnthropicProvider({ apiKey });
 
 interface Result {
