@@ -254,8 +254,25 @@ export function startConsole(root: HTMLElement): ConsoleHandle {
     finishBoot();
   }
 
+  /**
+   * The boot ends with the career tree, which grows upwards from the earliest
+   * years: start with the bottom of the drawing at the bottom of the log, so
+   * its base is in view (on phones the legend below it would push it out).
+   */
+  function scrollToTreeBase(): void {
+    const canvas = log.querySelector<HTMLElement>('.m-canvas');
+    if (!canvas) return scrollToEnd();
+    const margin = 12;
+    const canvasBottom =
+      canvas.getBoundingClientRect().bottom -
+      log.getBoundingClientRect().top +
+      log.scrollTop;
+    log.scrollTop = canvasBottom + margin - log.clientHeight;
+  }
+
   function finishBoot(): void {
     storage.set(BOOT_SEEN_KEY, '1');
+    scrollToTreeBase();
     // Focus the prompt on devices with a mouse; on touch screens this would
     // pop up the keyboard and hide the hero.
     const nothingFocused =
