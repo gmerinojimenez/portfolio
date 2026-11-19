@@ -5,6 +5,7 @@
  */
 import type { Localized } from '../../lib/content-core';
 import type { CompanyData, ItemData, ItemType } from '../../lib/content-schema';
+import { isCertification, isPersonal } from '../../lib/item-kind';
 import type { Locale } from '../../lib/locales';
 import { itemPath } from '../../i18n/paths';
 import { useTranslations } from '../../i18n/ui';
@@ -34,8 +35,20 @@ export interface CardItem {
   readonly importance: number;
   /** Raw start date (`YYYY[-MM[-DD]]`), for sorting. */
   readonly from?: string | undefined;
+  /** Raw end date, or `present`. */
+  readonly to?: string | undefined;
   /** Human-readable dates, e.g. `2019 – 2022`. */
   readonly dates: string;
+  /** Id of the company in the `companies` collection. */
+  readonly companyId?: string | undefined;
+  /** Side project (see `isPersonal`): grows on the map's personal stem. */
+  readonly personal: boolean;
+  /** A course certificate (see `isCertification`). */
+  readonly cert: boolean;
+  /** Map badge letters: the item's own, else undefined. */
+  readonly badge?: string | undefined;
+  /** Map badge letters of its company, for company and issuer groups. */
+  readonly companyBadge?: string | undefined;
   /** Company name, or a generic context (Open source, Blog…). */
   readonly context: string;
   readonly role?: string | undefined;
@@ -130,6 +143,7 @@ export function toCardItems({
 }: CardInput): CardItem[] {
   const byId = new Map(items.map((item) => [item.id, item]));
   const companyName = new Map(companies.map((c) => [c.id, c.name]));
+  const companyBadge = new Map(companies.map((c) => [c.id, c.badge]));
   const ref = (id: string): CardRef | undefined => {
     const target = byId.get(id);
     return target
@@ -162,7 +176,13 @@ export function toCardItems({
       topic: data.topic,
       importance: data.importance,
       from: data.from,
+      to: data.to,
       dates: formatDates(data.from, data.to, locale),
+      companyId: data.company,
+      personal: isPersonal(data),
+      cert: isCertification(data),
+      badge: data.badge,
+      companyBadge: data.company ? companyBadge.get(data.company) : undefined,
       context: cardContext(
         data,
         data.company ? companyName.get(data.company) : undefined,

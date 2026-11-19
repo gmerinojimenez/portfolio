@@ -17,6 +17,7 @@ topic: android # main topic: decides the cluster on the map (optional)
 
 company: some-company-id # file name (without .yaml) in src/content/companies/
 app: some-app-id # id of the app item this one belongs to (optional)
+context: work # work | personal (side project: grows on the map's personal stem)
 importance: 3 # 1 (minor) to 5 (flagship): node size on the map
 related: [] # ids of other items
 role: Android developer

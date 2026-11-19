@@ -27,7 +27,8 @@ Ask, in this order, skipping what is already known:
 2. Title and a one-line summary (offer a draft summary and let them edit it).
 3. When (approximate is fine) and company or context. If the company does not
    exist yet, offer to create `src/content/companies/<id>.yaml` (`name`, optional
-   `url`, `location`).
+   `url`, `location`, and `stage` if it is a job: the career stage it belongs to
+   on the map's trunk). Side projects get `context: personal`.
 4. Tags (technologies and topics) and the main `topic`.
 5. Does it belong to an existing app (`app`)? Which existing items are related
    (`related`)? Suggest candidates from the existing ids and check they exist.

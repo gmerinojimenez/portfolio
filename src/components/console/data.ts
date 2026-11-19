@@ -2,6 +2,7 @@ import { renderedBodies } from '../card/body';
 import { toCardItems, type CardItem } from '../card/model';
 import { getCompanies, getItems } from '../../lib/content';
 import type { Locale } from '../../lib/locales';
+import { stagesOf, type StageRef } from '../../lib/stages';
 import { profiles } from './profile';
 
 /**
@@ -12,9 +13,13 @@ import { profiles } from './profile';
  * time and the result is embedded in the page as JSON, so it must stay
  * serializable (no functions, no Dates).
  */
+export type { StageRef };
+
 export interface ConsoleData extends SiteProfile {
   /** Published items (drafts too in `astro dev`), sorted for `ls`. */
   readonly items: readonly CardItem[];
+  /** Career stages (companies with a `stage`), for the map's trunk. */
+  readonly stages: readonly StageRef[];
 }
 
 /** Hand-written data about the author (see `profile.ts`). */
@@ -74,5 +79,6 @@ async function loadConsoleData(locale: Locale): Promise<ConsoleData> {
   return {
     ...profiles[locale],
     items: toCardItems({ items, companies, locale, bodies }),
+    stages: stagesOf(companies),
   };
 }

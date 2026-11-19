@@ -16,6 +16,9 @@ export const itemTypes = [
 ] as const;
 export type ItemType = (typeof itemTypes)[number];
 
+export const contexts = ['work', 'personal'] as const;
+export type ItemContext = (typeof contexts)[number];
+
 export const statuses = ['draft', 'published'] as const;
 export type Status = (typeof statuses)[number];
 
@@ -102,6 +105,13 @@ export const itemSchema = requirePublished(
     company: z.string().optional(),
     /** Id of the app item this item belongs to (for projects inside an app). */
     app: z.string().optional(),
+    /**
+     * `personal` for side projects: on the map they grow on their own stem.
+     * Without it, an app or library with no company counts as personal too.
+     */
+    context: z.enum(contexts).optional(),
+    /** Two or three letters for the map's badge when this is a main node (apps of a stage). */
+    badge: z.string().min(1).max(3).optional(),
     /** Node size / label visibility on the map. 1 (minor) to 5 (flagship). */
     importance: z.number().int().min(1).max(5).default(3),
     related: idList,
@@ -125,6 +135,17 @@ export const companySchema = z.object({
   name: z.string().min(1),
   url: z.url().optional(),
   location: z.string().optional(),
+  /** Two or three letters for the company's badge on the map (`Tu`, `ZK`…). */
+  badge: z.string().min(1).max(3).optional(),
+  /**
+   * Career stage the company belongs to (`early`, `tuenti`…). On the map,
+   * the trunk is made of stages; companies without one (universities,
+   * course providers) don't appear on it.
+   */
+  stage: z
+    .string()
+    .regex(/^[a-z0-9-]+$/, 'Use lowercase letters, digits and dashes')
+    .optional(),
 });
 
 export type ItemData = z.infer<typeof itemSchema>;

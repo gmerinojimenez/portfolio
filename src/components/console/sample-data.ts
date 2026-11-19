@@ -6,6 +6,7 @@ import { toCardItems } from '../card/model';
 import type { Localized } from '../../lib/content-core';
 import type { ItemData } from '../../lib/content-schema';
 import type { Locale } from '../../lib/locales';
+import { stagesOf } from '../../lib/stages';
 import type { ConsoleData } from './data';
 import { profiles } from './profile';
 
@@ -83,6 +84,7 @@ function build(locale: Locale): ConsoleData {
       companies: [{ id: 'test-acme', name: 'Acme' }],
       locale,
     }),
+    stages: stagesOf([{ id: 'test-acme', stage: 'acme' }]),
   };
 }
 
