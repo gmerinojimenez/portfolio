@@ -1,5 +1,5 @@
 /*
- * Semantic map (S07). Global like the console styles (the map is injected
+ * Career tree (ADR 0015). Global like the console styles (the map is injected
  * with innerHTML), every class prefixed with `m-`.
  * Inside the SVG, CSS styles the shapes too: `fill` and `stroke` are the
  * SVG equivalents of a drawable's fillColor and strokeColor.
@@ -73,48 +73,208 @@
   display: none;
 }
 
-/* ---------- Regions and edges ---------- */
+/* ---------- Scenery: years, ground, trunk, branches ---------- */
 
-.m-region {
-  fill: var(--cl);
-  fill-opacity: 0.07;
+.m-year {
+  fill: var(--color-ornament);
+  font-size: 10px;
+}
+
+.m-ground {
+  stroke: var(--color-line-strong);
+  stroke-dasharray: 2 5;
+}
+
+.m-trunk-grad stop {
+  stop-color: var(--cl);
+}
+
+.m-trunk,
+.m-stroke {
+  fill: none;
+  stroke-linecap: round;
+  transition: opacity 0.15s;
+}
+
+.m-trunk {
+  stroke-width: 2.2;
+  opacity: 0.85;
+}
+
+.m-trunk-glow {
+  stroke-width: 8;
+  opacity: 0.12;
+}
+
+.m-stroke {
   stroke: var(--cl);
-  stroke-opacity: 0.2;
+  stroke-width: 1.25;
+  opacity: 0.6;
 }
 
-.m-region-label {
-  fill: var(--cl-text);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+.m-k-item {
+  stroke-width: 0.9;
 }
 
+.m-k-bough {
+  stroke-width: 1.7;
+}
+
+.m-k-stem {
+  stroke: var(--color-stem);
+  stroke-width: 1.8;
+  opacity: 0.8;
+}
+
+/* `related` connections: only for the focused node (ADR 0006). */
 .m-edge {
   fill: none;
-  stroke: var(--color-ornament);
-  stroke-width: 1.2;
+  stroke: var(--color-accent);
+  stroke-width: 1.1;
+  stroke-dasharray: 3 4;
   opacity: 0;
   transition: opacity 0.15s;
 }
 
-/* Without JS only the bridges between topics show (ADR 0006). */
-.m-edge.is-bridge {
-  opacity: 0.8;
+.m-edge.is-shown {
+  opacity: 0.9;
 }
 
-/* With JS, `enhance.ts` decides which edges show. */
-.m-map[data-ready] .m-edge {
+/* ---------- Growth ---------- */
+
+/* Branches draw themselves in and nodes pop, bottom to top. Each element
+   carries its own delay (`--d`), duration (`--dur`) and length (`--len`),
+   computed at build time. Without JS it still plays once. */
+.m-trunk,
+.m-stroke {
+  stroke-dasharray: var(--len) var(--len);
+  animation: m-draw var(--dur, 0.5s) ease-out var(--d, 0s) both;
+}
+
+.m-body {
+  animation: m-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) var(--d, 0s) both;
+}
+
+@keyframes m-draw {
+  from {
+    stroke-dashoffset: var(--len);
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes m-pop {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* "Replay": `enhance.ts` adds this class for one frame to reset them. */
+.m-map.is-restarting * {
+  animation: none !important;
+}
+
+/* ---------- Stages, stem and groups ---------- */
+
+.m-anchor {
+  transition: opacity 0.15s;
+}
+
+/* Soft glow behind every node (blurred with an SVG filter). */
+.m-halo {
+  fill: var(--cl, var(--color-text));
+  opacity: 0.16;
+  transition: opacity 0.15s;
+}
+
+.m-anchor .m-halo {
+  opacity: 0.14;
+}
+
+/* Badges: stages, the stem and main nodes (apps, companies, issuers). */
+.m-shape.m-badge {
+  fill: var(--color-surface);
+  stroke: var(--cl, var(--color-text));
+  stroke-width: 1.2;
+}
+
+.m-badge.m-anchor-badge {
+  stroke-width: 1.5;
+}
+
+.m-badge-text {
+  fill: var(--color-title);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.m-mono {
+  fill: var(--color-title);
+  font-size: 8.5px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.m-anchor-label {
+  fill: var(--cl-text);
+  font-size: 12px;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: var(--m-bg);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.m-anchor-period {
+  fill: var(--color-dim);
+  font-size: 10px;
+  paint-order: stroke;
+  stroke: var(--m-bg);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.m-stem {
+  --cl: var(--color-stem);
+  --cl-text: var(--color-stem-text);
+}
+
+.m-group .m-label {
+  fill: var(--cl-text);
   opacity: 0;
 }
 
-.m-map[data-ready] .m-edge.is-shown {
-  opacity: 0.8;
+.m-group.is-labeled .m-label {
+  opacity: 1;
 }
 
-.m-map[data-ready] .m-edge.is-hot {
-  stroke: var(--color-accent);
-  stroke-width: 1.6;
-  opacity: 1;
+/* A focused node: branches and anchors off its path fade. */
+.m-map.is-focusing .m-trunk {
+  opacity: 0.35;
+}
+
+.m-map.is-focusing .m-stroke:not(.is-linked) {
+  opacity: 0.08;
+}
+
+.m-map.is-focusing .m-stroke.is-linked {
+  opacity: 0.95;
+}
+
+.m-map.is-focusing .m-anchor:not(.is-linked) {
+  opacity: 0.3;
+}
+
+.m-map .m-stroke.is-out {
+  opacity: 0.06;
 }
 
 /* ---------- Nodes ---------- */
@@ -133,21 +293,39 @@
   fill: transparent;
 }
 
-.m-shape {
-  fill: var(--cl);
-  stroke: var(--m-bg);
-  stroke-width: 1.5;
+.m-shape,
+.m-mark,
+.m-mono {
   transition: opacity 0.15s;
 }
 
-.m-dot {
-  fill: var(--m-bg);
+.m-shape {
+  fill: var(--cl, var(--color-text));
+}
+
+/* Posts are hollow, libraries get an outer ring, apps a light core. */
+.m-shape.m-hollow {
+  fill: var(--m-bg, var(--color-console));
+  stroke: var(--cl, var(--color-text));
+  stroke-width: 1.3;
+}
+
+.m-outer {
+  fill: none;
+  stroke: var(--cl, var(--color-text));
+  stroke-width: 0.8;
+  opacity: 0.8;
+}
+
+.m-core {
+  fill: var(--color-title);
+  opacity: 0.85;
 }
 
 .m-ring {
   fill: none;
   stroke: var(--color-accent);
-  stroke-width: 2;
+  stroke-width: 1.4;
   opacity: 0;
 }
 
@@ -156,12 +334,14 @@
   opacity: 1;
 }
 
-.m-node:hover .m-shape {
-  stroke: var(--color-title);
+.m-node:hover .m-halo,
+.m-node.is-active .m-halo {
+  opacity: 0.4;
 }
 
 .m-label {
   fill: var(--color-title);
+  font-size: 11px;
   paint-order: stroke;
   stroke: var(--m-bg);
   stroke-width: 4px;
@@ -179,8 +359,12 @@
 }
 
 /* A focused node: everything not connected to it fades. */
-.m-map.is-focusing .m-node:not(.is-linked) .m-shape {
-  opacity: 0.3;
+.m-map.is-focusing .m-node:not(.is-linked) :is(.m-shape, .m-mark, .m-mono) {
+  opacity: 0.2;
+}
+
+.m-map.is-focusing .m-node:not(.is-linked) .m-halo {
+  opacity: 0.04;
 }
 
 .m-map.is-focusing .m-node:not(.is-linked) .m-label {
@@ -196,8 +380,8 @@
   pointer-events: none;
 }
 
-.m-map .m-node.is-out .m-shape {
-  opacity: 0.1;
+.m-map .m-node.is-out :is(.m-shape, .m-mark, .m-mono, .m-halo) {
+  opacity: 0.08;
 }
 
 .m-map .m-node.is-out .m-label {
@@ -268,7 +452,7 @@
   fill: var(--cl, var(--color-text));
 }
 
-.m-swatch .m-dot {
+.m-swatch .m-hollow {
   fill: var(--color-console);
 }
 
@@ -402,7 +586,23 @@
 @media (prefers-reduced-motion: reduce) {
   .m-edge,
   .m-shape,
-  .m-label {
+  .m-label,
+  .m-stroke,
+  .m-anchor {
     transition: none;
   }
+
+  /* The finished tree at once (global.css shortens animations but keeps
+     their delays). */
+  .m-map * {
+    animation: none !important;
+  }
+}
+
+.m-list-stem {
+  --cl-text: var(--color-stem-text);
+}
+
+.m-list-roots {
+  --cl-text: var(--color-cluster-base-text);
 }

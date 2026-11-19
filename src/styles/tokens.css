@@ -32,6 +32,9 @@
   --color-cluster-ai-text: #e0632e;
   --color-cluster-base: #586e75;
   --color-cluster-base-text: #839496;
+  /* Map: the personal stem (violet) */
+  --color-stem: #6c71c4;
+  --color-stem-text: #9396dc;
 
   /* Typography */
   --font-mono:

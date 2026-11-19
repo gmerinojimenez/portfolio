@@ -1,24 +1,23 @@
-import mapJson from '../../../data/map.json';
 import { pick } from '../../../i18n/ui';
 import { enhanceMap } from '../../map/enhance';
-import { buildMapModel, type MapData } from '../../map/model';
+import { buildTreeModel } from '../../map/model';
 import { renderMap } from '../../map/render';
 import type { Command } from '../core/types';
 
-const mapData: MapData = mapJson;
-
 /**
- * `map`: the semantic map (S07). `run` draws it as SVG (at build time for
- * the boot, or in the browser), joining `map.json` with the visible items;
- * `enhance` adds hover/focus connections and the legend filters.
+ * `map`: the career tree (ADR 0015). `run` draws it as SVG (at build time
+ * for the boot, or in the browser) from the visible items and stages;
+ * `enhance` adds hover/focus connections, the legend filters and replay.
  */
 export const map: Command = {
   name: 'map',
   summary: pick((t) => t.commands.map.summary),
   run(_input, ctx) {
-    ctx.print(renderMap(buildMapModel(mapData, ctx.data.items), ctx.t));
+    ctx.print(
+      renderMap(buildTreeModel(ctx.data.items, ctx.data.stages, ctx.t), ctx.t),
+    );
   },
   enhance(output, ctx) {
-    enhanceMap(output, mapData, ctx.data.items, ctx.t);
+    enhanceMap(output, ctx.data, ctx.t);
   },
 };

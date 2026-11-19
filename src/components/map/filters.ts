@@ -4,7 +4,7 @@
  * the DOM.
  */
 import type { ItemType } from '../../lib/content-schema';
-import type { ClusterId, MapEdge, MapNode } from './model';
+import type { ClusterId, MapEdge, MapModel, MapNode } from './model';
 
 /** Legend filters. An empty set means "no filter" for that dimension. */
 export interface MapFilter {
@@ -67,23 +67,56 @@ export const edgeKey = (edge: Pick<MapEdge, 'source' | 'target'>) =>
   `${edge.source}|${edge.target}`;
 
 /**
- * Edges to draw (ADR 0006): at rest only the bridges between topics; with a
- * focused node, all of its edges and nothing else. Edges touching a
- * filtered-out node never show.
+ * `related` connections to draw (ADR 0006): none at rest; with a focused
+ * node, its own. Edges touching a filtered-out node never show. Tree
+ * branches are always drawn.
  */
 export function shownEdges(
   edges: readonly MapEdge[],
   focused: string | null,
   visible: ReadonlySet<string>,
 ): Set<string> {
+  if (focused === null) return new Set();
   return new Set(
     edges
       .filter((e) => visible.has(e.source) && visible.has(e.target))
-      .filter((e) =>
-        focused === null
-          ? e.bridge
-          : e.source === focused || e.target === focused,
-      )
+      .filter((e) => e.source === focused || e.target === focused)
       .map(edgeKey),
   );
+}
+
+/**
+ * The focused node's place in the tree: itself, the path down to the trunk
+ * (items, groups, stage) and its direct children. Branches leading to these
+ * nodes stay lit.
+ */
+export function pathSet(
+  model: Pick<MapModel, 'tree'>,
+  id: string,
+): Set<string> {
+  const node = model.tree.get(id);
+  if (!node) return new Set();
+  const out = new Set([id, ...node.children]);
+  for (let p = node.parent; p !== null; p = model.tree.get(p)?.parent ?? null) {
+    if (out.has(p)) break;
+    out.add(p);
+  }
+  return out;
+}
+
+/** Items connected to `id`: parent item, children and `related`, deduplicated. */
+export function connectionsOf(
+  model: Pick<MapModel, 'tree' | 'edges'>,
+  id: string,
+): string[] {
+  const node = model.tree.get(id);
+  if (!node) return [];
+  const isItem = (other: string) => model.tree.get(other)?.kind === 'item';
+  return [
+    ...new Set([
+      ...(node.parent && isItem(node.parent) ? [node.parent] : []),
+      ...node.children.filter(isItem),
+      ...neighborsOf(model.edges, id),
+    ]),
+  ];
 }

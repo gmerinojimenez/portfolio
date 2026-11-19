@@ -4,42 +4,46 @@
  * only toggles classes and attributes, like changing a View's state instead
  * of inflating a new layout.
  *
- * - Hover or focus a node: its connections show, the rest dims, the panel
- *   lists its related items.
+ * - Hover or focus a node: its path down to the trunk, its children and its
+ *   related items stay lit, the rest dims, and its `related` connections
+ *   show; the panel lists its connections.
  * - Click (or Enter on the focused link) pins it; the card controller (S05)
  *   opens the card because nodes are `a[data-card-open]` links.
- * - Legend buttons filter by type and topic.
+ * - Legend buttons filter by type and topic; "replay" grows the tree again.
  */
-import type { CardItem } from '../card/model';
 import type { UiStrings } from '../../i18n/ui';
+import type { ConsoleData } from '../console/data';
 import {
+  connectionsOf,
   isFiltering,
-  neighborsOf,
   NO_FILTER,
+  pathSet,
   shownEdges,
   toggleFilter,
   visibleIds,
   type MapFilter,
 } from './filters';
-import { buildMapModel, type MapData } from './model';
+import { buildTreeModel } from './model';
 import { renderPanel } from './render';
 
 export function enhanceMap(
   output: HTMLElement,
-  data: MapData,
-  items: readonly CardItem[],
+  data: Pick<ConsoleData, 'items' | 'stages'>,
   t: UiStrings,
 ): void {
   const found = output.querySelector<HTMLElement>('[data-map]');
   if (!found) return;
   const root: HTMLElement = found;
-  const model = buildMapModel(data, items);
+  const model = buildTreeModel(data.items, data.stages, t);
   const byId = new Map(model.nodes.map((node) => [node.id, node]));
   const nodeEls = [...root.querySelectorAll<SVGAElement>('[data-node]')];
+  const anchorEls = [...root.querySelectorAll<SVGGElement>('[data-anchor]')];
+  const branchEls = [...root.querySelectorAll<SVGPathElement>('[data-branch]')];
   const edgeEls = [...root.querySelectorAll<SVGPathElement>('[data-edge]')];
   const filterEls = [
     ...root.querySelectorAll<HTMLButtonElement>('[data-filter]'),
   ];
+  const replay = root.querySelector<HTMLButtonElement>('[data-map-replay]');
   const panel = root.querySelector<HTMLElement>('[data-map-panel]');
 
   let filter: MapFilter = NO_FILTER;
@@ -58,10 +62,11 @@ export function enhanceMap(
     if (pinned && !visible.has(pinned)) pinned = null;
     const candidate = hovered ?? focused ?? pinned;
     const active = candidate && visible.has(candidate) ? candidate : null;
+    const path = active ? pathSet(model, active) : new Set<string>();
     const linked = new Set(
       active
-        ? [active, ...neighborsOf(model.edges, active)].filter((id) =>
-            visible.has(id),
+        ? [...path, ...connectionsOf(model, active)].filter(
+            (id) => visible.has(id) || model.tree.get(id)?.kind !== 'item',
           )
         : [],
     );
@@ -85,10 +90,19 @@ export function enhanceMap(
         el.removeAttribute('aria-hidden');
       }
     }
+    for (const el of anchorEls) {
+      el.classList.toggle('is-linked', path.has(el.dataset.anchor ?? ''));
+    }
+    for (const el of branchEls) {
+      const id = el.dataset.branch ?? '';
+      el.classList.toggle('is-linked', path.has(id));
+      el.classList.toggle(
+        'is-out',
+        model.tree.get(id)?.kind === 'item' && !visible.has(id),
+      );
+    }
     for (const el of edgeEls) {
-      const key = el.dataset.edge ?? '';
-      el.classList.toggle('is-shown', shown.has(key));
-      el.classList.toggle('is-hot', active !== null && shown.has(key));
+      el.classList.toggle('is-shown', shown.has(el.dataset.edge ?? ''));
     }
     for (const button of filterEls) {
       const dimension =
@@ -107,12 +121,19 @@ export function enhanceMap(
   function updatePanel(id: string | null, visible: ReadonlySet<string>): void {
     const node = id && visible.has(id) ? byId.get(id) : undefined;
     const related = node
-      ? neighborsOf(model.edges, node.id)
+      ? connectionsOf(model, node.id)
           .filter((other) => visible.has(other))
           .flatMap((other) => byId.get(other) ?? [])
       : [];
     if (panel) panel.innerHTML = renderPanel(node ?? null, related, t).value;
     panelFor = node?.id ?? null;
+  }
+
+  /** Restarts the CSS growth animation. */
+  function regrow(): void {
+    root.classList.add('is-restarting');
+    void root.getBoundingClientRect(); // flush styles so the animation resets
+    root.classList.remove('is-restarting');
   }
 
   root.addEventListener('pointerover', (event) => {
@@ -137,6 +158,10 @@ export function enhanceMap(
   root.addEventListener('click', (event) => {
     const target = event.target instanceof Element ? event.target : null;
     if (!target) return;
+    if (target.closest('[data-map-replay]')) {
+      regrow();
+      return;
+    }
     const button = target.closest<HTMLButtonElement>('[data-filter]');
     if (button) {
       const dimension =
@@ -156,6 +181,7 @@ export function enhanceMap(
   });
 
   for (const button of filterEls) button.disabled = false;
+  if (replay) replay.disabled = false;
   root.setAttribute('data-ready', '');
   apply();
 }

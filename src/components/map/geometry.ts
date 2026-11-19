@@ -1,114 +1,36 @@
 /**
- * Geometry of the map: the two canvases (desktop and mobile), where each
- * cluster and node goes, node shapes, curved edges and label placement.
- * Coordinates are SVG user units (the `viewBox`), not CSS pixels: the SVG
- * scales to its box like a vector drawable does on Android.
+ * Geometry of the map: the two canvases (desktop and mobile), node shapes,
+ * curved connections and label placement. Coordinates are SVG user units
+ * (the `viewBox`), not CSS pixels: the SVG scales to its box like a vector
+ * drawable does on Android.
  */
-import type { ItemType } from '../../lib/content-schema';
-import type { ClusterId, Layout, MapCluster, MapNode, Point } from './model';
+import type { Layout } from './model';
+
+export interface Point {
+  readonly x: number;
+  readonly y: number;
+}
 
 export interface Canvas {
   readonly width: number;
   readonly height: number;
 }
 
+/** A tall, narrow canvas: the tree grows upwards through time. */
 export const CANVAS: Record<Layout, Canvas> = {
-  desktop: { width: 720, height: 440 },
-  mobile: { width: 340, height: 520 },
+  desktop: { width: 720, height: 1000 },
+  mobile: { width: 340, height: 880 },
 };
-
-/** Desktop margin around the unit square, so regions aren't cut off. */
-const DESKTOP_PAD = 28;
-
-/**
- * Mobile is a vertical canvas with its own fixed centers: Android at the
- * top, Cloud on the right, AI at the bottom, Fundamentals on the left.
- */
-const MOBILE_CENTERS: Record<ClusterId, Point> = {
-  android: { x: 160, y: 108 },
-  cloud: { x: 252, y: 262 },
-  ai: { x: 160, y: 412 },
-  fundamentals: { x: 78, y: 262 },
-};
-
-/** Mobile radius of a cluster whose desktop radius is the reference (0.17). */
-const MOBILE_RADIUS = 72;
-const REFERENCE_RADIUS = 0.17;
 
 const round = (n: number) => Math.round(n * 10) / 10;
-
-/** Desktop: the unit square scaled into the canvas, inside a margin. */
-export function toDesktop(p: Point): Point {
-  const { width, height } = CANVAS.desktop;
-  return {
-    x: round(DESKTOP_PAD + p.x * (width - 2 * DESKTOP_PAD)),
-    y: round(DESKTOP_PAD + p.y * (height - 2 * DESKTOP_PAD)),
-  };
-}
-
-/** Cluster center and radii (an ellipse on desktop, a circle on mobile). */
-export function clusterShape(
-  cluster: MapCluster,
-  layout: Layout,
-): { center: Point; rx: number; ry: number } {
-  if (layout === 'mobile') {
-    const r = round((cluster.radius / REFERENCE_RADIUS) * MOBILE_RADIUS);
-    return { center: MOBILE_CENTERS[cluster.id], rx: r, ry: r };
-  }
-  const { width, height } = CANVAS.desktop;
-  return {
-    center: toDesktop(cluster.center),
-    rx: round(cluster.radius * (width - 2 * DESKTOP_PAD)),
-    ry: round(cluster.radius * (height - 2 * DESKTOP_PAD)),
-  };
-}
-
-/** Where a node goes: `x, y` on desktop, `center + local × radius` on mobile. */
-export function nodePosition(
-  node: Pick<MapNode, 'desktop' | 'local'>,
-  cluster: MapCluster,
-  layout: Layout,
-): Point {
-  if (layout === 'desktop') return toDesktop(node.desktop);
-  const { center, rx } = clusterShape(cluster, 'mobile');
-  return {
-    x: round(center.x + node.local.x * rx),
-    y: round(center.y + node.local.y * rx),
-  };
-}
 
 /** Node radius grows with importance (1–5); a bit bigger on touch screens. */
 export function nodeRadius(importance: number, layout: Layout): number {
   const clamped = Math.min(5, Math.max(1, importance));
-  return 4 + clamped * 1.4 + (layout === 'mobile' ? 1 : 0);
+  return 2.6 + clamped * 1.25 + (layout === 'mobile' ? 1 : 0);
 }
 
 const n = (value: number) => String(round(value));
-
-/**
- * SVG path of a node's shape centered on 0,0: ○ app and ◎ project are
- * circles (the project gets an inner dot when drawn), □ education,
- * ◇ library, △ post. Polygons are a bit bigger than `r` so every shape
- * looks about the same size as a circle of radius `r`.
- */
-export function shapePath(type: ItemType, r: number): string {
-  switch (type) {
-    case 'education': {
-      const s = r * 0.9;
-      return `M${n(-s)},${n(-s)}H${n(s)}V${n(s)}H${n(-s)}Z`;
-    }
-    case 'post': {
-      const s = r * 1.2;
-      return `M0,${n(-s)}L${n(s)},${n(s * 0.7)}L${n(-s)},${n(s * 0.7)}Z`;
-    }
-    case 'oss': {
-      const s = r * 1.25;
-      return `M0,${n(-s)}L${n(s)},0L0,${n(s)}L${n(-s)},0Z`;
-    }
-    default:
-      return `M${n(-r)},0A${n(r)},${n(r)} 0 1,0 ${n(r)},0A${n(r)},${n(r)} 0 1,0 ${n(-r)},0Z`;
-  }
-}
 
 /**
  * A curved edge from `a` to `b`: a quadratic Bézier whose control point sits
@@ -128,7 +50,7 @@ export function curvePath(a: Point, b: Point, bend = 0.18): string {
 
 // ---------- Labels ----------
 
-export const LABEL_FONT_SIZE = 12;
+export const LABEL_FONT_SIZE = 11;
 /** JetBrains Mono advance width is 0.6 em. */
 const CHAR_WIDTH = LABEL_FONT_SIZE * 0.6;
 const LABEL_HEIGHT = LABEL_FONT_SIZE + 4;
@@ -150,7 +72,7 @@ export interface LabelPlacement {
   readonly anchor: Anchor;
 }
 
-interface Box {
+export interface Box {
   readonly x1: number;
   readonly y1: number;
   readonly x2: number;
@@ -167,17 +89,33 @@ export interface LabelInput {
   readonly r: number;
   /** Labels shown at rest are placed first and avoid each other. */
   readonly atRest: boolean;
+  /** Side tried first: the side its branch grows towards (default right). */
+  readonly side?: -1 | 1;
 }
 
-/** Right, left, above, below. */
-function candidates(r: number): LabelPlacement[] {
+/** Outward side first, then the other side, above, below. */
+function candidates(r: number, side: -1 | 1 = 1): LabelPlacement[] {
   const gap = round(r + 5);
+  const right: LabelPlacement = { dx: gap, dy: 4, anchor: 'start' };
+  const left: LabelPlacement = { dx: -gap, dy: 4, anchor: 'end' };
   return [
-    { dx: gap, dy: 4, anchor: 'start' },
-    { dx: -gap, dy: 4, anchor: 'end' },
+    ...(side === 1 ? [right, left] : [left, right]),
     { dx: 0, dy: -round(r + 7), anchor: 'middle' },
     { dx: 0, dy: round(r + LABEL_FONT_SIZE + 3), anchor: 'middle' },
   ];
+}
+
+/** Box of a text of `chars` characters whose baseline starts at `x, y`. */
+export function textBox(
+  chars: number,
+  x: number,
+  baseline: number,
+  anchor: Anchor,
+  fontSize = LABEL_FONT_SIZE,
+): Box {
+  const w = chars * fontSize * 0.6;
+  const x1 = anchor === 'start' ? x : anchor === 'end' ? x - w : x - w / 2;
+  return { x1, x2: x1 + w, y1: baseline - fontSize, y2: baseline + 4 };
 }
 
 function boxOf(label: LabelInput, place: LabelPlacement): Box {
@@ -205,6 +143,7 @@ export interface PlacedLabel extends LabelPlacement {
 export function placeLabels(
   labels: readonly LabelInput[],
   canvas: Canvas,
+  obstacles: readonly Box[] = [],
 ): Map<string, PlacedLabel> {
   const result = new Map<string, PlacedLabel>();
   const nodes: (Box & { id: string })[] = labels.map((l) => ({
@@ -214,14 +153,14 @@ export function placeLabels(
     y1: l.at.y - l.r,
     y2: l.at.y + l.r,
   }));
-  const taken: Box[] = [];
+  const taken: Box[] = [...obstacles];
   const inside = (b: Box) =>
     b.x1 >= 2 &&
     b.y1 >= 2 &&
     b.x2 <= canvas.width - 2 &&
     b.y2 <= canvas.height - 2;
   const freeSpot = (label: LabelInput) =>
-    candidates(label.r).find((place) => {
+    candidates(label.r, label.side).find((place) => {
       const box = boxOf(label, place);
       return (
         inside(box) &&
@@ -242,7 +181,7 @@ export function placeLabels(
   // No free spot: the first one inside the canvas, even if it overlaps.
   for (const label of labels) {
     if (result.has(label.id)) continue;
-    const spots = candidates(label.r);
+    const spots = candidates(label.r, label.side);
     const place = spots.find((spot) => inside(boxOf(label, spot))) ?? spots[0];
     if (place) result.set(label.id, { ...place, atRest: false });
   }
