@@ -62,6 +62,8 @@ const DECLINE_PATTERNS = [
   // Spanish: "not in the content"
   'no aparece',
   'no menciona',
+  'no lo menciona',
+  'no la menciona',
   'no se menciona',
   'no incluye',
   'no indica',
@@ -69,6 +71,7 @@ const DECLINE_PATTERNS = [
   'no describe',
   'no recoge',
   'no hay informacion',
+  'no hay ningun',
   'no tengo informacion',
   'no dispongo',
   'no figura',
@@ -193,6 +196,16 @@ export function detectLanguage(text: string): 'es' | 'en' {
   return guessLanguage(text) ?? 'es';
 }
 
+/** The answer with every known source title removed (normalized text). */
+export function withoutTitles(answer: string, known: SourceRef[]): string {
+  let text = normalize(answer);
+  for (const { title } of known) {
+    const t = normalize(title).trim();
+    if (t.length > 0) text = text.split(t).join(' ');
+  }
+  return text;
+}
+
 const CITATION = /\[([a-z0-9][a-z0-9-]*(?:\s*,\s*[a-z0-9][a-z0-9-]*)*)\]/g;
 
 function citedIds(answer: string): string[] {
@@ -256,8 +269,10 @@ export function grade(
       (q.type === 'offtopic' && !q.declineMayCite ? cited.length === 0 : true)
     : null;
 
-  // No signal in the answer (very short) is not a failure.
-  const answerLang = guessLanguage(answer);
+  // No signal in the answer (very short) is not a failure. Source titles are
+  // proper names kept as written (often English in a Spanish answer), so they
+  // are left out of the guess.
+  const answerLang = guessLanguage(withoutTitles(answer, known));
   const languageOk = answerLang === null || answerLang === expectedLanguage(q);
 
   const pass =

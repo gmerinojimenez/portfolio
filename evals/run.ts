@@ -31,10 +31,21 @@ import {
 import { systemInstructions } from '../src/server/ai/prompt';
 import { grade, turnsOf, type EvalQuestion, type Grade } from './grade';
 
+/** Questions with the file-wide `mustNotMentionAnywhere` added to each one. */
+function loadQuestions(): EvalQuestion[] {
+  const file = JSON.parse(readFileSync('evals/questions.json', 'utf8')) as {
+    mustNotMentionAnywhere?: string[];
+    questions: EvalQuestion[];
+  };
+  const everywhere = file.mustNotMentionAnywhere ?? [];
+  return file.questions.map((q) => ({
+    ...q,
+    mustNotMention: [...(q.mustNotMention ?? []), ...everywhere],
+  }));
+}
+
 function regrade(file: string): void {
-  const { questions } = JSON.parse(
-    readFileSync('evals/questions.json', 'utf8'),
-  ) as { questions: EvalQuestion[] };
+  const questions = loadQuestions();
   const saved = JSON.parse(readFileSync(file, 'utf8')) as {
     results: { id: string; answer: string; grade: Grade | null }[];
   };
@@ -77,9 +88,7 @@ if (!apiKey) {
   process.exit(0);
 }
 
-const { questions } = JSON.parse(
-  readFileSync('evals/questions.json', 'utf8'),
-) as { questions: EvalQuestion[] };
+const questions = loadQuestions();
 const only = process.argv.slice(2);
 const selected = only.length
   ? questions.filter((q) => only.includes(q.id))

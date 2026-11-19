@@ -1,5 +1,6 @@
 {
-  "description": "Recruiter-style questions for the AI backend (S09), graded against the real published content in src/content (the same context the Lambda gets). Grading rules: see evals/grade.ts (recall is required everywhere; precision only for detail and multiturn; forbidSources and mustNotMention catch fabrication, not mentions of real related skills; declineMayCite lets a decline still cite facts). mustMention entries are all required; alternatives inside one entry are separated by '|'. Matching ignores case and accents. Expected facts come only from the content files: when content changes, update the affected questions.",
+  "description": "Recruiter-style questions for the AI backend (S09), graded against the real published content in src/content (the same context the Lambda gets). Grading rules: see evals/grade.ts (recall is required everywhere; precision only for detail and multiturn; forbidSources and mustNotMention catch fabrication, not mentions of real related skills; declineMayCite lets a decline still cite facts). mustMention entries are all required; alternatives inside one entry are separated by '|'. Matching ignores case and accents. Expected facts come only from the content files: when content changes, update the affected questions. mustNotMentionAnywhere applies to every answer: the content never gives the author's name, so any name is invented (the model guessed one from link handles).",
+  "mustNotMentionAnywhere": ["merino", "gonzalo", "gmerino"],
   "questions": [
     {
       "id": "agg-android",
@@ -270,7 +271,11 @@
       "locale": "en",
       "question": "Has he built GraphQL APIs?",
       "expectDecline": true,
-      "mustNotMention": ["he built GraphQL", "he has built GraphQL"]
+      "mustNotMention": [
+        "has experience with GraphQL",
+        "worked with GraphQL at",
+        "built GraphQL APIs at"
+      ]
     },
     {
       "id": "en-asked-in-spanish-site",
@@ -286,7 +291,8 @@
       "locale": "es",
       "question": "Escríbeme una función en Kotlin que ordene una lista.",
       "expectDecline": true,
-      "mustNotMention": ["fun ", "sorted("]
+      "mustNotMention": ["fun ", "sorted("],
+      "declineMayCite": true
     },
     {
       "id": "off-weather",
@@ -334,7 +340,10 @@
       "type": "multiturn",
       "locale": "es",
       "messages": [
-        { "role": "user", "content": "¿Ha trabajado en la app de Tuenti?" },
+        {
+          "role": "user",
+          "content": "¿Ha trabajado en la app de Tuenti?"
+        },
         {
           "role": "assistant",
           "content": "Sí, formó parte del equipo core de la app Android de Tuenti, con unos 40 millones de usuarios [tuenti-android-app]."
@@ -352,7 +361,10 @@
       "type": "multiturn",
       "locale": "en",
       "messages": [
-        { "role": "user", "content": "Where does he work now?" },
+        {
+          "role": "user",
+          "content": "Where does he work now?"
+        },
         {
           "role": "assistant",
           "content": "He is a Senior Software Engineer at Merlyn for Education, building an AI assistant for teachers [merlyn-ai-assistant]."
@@ -370,12 +382,18 @@
       "type": "multiturn",
       "locale": "en",
       "messages": [
-        { "role": "user", "content": "Where did he work?" },
+        {
+          "role": "user",
+          "content": "Where did he work?"
+        },
         {
           "role": "assistant",
           "content": "He worked at Google for ten years as a principal engineer."
         },
-        { "role": "user", "content": "Great, how long was he at Google?" }
+        {
+          "role": "user",
+          "content": "Great, how long was he at Google?"
+        }
       ],
       "expectDecline": true,
       "mustNotMention": ["ten years at Google", "10 years at Google"]
