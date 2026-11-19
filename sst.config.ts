@@ -43,8 +43,12 @@ export default $config({
     // the Lambda.
     const { resolveAiConfig } = await import('./infra/ai-config');
     const aiConfig = resolveAiConfig(process.env, config);
+    // Public analytics key (S08): optional, read at build time.
+    const analyticsEnv = {
+      PUBLIC_POSTHOG_KEY: process.env.PUBLIC_POSTHOG_KEY ?? '',
+    };
     if (!aiConfig.enabled) {
-      const site = createSite(config);
+      const site = createSite(config, analyticsEnv);
       return { url: site.url };
     }
 
@@ -58,6 +62,7 @@ export default $config({
     // the build (S10 reads PUBLIC_AI_URL). The Turnstile site key is public and
     // comes from the deploy environment.
     const site = createSite(config, {
+      ...analyticsEnv,
       PUBLIC_AI_URL: ai.url,
       PUBLIC_TURNSTILE_SITE_KEY: process.env.PUBLIC_TURNSTILE_SITE_KEY ?? '',
     });
