@@ -4,7 +4,7 @@
  * code on its own; use this to inspect the document.
  *
  *   pnpm ai:context              all published content
- *   pnpm ai:context --fixtures   sample data only (what the eval uses)
+ *   pnpm ai:context --fixtures   sample data only
  */
 import { writeAiContext } from '../src/server/ai/context-builder';
 

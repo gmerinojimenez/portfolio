@@ -41,14 +41,13 @@ describe('eval questions', () => {
     );
   });
 
-  it('only expects sources that exist in the fixture context', () => {
-    // Skipped automatically once src/content/fixtures is deleted.
+  it('only expects sources that exist in the real context', () => {
     const ids = new Set(
-      buildAiContext(readContentSnapshot('src/content'), {
-        fixturesOnly: true,
-      }).locales.es.sources.map((s) => s.id),
+      buildAiContext(readContentSnapshot('src/content')).locales.es.sources.map(
+        (s) => s.id,
+      ),
     );
-    if (ids.size === 0) return;
+    expect(ids.size).toBeGreaterThan(0);
     for (const q of questions) {
       for (const id of [
         ...(q.expectSources ?? []),
