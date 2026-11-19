@@ -20,7 +20,8 @@
     "content:embed": "tsx --env-file-if-exists=.env.local scripts/embed.ts",
     "content:translate": "tsx --env-file-if-exists=.env.local scripts/translate.ts",
     "ai:context": "tsx --env-file-if-exists=.env.local scripts/build-ai-context.ts",
-    "eval": "tsx --env-file-if-exists=.env.local evals/run.ts"
+    "eval": "tsx --env-file-if-exists=.env.local evals/run.ts",
+    "deploy:prod": "bash scripts/deploy-prod.sh"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.10.0",
