@@ -192,6 +192,12 @@ describe('AI context builder', () => {
       /- Room \(also: Jetpack Room\) \[Android\] 2017–2023: [^\n]*tuenti-android-app/,
     );
     expect(index).toContain('[Languages]');
+    expect(en).toMatch(
+      /\nstack: [^\n]*Android practices: Performance & memory, Android lifecycle/,
+    );
+    expect(index).toMatch(
+      /- Performance & memory \(also: Rendimiento y memoria, [^\n]*\) \[Android practices\] [^\n]*merlyn-ai-assistant/,
+    );
     expect(real.locales.es.document).toContain('[Lenguajes]');
   });
 });

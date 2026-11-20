@@ -43,7 +43,7 @@ export const sampleItems = (locale: Locale): Localized<ItemData>[] => [
       title: 'Bank app',
       summary: 'A banking app.',
       tags: ['android', 'kotlin'],
-      stack: ['kotlin', 'room'],
+      stack: ['kotlin', 'room', 'android-performance'],
       from: '2019-03',
       to: '2022-06',
       company: 'test-acme',
@@ -84,6 +84,13 @@ export const sampleTech: TechCatalog = [
     id: 'android',
     label: { es: 'Android', en: 'Android' },
     techs: [{ id: 'room', name: 'Room', aliases: ['Jetpack Room'] }],
+    skills: [
+      {
+        id: 'android-performance',
+        name: { es: 'Rendimiento y memoria', en: 'Performance & memory' },
+        aliases: ['Memory leaks'],
+      },
+    ],
   },
   {
     id: 'languages',

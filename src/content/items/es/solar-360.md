@@ -9,7 +9,7 @@ company: tuenti
 importance: 3
 summary: App para controlar la producción y el consumo de placas solares; llevé Android con Jetpack Compose y coordiné al desarrollador de iOS.
 tags: [android, jetpack-compose, webview, liderazgo-tecnico]
-stack: [compose, kotlin, android-sdk, coroutines]
+stack: [compose, kotlin, android-sdk, coroutines, android-lifecycle]
 related: [tuenti-kotlin-compose-migration, tuenti-android-app]
 ---
 

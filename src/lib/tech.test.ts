@@ -6,6 +6,7 @@ import {
   parseTechCatalog,
   inheritAppEnds,
   summarizeStacks,
+  techIds,
   toStackUses,
   validateCatalog,
   type TechCatalog,
@@ -138,14 +139,104 @@ describe('tech catalog (S15)', () => {
           { id: 'room', name: 'Room' },
           { id: 'compose', name: 'Jetpack Compose' },
         ],
+        skills: [],
       },
       {
         id: 'languages',
         label: 'Lenguajes',
         techs: [{ id: 'kotlin', name: 'Kotlin' }],
+        skills: [],
       },
     ]);
     expect(itemStackGroups(catalog, undefined, 'es')).toEqual([]);
+  });
+
+  describe('skills', () => {
+    const withSkills: TechCatalog = [
+      {
+        id: 'android',
+        label: { es: 'Android', en: 'Android' },
+        techs: [{ id: 'room', name: 'Room', aliases: [] }],
+        skills: [
+          {
+            id: 'android-performance',
+            name: { es: 'Rendimiento y memoria', en: 'Performance & memory' },
+            aliases: ['Memory leaks'],
+          },
+          {
+            id: 'android-lifecycle',
+            name: { es: 'Ciclo de vida', en: 'Android lifecycle' },
+            aliases: [],
+          },
+        ],
+      },
+    ];
+    const used = [
+      {
+        id: 'app',
+        from: '2015',
+        to: '2023',
+        stack: toStackUses(['room', 'android-performance']),
+      },
+    ];
+
+    it('lists the skills an item shows apart from its technologies', () => {
+      expect(
+        itemStackGroups(withSkills, ['android-performance', 'room'], 'en'),
+      ).toEqual([
+        {
+          id: 'android',
+          label: 'Android',
+          techs: [{ id: 'room', name: 'Room' }],
+          skills: [{ id: 'android-performance', name: 'Performance & memory' }],
+        },
+      ]);
+    });
+
+    it("summarizes skills in the reader's language and drops unused ones", () => {
+      const [android] = summarizeStacks(withSkills, used, 'es');
+      expect(android?.techs.map((t) => t.id)).toEqual(['room']);
+      expect(android?.skills).toEqual([
+        {
+          id: 'android-performance',
+          name: 'Rendimiento y memoria',
+          aliases: ['Performance & memory', 'Memory leaks'],
+          items: ['app'],
+          from: '2015',
+          to: '2023',
+        },
+      ]);
+    });
+
+    it('finds a skill by its name in either language or an alias', () => {
+      const stacks = summarizeStacks(withSkills, used, 'es');
+      expect(findTech(stacks, 'performance & memory')?.id).toBe(
+        'android-performance',
+      );
+      expect(findTech(stacks, 'memory leaks')?.id).toBe('android-performance');
+      expect(findTech(stacks, 'ciclo de vida')).toBeUndefined(); // unused
+    });
+
+    it('rejects a skill that reuses a technology id or name', () => {
+      const [android] = withSkills;
+      if (!android) throw new Error('fixture');
+      expect(
+        validateCatalog([
+          {
+            ...android,
+            skills: [
+              { id: 'room', name: { es: 'Room', en: 'Room' }, aliases: [] },
+            ],
+          },
+        ]),
+      ).toContain('tech: "room" is in stacks "android" and "android"');
+    });
+
+    it('content validation accepts skill ids in `stack`', () => {
+      expect(techIds(withSkills)).toEqual(
+        new Set(['room', 'android-performance', 'android-lifecycle']),
+      );
+    });
   });
 
   it('finds a technology by id, name or alias, ignoring case and accents', () => {

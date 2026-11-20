@@ -142,7 +142,14 @@ function stackLine(
   const groups = itemStackGroups(tech, stack, locale);
   if (groups.length === 0) return undefined;
   return groups
-    .map((g) => `${g.label}: ${g.techs.map((t) => t.name).join(', ')}`)
+    .flatMap((g) => [
+      ...(g.techs.length
+        ? [`${g.label}: ${g.techs.map((t) => t.name).join(', ')}`]
+        : []),
+      ...(g.skills.length
+        ? [`${g.label} practices: ${g.skills.map((t) => t.name).join(', ')}`]
+        : []),
+    ])
     .join(' · ');
 }
 
@@ -171,7 +178,10 @@ function renderTechIndex(
   if (stacks.length === 0) return undefined;
   const present = labels[locale].present;
   const lines = stacks.flatMap((stack) =>
-    stack.techs.map((t) => {
+    [
+      ...stack.techs.map((t) => ({ t, group: stack.label })),
+      ...stack.skills.map((t) => ({ t, group: `${stack.label} practices` })),
+    ].map(({ t, group }) => {
       const aliases = t.aliases.length
         ? ` (also: ${t.aliases.join(', ')})`
         : '';
@@ -179,12 +189,12 @@ function renderTechIndex(
       const years = t.from
         ? ` ${t.from}${end && end !== t.from ? `–${end}` : ''}`
         : '';
-      return `- ${t.name}${aliases} [${stack.label}]${years}: ${t.items.join(', ')}`;
+      return `- ${t.name}${aliases} [${group}]${years}: ${t.items.join(', ')}`;
     }),
   );
   return [
     '<tech_index>',
-    'Technologies by stack, with the ids of the items that use them.',
+    'Technologies and practices by stack, with the ids of the items that use them.',
     ...lines,
     '</tech_index>',
   ].join('\n');

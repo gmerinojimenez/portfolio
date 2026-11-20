@@ -24,6 +24,8 @@ stack:
     llama,
     ollama,
     pinecone,
+    android-performance,
+    android-lifecycle,
   ]
 related:
   [
@@ -42,5 +44,6 @@ Diseño y construyo funcionalidades basadas en LLM que se ejecutan tanto en loca
 
 Además:
 
+- Analizo y optimizo el rendimiento y el consumo de memoria de la app en la pizarra: fugas de memoria, perfilado del arranque y de los frames lentos, y trabajo fuera del hilo principal para evitar ANR.
 - Mantengo y evoluciono el portal web de la empresa, hecho en React.
 - Formo parte de la guardia rotativa: cuando me toca, coordino el trabajo y gestiono incidencias de alta gravedad.

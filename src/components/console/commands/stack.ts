@@ -23,11 +23,22 @@ function techButton(tech: TechSummary, ctx: CommandContext): Html {
   return markup`<button type="button" class="c-cmd c-tech" data-cmd="stack ${tech.id}" data-tech="${tech.id}">${tech.name} <span class="c-dim c-tech-meta">${techMeta(tech, ctx)}</span></button>`;
 }
 
+/** A line of tech buttons, with an optional label (`Prácticas:`). */
+function techLine(
+  techs: readonly TechSummary[],
+  label: string,
+  ctx: CommandContext,
+): Html | string {
+  if (techs.length === 0) return '';
+  const prefix = label ? markup`<span class="c-dim">${label}:</span> ` : '';
+  return markup`<p class="c-stack-techs">${prefix}${techs.map((tech) => markup`${techButton(tech, ctx)} `)}</p>`;
+}
+
 function renderAll(ctx: CommandContext): Html {
   const strings = ctx.t.commands.stack;
   const groups = ctx.data.stacks.map(
     (stack) =>
-      markup`<section class="c-stack" aria-label="${stack.label}"><h3 class="c-stack-title">${stack.label}</h3><p class="c-stack-techs">${stack.techs.map((tech) => markup`${techButton(tech, ctx)} `)}</p></section>`,
+      markup`<section class="c-stack" aria-label="${stack.label}"><h3 class="c-stack-title">${stack.label}</h3>${techLine(stack.techs, '', ctx)}${techLine(stack.skills, strings.skills, ctx)}</section>`,
   );
   return markup`<p>${strings.heading}</p>${groups}<p class="c-dim c-small">${strings.hint}</p>`;
 }
@@ -77,7 +88,9 @@ export const stack: Command = {
   accepts: (input) => input.args.length <= 1,
   complete({ args }, ctx) {
     if (args.length > 0) return [];
-    return ctx.data.stacks.flatMap((s) => s.techs.map((tech) => tech.id));
+    return ctx.data.stacks.flatMap((s) =>
+      [...s.techs, ...s.skills].map((tech) => tech.id),
+    );
   },
   run(input, ctx) {
     const strings = ctx.t.commands.stack;
@@ -104,7 +117,7 @@ export const stack: Command = {
     const bar = output.querySelector<HTMLElement>('[data-stack-filter]');
     if (!block || !bar || !ctx.interactive) return;
     const tech = ctx.data.stacks
-      .flatMap((s) => s.techs)
+      .flatMap((s) => [...s.techs, ...s.skills])
       .find((t) => t.id === block.dataset.stackTech);
     const map = lastMap(output);
     if (!tech || !map) return;

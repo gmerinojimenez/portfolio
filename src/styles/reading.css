@@ -214,3 +214,11 @@
 .no-js .c-wrap[data-card-page] {
   display: none;
 }
+
+/* Practices of a stack (performance, lifecycle), under its technologies. */
+.r-stack-sub {
+  margin: 10px 0 4px;
+  color: var(--color-dim);
+  font-size: 13px;
+  font-weight: 600;
+}

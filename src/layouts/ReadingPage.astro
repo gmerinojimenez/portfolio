@@ -75,32 +75,42 @@ const topicLabel = (topic: string): string =>
             <h3 class="r-stack-title" id={`stack-${stack.id}`}>
               {stack.label}
             </h3>
-            <ul class="r-stack">
-              {stack.techs.map((tech) => (
-                <li id={`tech-${tech.id}`}>
-                  <span class="r-tech">{tech.name}</span>{' '}
-                  <span class="r-meta">
-                    {[
-                      formatDates(tech.from, tech.to, locale),
-                      projectCount(tech.items.length),
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </span>
-                  <span class="r-meta">
-                    {': '}
-                    {tech.items
-                      .flatMap((id) => titles.get(id) ?? [])
-                      .map((item, i) => (
-                        <>
-                          {i > 0 && ', '}
-                          <a href={item.path}>{item.title}</a>
-                        </>
-                      ))}
-                  </span>
-                </li>
+            {[
+              { techs: stack.techs, title: '' },
+              { techs: stack.skills, title: t.commands.stack.skills },
+            ]
+              .filter((list) => list.techs.length > 0)
+              .map((list) => (
+                <>
+                  {list.title && <h4 class="r-stack-sub">{list.title}</h4>}
+                  <ul class="r-stack">
+                    {list.techs.map((tech) => (
+                      <li id={`tech-${tech.id}`}>
+                        <span class="r-tech">{tech.name}</span>{' '}
+                        <span class="r-meta">
+                          {[
+                            formatDates(tech.from, tech.to, locale),
+                            projectCount(tech.items.length),
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </span>
+                        <span class="r-meta">
+                          {': '}
+                          {tech.items
+                            .flatMap((id) => titles.get(id) ?? [])
+                            .map((item, i) => (
+                              <>
+                                {i > 0 && ', '}
+                                <a href={item.path}>{item.title}</a>
+                              </>
+                            ))}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
               ))}
-            </ul>
           </>
         ))}
       </section>

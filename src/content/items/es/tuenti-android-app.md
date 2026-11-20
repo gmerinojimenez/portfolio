@@ -34,6 +34,8 @@ stack:
   - { id: fcm, from: 2016 }
   - gradle
   - git
+  - android-performance
+  - android-lifecycle
 related:
   [
     tuenti-modularization,
@@ -50,5 +52,6 @@ Formé parte del equipo core, a cargo de la arquitectura de una app Android de c
 
 Además:
 
+- Analicé y optimicé el rendimiento y el consumo de memoria: detecté y corregí fugas de memoria, perfilé el arranque y los frames lentos, y saqué trabajo del hilo principal para evitar ANR, con ayuda de StrictMode.
 - Mentoricé a ingenieros junior y de nivel medio.
 - Lideré proyectos de varias personas.

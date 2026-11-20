@@ -2,6 +2,9 @@
 # and items reference it by id in their `stack` field. Stacks show in this
 # order. A technology no published item uses doesn't show anywhere.
 # Names are never translated; aliases are other names job offers use.
+# A stack may also list `skills`: practices rather than tools (performance,
+# lifecycle). Items cite them in `stack` too; their names are translated and
+# the UI lists them apart from the technologies.
 
 - id: android
   label: { es: Android, en: Android }
@@ -34,6 +37,29 @@
     - { id: fastlane, name: Fastlane }
     - { id: wear-os, name: Wear OS, aliases: [Android Wear] }
     - { id: kmp, name: Kotlin Multiplatform, aliases: [KMP] }
+  skills:
+    - id: android-performance
+      name: { es: Rendimiento y memoria, en: Performance & memory }
+      aliases:
+        - Performance optimization
+        - Memory optimization
+        - Memory leaks
+        - Profiling
+        - Android Profiler
+        - App startup
+        - ANR
+        - StrictMode
+        - Optimización de rendimiento
+        - Consumo de memoria
+    - id: android-lifecycle
+      name: { es: Ciclo de vida de Android, en: Android lifecycle }
+      aliases:
+        - Activity lifecycle
+        - Fragment lifecycle
+        - Lifecycle
+        - Configuration changes
+        - Process death
+        - Ciclo de vida
 
 - id: backend
   label: { es: 'Backend, web y cloud', en: 'Backend, web & cloud' }

@@ -23,15 +23,30 @@ const techSchema = z.object({
   aliases: z.array(z.string().min(1)).default([]),
 });
 
+const localized = z.object({ es: z.string().min(1), en: z.string().min(1) });
+
+/**
+ * A practice, not a library: `Performance & memory`, `Android lifecycle`.
+ * Items cite it in `stack` like a technology; the UI lists it apart, and
+ * its name is translated.
+ */
+const skillSchema = z.object({
+  id: slug,
+  name: localized,
+  aliases: z.array(z.string().min(1)).default([]),
+});
+
 const stackSchema = z.object({
   id: slug,
-  label: z.object({ es: z.string().min(1), en: z.string().min(1) }),
+  label: localized,
   techs: z.array(techSchema).min(1),
+  skills: z.array(skillSchema).optional(),
 });
 
 export const techCatalogSchema = z.array(stackSchema).min(1);
 
 export type Tech = z.infer<typeof techSchema>;
+export type Skill = z.infer<typeof skillSchema>;
 export type Stack = z.infer<typeof stackSchema>;
 export type TechCatalog = z.infer<typeof techCatalogSchema>;
 
@@ -56,7 +71,14 @@ export function validateCatalog(catalog: TechCatalog): string[] {
       errors.push(`tech: duplicate stack "${stack.id}"`);
     }
     stackIds.add(stack.id);
-    for (const tech of stack.techs) {
+    const entries = [
+      ...stack.techs.map((t) => ({ id: t.id, names: [t.name, ...t.aliases] })),
+      ...(stack.skills ?? []).map((s) => ({
+        id: s.id,
+        names: [s.name.es, s.name.en, ...s.aliases],
+      })),
+    ];
+    for (const tech of entries) {
       const other = techIds.get(tech.id);
       if (other) {
         errors.push(
@@ -64,7 +86,7 @@ export function validateCatalog(catalog: TechCatalog): string[] {
         );
       }
       techIds.set(tech.id, stack.id);
-      for (const name of [tech.id, tech.name, ...tech.aliases]) {
+      for (const name of [tech.id, ...tech.names]) {
         const key = normalizeTechName(name);
         const owner = names.get(key);
         if (owner && owner !== tech.id) {
@@ -89,8 +111,34 @@ export function parseTechCatalog(yaml: string): TechCatalog {
   return catalog;
 }
 
+/** Ids of every technology and skill: what an item's `stack` may cite. */
 export function techIds(catalog: TechCatalog): Set<string> {
-  return new Set(catalog.flatMap((stack) => stack.techs.map((t) => t.id)));
+  return new Set(
+    catalog.flatMap((stack) =>
+      [...stack.techs, ...(stack.skills ?? [])].map((t) => t.id),
+    ),
+  );
+}
+
+/** A technology or skill with its name in one language. */
+interface Entry {
+  readonly id: string;
+  readonly name: string;
+  readonly aliases: readonly string[];
+}
+
+/** Skills read in `locale`; the other language's name becomes an alias. */
+function localSkills(stack: Stack, locale: Locale): Entry[] {
+  return (stack.skills ?? []).map((skill) => {
+    const other = locale === 'es' ? skill.name.en : skill.name.es;
+    return {
+      id: skill.id,
+      name: skill.name[locale],
+      aliases: [other, ...skill.aliases].filter(
+        (a) => a !== skill.name[locale],
+      ),
+    };
+  });
 }
 
 // ------------------------------------------------------------ derived data
@@ -144,6 +192,8 @@ export interface StackSummary {
   readonly label: string;
   /** Only technologies used by at least one item. */
   readonly techs: readonly TechSummary[];
+  /** Only skills shown by at least one item. */
+  readonly skills: readonly TechSummary[];
 }
 
 const year = (date: string | undefined) => date?.slice(0, 4);
@@ -175,9 +225,9 @@ function laterEnd(a: string | undefined, b: string | undefined) {
 }
 
 /**
- * Stacks in catalog order, each with the technologies that some item uses.
- * Inside a stack: most items first, then the most recent, then by name.
- * Stacks left empty are dropped.
+ * Stacks in catalog order, each with the technologies and skills that some
+ * item uses. Inside each list: most items first, then the most recent, then
+ * by name. Stacks left empty are dropped.
  */
 export function summarizeStacks(
   catalog: TechCatalog,
@@ -187,35 +237,39 @@ export function summarizeStacks(
   const recent = [...items].sort((a, b) =>
     (b.from ?? '').localeCompare(a.from ?? ''),
   );
+  const summarize = (entries: readonly Entry[]): TechSummary[] =>
+    entries
+      .map((tech): TechSummary => {
+        const uses = recent.flatMap((item) => {
+          const use = item.stack?.find((u) => u.id === tech.id);
+          return use ? [{ item, from: year(use.from ?? item.from) }] : [];
+        });
+        const using = uses.map((u) => u.item);
+        const froms = uses.flatMap((u) => u.from ?? []).sort();
+        return {
+          id: tech.id,
+          name: tech.name,
+          aliases: tech.aliases,
+          items: using.map((i) => i.id),
+          from: froms[0],
+          to: using.map(endOf).reduce(laterEnd, undefined),
+        };
+      })
+      .filter((tech) => tech.items.length > 0)
+      .sort(
+        (a, b) =>
+          b.items.length - a.items.length ||
+          rank(b.to).localeCompare(rank(a.to)) ||
+          a.name.localeCompare(b.name),
+      );
   return catalog
-    .map((stack): StackSummary => {
-      const techs = stack.techs
-        .map((tech): TechSummary => {
-          const uses = recent.flatMap((item) => {
-            const use = item.stack?.find((u) => u.id === tech.id);
-            return use ? [{ item, from: year(use.from ?? item.from) }] : [];
-          });
-          const using = uses.map((u) => u.item);
-          const froms = uses.flatMap((u) => u.from ?? []).sort();
-          return {
-            id: tech.id,
-            name: tech.name,
-            aliases: tech.aliases,
-            items: using.map((i) => i.id),
-            from: froms[0],
-            to: using.map(endOf).reduce(laterEnd, undefined),
-          };
-        })
-        .filter((tech) => tech.items.length > 0)
-        .sort(
-          (a, b) =>
-            b.items.length - a.items.length ||
-            rank(b.to).localeCompare(rank(a.to)) ||
-            a.name.localeCompare(b.name),
-        );
-      return { id: stack.id, label: stack.label[locale], techs };
-    })
-    .filter((stack) => stack.techs.length > 0);
+    .map((stack): StackSummary => ({
+      id: stack.id,
+      label: stack.label[locale],
+      techs: summarize(stack.techs),
+      skills: summarize(localSkills(stack, locale)),
+    }))
+    .filter((stack) => stack.techs.length + stack.skills.length > 0);
 }
 
 /** `present` sorts after every year. */
@@ -227,6 +281,7 @@ export interface ItemStackGroup {
   readonly id: string;
   readonly label: string;
   readonly techs: readonly { readonly id: string; readonly name: string }[];
+  readonly skills: readonly { readonly id: string; readonly name: string }[];
 }
 
 export function itemStackGroups(
@@ -236,18 +291,21 @@ export function itemStackGroups(
 ): ItemStackGroup[] {
   if (!stack?.length) return [];
   const used = new Set(stackIdsOf(stack));
+  const pick = (entries: readonly Entry[]) =>
+    entries
+      .filter((tech) => used.has(tech.id))
+      .map(({ id, name }) => ({ id, name }));
   return catalog
     .map((group) => ({
       id: group.id,
       label: group.label[locale],
-      techs: group.techs
-        .filter((tech) => used.has(tech.id))
-        .map(({ id, name }) => ({ id, name })),
+      techs: pick(group.techs),
+      skills: pick(localSkills(group, locale)),
     }))
-    .filter((group) => group.techs.length > 0);
+    .filter((group) => group.techs.length + group.skills.length > 0);
 }
 
-/** A technology by id, name or alias, ignoring case and accents. */
+/** A technology or skill by id, name or alias, ignoring case and accents. */
 export function findTech(
   stacks: readonly StackSummary[],
   query: string,
@@ -255,7 +313,7 @@ export function findTech(
   const key = normalizeTechName(query);
   if (!key) return undefined;
   for (const stack of stacks) {
-    for (const tech of stack.techs) {
+    for (const tech of [...stack.techs, ...stack.skills]) {
       const names = [tech.id, tech.name, ...tech.aliases];
       if (names.some((name) => normalizeTechName(name) === key)) return tech;
     }

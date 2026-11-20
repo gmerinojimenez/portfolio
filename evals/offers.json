@@ -59,7 +59,7 @@
       "id": "offer-mobile-either-es",
       "locale": "es",
       "company": "Acme Mobile",
-      "offer": "Buscamos Mobile Developers con experiencia nativa en Android y/o iOS. Puedes especializarte en una de las dos plataformas o aportar experiencia en ambas.\n\nFunciones\n- Diseñar y evolucionar apps móviles nativas de alto rendimiento.\n- Colaborar con Producto, UX/UI y Backend.\n- Participar en code reviews y en la definición técnica de funcionalidades.\n\nEspecialidad Android: requisitos imprescindibles\n- 3+ años desarrollando apps Android nativas.\n- Kotlin; Java valorable.\n- Jetpack Compose y/o Views/XML.\n- Arquitecturas MVVM o MVP.\n- Jetpack: ViewModel, LiveData, Room, Navigation, WorkManager.\n- REST APIs, JSON, Coroutines y Flow.\n- Publicación en Google Play.\n- Git.\n\nSe valorará: Fastlane o GitHub Actions, Firebase Cloud Messaging, Hilt/Dagger, JUnit, Espresso, MockK, Retrofit, OkHttp, accesibilidad con TalkBack.\n\nEspecialidad iOS: requisitos imprescindibles\n- 3+ años desarrollando apps iOS.\n- Swift, UIKit y/o SwiftUI, Combine.\n- Publicación en App Store.",
+      "offer": "Buscamos Mobile Developers con experiencia nativa en Android y/o iOS. Puedes especializarte en una de las dos plataformas o aportar experiencia en ambas.\n\nFunciones\n- Diseñar y evolucionar apps móviles nativas de alto rendimiento.\n- Colaborar con Producto, UX/UI y Backend.\n- Participar en code reviews y en la definición técnica de funcionalidades.\n\nEspecialidad Android: requisitos imprescindibles\n- 3+ años desarrollando apps Android nativas.\n- Kotlin; Java valorable.\n- Jetpack Compose y/o Views/XML.\n- Arquitecturas MVVM o MVP.\n- Jetpack: ViewModel, LiveData, Room, Navigation, WorkManager.\n- REST APIs, JSON, Coroutines y Flow.\n- Análisis y optimización de rendimiento y consumo de memoria, y conocimientos de ciclo de vida.\n- Publicación en Google Play.\n- Git.\n\nSe valorará: Fastlane o GitHub Actions, Firebase Cloud Messaging, Hilt/Dagger, JUnit, Espresso, MockK, Retrofit, OkHttp, accesibilidad con TalkBack.\n\nEspecialidad iOS: requisitos imprescindibles\n- 3+ años desarrollando apps iOS.\n- Swift, UIKit y/o SwiftUI, Combine.\n- Publicación en App Store.",
       "minMatches": 4,
       "expectSources": ["tuenti-android-app"],
       "forbidInGaps": [
@@ -72,7 +72,10 @@
         "Git",
         "Retrofit",
         "Hilt",
-        "MockK"
+        "MockK",
+        "rendimiento",
+        "memoria",
+        "ciclo de vida"
       ]
     }
   ]

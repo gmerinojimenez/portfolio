@@ -131,6 +131,9 @@ describe('card view', () => {
       html.indexOf('<dt>Languages</dt>'),
     );
     expect(html).toContain('<a href="/en/reading/#tech-room">Room</a>');
+    expect(html).toContain(
+      '<dt>Android practices</dt><dd><ul class="k-tags"><li><a href="/en/reading/#tech-android-performance">Performance &amp; memory</a>',
+    );
   });
 
   it('shows the parent app and the Spanish fallback notice in English', () => {

@@ -122,6 +122,7 @@ const es = {
       showInTree: 'ver en el árbol',
       clearFilter: 'quitar filtro',
       filtered: 'El árbol muestra solo los proyectos con {tech}.',
+      skills: 'Prácticas',
     },
     offer: {
       summary: 'analiza cómo encajo en una oferta',
@@ -160,6 +161,7 @@ const es = {
     inside: 'Dentro de:',
     related: 'Relacionado',
     stack: 'Stack',
+    skillsOf: 'Prácticas de {stack}',
     links: 'Enlaces',
     fallback:
       'Este elemento aún no está traducido al inglés: se muestra en español.',
@@ -372,6 +374,7 @@ const en: UiStrings = {
       showInTree: 'show in the tree',
       clearFilter: 'clear filter',
       filtered: 'The tree only shows the projects with {tech}.',
+      skills: 'Practices',
     },
     offer: {
       summary: 'see how I fit a job offer',
@@ -410,6 +413,7 @@ const en: UiStrings = {
     inside: 'Part of:',
     related: 'Related',
     stack: 'Stack',
+    skillsOf: '{stack} practices',
     links: 'Links',
     fallback:
       "This item isn't translated into English yet, so it is shown in Spanish.",

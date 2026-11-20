@@ -9,7 +9,7 @@ company: zkteco
 importance: 4
 summary: SDK para Android con el que los partners integran terminales biométricos de control horario.
 tags: [android, sdk, biometrics]
-stack: [android-sdk, java, jenkins]
+stack: [android-sdk, java, jenkins, android-lifecycle]
 related: [zkteco-p200, zkteco-sync-protocol]
 role: Senior Developer
 ---

@@ -28,6 +28,19 @@ function itemLink(target: CardRef, locale: Locale, className: string): Html {
   return markup`<a class="${className}" href="${target.path}" data-card-open="${target.id}"><span class="k-shape" aria-hidden="true">${TYPE_SHAPES[target.type]}</span><span class="sr-only">${type}: </span>${target.title}</a>`;
 }
 
+/** One `dt`/`dd` pair of the stack section; nothing when the list is empty. */
+function stackRow(
+  label: string,
+  techs: readonly { id: string; name: string }[],
+  reading: string,
+): Html | string {
+  if (techs.length === 0) return '';
+  return markup`<dt>${label}</dt><dd><ul class="k-tags">${techs.map(
+    (tech) =>
+      markup`<li><a href="${reading}#tech-${tech.id}">${tech.name}</a></li>`,
+  )}</ul></dd>`;
+}
+
 export function renderCard(item: CardItem, options: CardViewOptions): Html {
   const { locale } = options;
   const t = useTranslations(locale).card;
@@ -60,11 +73,14 @@ export function renderCard(item: CardItem, options: CardViewOptions): Html {
   const reading = sectionPath('reading', locale);
   const stack = item.stack.length
     ? markup`<section class="k-stack" aria-labelledby="card-stack"><h3 class="k-label" id="card-stack">${t.stack}</h3><dl>${item.stack.map(
-        (group) =>
-          markup`<dt>${group.label}</dt><dd><ul class="k-tags">${group.techs.map(
-            (tech) =>
-              markup`<li><a href="${reading}#tech-${tech.id}">${tech.name}</a></li>`,
-          )}</ul></dd>`,
+        (group) => [
+          stackRow(group.label, group.techs, reading),
+          stackRow(
+            t.skillsOf.replace('{stack}', group.label),
+            group.skills,
+            reading,
+          ),
+        ],
       )}</dl></section>`
     : '';
   const links = item.links.length

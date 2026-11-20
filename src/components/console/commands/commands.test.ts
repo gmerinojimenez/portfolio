@@ -269,6 +269,10 @@ describe('S15: stack', () => {
     expect(text).toContain('data-cmd="stack kotlin" data-tech="kotlin"');
     expect(text).toContain('2019 – 2022 · 2 proyectos');
     expect(text).toContain('data-cmd="stack room"');
+    expect(text).toContain('<span class="c-dim">Prácticas:</span>');
+    expect(text).toContain(
+      'data-cmd="stack android-performance" data-tech="android-performance">Rendimiento y memoria',
+    );
     expect(text).toContain('1 proyecto');
   });
 
@@ -276,6 +280,10 @@ describe('S15: stack', () => {
     const en = fakeConsole('en');
     await en.run('stack jetpack room');
     expect(en.text()).not.toContain('data-stack-tech');
+    await en.run('stack memory leaks');
+    expect(en.text()).not.toContain('data-stack-tech'); // two words: the AI
+    await en.run('stack android-performance');
+    expect(en.text()).toContain('Where I used Performance &amp; memory');
     await en.run('stack ROOM');
     expect(en.text()).toContain('data-stack-tech="room"');
     expect(en.text()).toContain('Where I used Room');
@@ -303,6 +311,7 @@ describe('S15: stack', () => {
     const command = es.registry.resolve('stack');
     expect(command?.complete?.({ args: [], current: '' }, es.ctx)).toEqual([
       'room',
+      'android-performance',
       'kotlin',
     ]);
   });
