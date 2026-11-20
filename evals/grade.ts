@@ -333,6 +333,11 @@ export interface EvalOffer {
   expectGaps?: string[];
   /** Words that must not appear in any match's requirement or evidence. */
   forbidInMatches?: string[];
+  /**
+   * Words that must not appear in any gap: skills the portfolio shows, or
+   * alternatives he doesn't need ("Android and/or iOS").
+   */
+  forbidInGaps?: string[];
   /** Words that must not appear anywhere in the analysis. */
   mustNotMention?: string[];
 }
@@ -348,6 +353,8 @@ export interface OfferGrade {
   gapsOk: boolean;
   /** No match claims experience the offer's forbidden words describe. */
   noInventedOk: boolean;
+  /** No gap names something the portfolio shows or he doesn't need. */
+  noFalseGapsOk: boolean;
   forbiddenOk: boolean;
   languageOk: boolean | null;
   pass: boolean;
@@ -441,6 +448,9 @@ export function gradeOffer(
   const noInventedOk = !a.matches.some((m) =>
     (o.forbidInMatches ?? []).some((word) => has(m.requirement, word)),
   );
+  const noFalseGapsOk = !(o.forbidInGaps ?? []).some((word) =>
+    has(gapText, word),
+  );
   const all = [
     a.summary,
     ...a.matches.flatMap((m) => [m.requirement, m.evidence]),
@@ -457,6 +467,7 @@ export function gradeOffer(
     countsOk &&
     gapsOk &&
     noInventedOk &&
+    noFalseGapsOk &&
     forbiddenOk &&
     languageOk !== false &&
     (sourceRecall === null || sourceRecall >= 0.5);
@@ -468,6 +479,7 @@ export function gradeOffer(
     countsOk,
     gapsOk,
     noInventedOk,
+    noFalseGapsOk,
     forbiddenOk,
     languageOk,
     pass,

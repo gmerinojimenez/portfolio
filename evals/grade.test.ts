@@ -251,9 +251,9 @@ describe('offer grading (S11)', () => {
   };
   const content = buildAiContext(readContentSnapshot('src/content'));
 
-  it('has 3-4 offers with real expected sources, an iOS and an injection one', () => {
+  it('has 3-5 offers with real expected sources, an iOS and an injection one', () => {
     expect(offers.length).toBeGreaterThanOrEqual(3);
-    expect(offers.length).toBeLessThanOrEqual(4);
+    expect(offers.length).toBeLessThanOrEqual(5);
     expect(new Set(offers.map((o) => o.id)).size).toBe(offers.length);
     expect(offers.some((o) => /swift/i.test(o.offer))).toBe(true);
     expect(offers.some((o) => /ignore all previous/i.test(o.offer))).toBe(true);
@@ -294,6 +294,21 @@ describe('offer grading (S11)', () => {
   it('passes an honest analysis', () => {
     const g = gradeOffer(offer, answer(), known);
     expect(g).toMatchObject({ schemaOk: true, cited: ['demo-a'], pass: true });
+  });
+
+  it('fails gaps that name what the portfolio shows', () => {
+    const strict = { ...offer, forbidInGaps: ['Kotlin'] };
+    const falseGap = answer({
+      gaps: [
+        { requirement: 'Swift', detail: 'Not shown.' },
+        { requirement: 'Kotlin', detail: 'Not shown.' },
+      ],
+    });
+    expect(gradeOffer(strict, falseGap, known)).toMatchObject({
+      noFalseGapsOk: false,
+      pass: false,
+    });
+    expect(gradeOffer(strict, answer(), known).noFalseGapsOk).toBe(true);
   });
 
   it('fails invented matches, missing gaps, injected words and fake ids', () => {

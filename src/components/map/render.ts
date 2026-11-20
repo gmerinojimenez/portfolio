@@ -158,7 +158,7 @@ function renderFuture(node: TreeNode, at: FuturePlacement, t: Strings): Html {
   const strings = t.commands.map;
   const w = at.width;
   const h = at.height;
-  const name = `${node.title} ${strings.nextChapter} ${strings.futureAction.replace('{question}', node.prompt ?? '')}`;
+  const name = `${node.title} ${strings.nextChapter} ${strings.futureAction}`;
   return markup`<a class="m-future m-cl-${node.cluster}" href="#" role="button" data-cmd="${node.prompt ?? ''}" data-company-node data-anchor="${FUTURE_ID}" aria-label="${name}" transform="translate(${at.x} ${at.y})"><title>${strings.nextChapter}</title><g class="m-body" style="${delay(at.delay)}"><rect class="m-hit" x="${-w / 2 - 4}" y="${-h / 2 - 4}" width="${w + 8}" height="${h + 8}" rx="${h / 2 + 4}"/><rect class="m-future-pill" x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" rx="${h / 2}"/><text class="m-future-label" y="4" text-anchor="middle">${node.title}</text></g></a>`;
 }
 

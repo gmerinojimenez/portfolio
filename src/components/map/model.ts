@@ -93,7 +93,7 @@ export interface TreeNode {
    * issuer groups and top-level roots. Undefined for the rest.
    */
   readonly badge?: string;
-  /** Future node only: the question it sends to the console. */
+  /** Future node only: the command it runs in the console. */
   readonly prompt?: string;
 }
 
@@ -155,7 +155,7 @@ export interface TreeOptions {
   readonly future?: {
     /** e.g. "¿Amazon?". */
     readonly label: string;
-    /** e.g. "¿Por qué debería contratar Amazon a Guillermo?". */
+    /** The console command the node runs, e.g. `analiza-oferta`. */
     readonly prompt: string;
   };
 }

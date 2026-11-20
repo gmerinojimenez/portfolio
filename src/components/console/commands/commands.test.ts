@@ -243,19 +243,16 @@ describe('S11: company link and offer analyzer', () => {
   });
 
   it('adds the future node to a typed map only with a company', async () => {
-    const first = sampleData.es.profile.name.split(' ')[0] ?? '';
     const plain = fakeConsole('es');
     await plain.run('map');
     expect(plain.text()).not.toContain('data-company-node');
     const amazon = fakeConsole('es', { company: 'Amazon' });
     await amazon.run('map');
     expect(amazon.text()).toContain('>¿Amazon?</text>');
-    expect(amazon.text()).toContain(
-      `data-cmd="¿Por qué debería contratar Amazon a ${first}?"`,
-    );
+    expect(amazon.text()).toContain('data-cmd="analiza-oferta"');
     const en = fakeConsole('en', { company: 'Amazon' });
     await en.run('map');
     expect(en.text()).toContain('>Amazon?</text>');
-    expect(en.text()).toContain('data-cmd="Why should Amazon hire ');
+    expect(en.text()).toContain('data-cmd="analyze-job"');
   });
 });

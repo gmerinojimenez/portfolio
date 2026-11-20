@@ -106,7 +106,8 @@ const es = {
       empty: 'Aún no hay nada en el mapa. Prueba ',
       future: '¿{company}?',
       nextChapter: '¿Siguiente capítulo?',
-      futureAction: 'Pregunta a la IA: {question}',
+      futureAction: 'Analiza la oferta con la IA',
+      futureCommand: 'analiza-oferta',
     },
     offer: {
       summary: 'analiza cómo encajo en una oferta',
@@ -192,7 +193,6 @@ const es = {
   },
   ai: {
     thinking: 'pensando…',
-    whyHire: '¿Por qué debería contratar {company} a {name}?',
     sources: 'Fuentes:',
     meanwhile: 'Mientras, prueba:',
     notConfigured:
@@ -338,7 +338,8 @@ const en: UiStrings = {
       empty: 'Nothing on the map yet. Try ',
       future: '{company}?',
       nextChapter: 'Next chapter?',
-      futureAction: 'Ask the AI: {question}',
+      futureAction: 'Analyze the job offer with the AI',
+      futureCommand: 'analyze-job',
     },
     offer: {
       summary: 'see how I fit a job offer',
@@ -424,7 +425,6 @@ const en: UiStrings = {
   },
   ai: {
     thinking: 'thinking…',
-    whyHire: 'Why should {company} hire {name}?',
     sources: 'Sources:',
     meanwhile: 'Meanwhile, try:',
     notConfigured:

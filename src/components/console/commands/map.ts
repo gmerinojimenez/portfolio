@@ -3,21 +3,22 @@ import { fill } from '../../ai/format';
 import { enhanceMap } from '../../map/enhance';
 import { buildTreeModel, type TreeOptions } from '../../map/model';
 import { renderMap } from '../../map/render';
-import type { ConsoleData } from '../data';
 import type { Command, CommandContext } from '../core/types';
 
-/** The future node for a `?company=` visit (S11); none without one. */
+/**
+ * The future node for a `?company=` visit (S11); none without one. Clicking
+ * it runs the offer analyzer: a recruiter who got a link for a specific role
+ * has the job description at hand, so asking first is a wasted step.
+ */
 export function futureOptions(
   t: UiStrings,
-  data: Pick<ConsoleData, 'profile'>,
   company: string | undefined,
 ): TreeOptions {
   if (!company) return {};
-  const name = data.profile.name.split(' ')[0] ?? data.profile.name;
   return {
     future: {
       label: fill(t.commands.map.future, { company }),
-      prompt: fill(t.ai.whyHire, { company, name }),
+      prompt: t.commands.map.futureCommand,
     },
   };
 }
@@ -27,7 +28,7 @@ const modelFor = (ctx: CommandContext) =>
     ctx.data.items,
     ctx.data.stages,
     ctx.t,
-    futureOptions(ctx.t, ctx.data, ctx.company),
+    futureOptions(ctx.t, ctx.company),
   );
 
 /**
