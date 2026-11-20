@@ -17,6 +17,8 @@ export interface Session {
   readonly ref?: string | undefined;
   /** Validated `?company=` (S11), lowercase. */
   readonly company?: string | undefined;
+  /** Validated `?track=` (S16): `ai` or `android`. */
+  readonly track?: string | undefined;
 }
 
 export interface Capture {
@@ -45,6 +47,7 @@ export function toCapture(event: AnalyticsEvent, session: Session): Capture {
   };
   if (session.ref) base['ref'] = session.ref;
   if (session.company) base['company'] = session.company;
+  if (session.track) base['track'] = session.track;
   const withBase = (
     name: string,
     extra: Record<string, string | number | boolean> = {},

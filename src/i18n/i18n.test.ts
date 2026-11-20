@@ -47,6 +47,13 @@ describe('locale paths', () => {
     expect(switchLocalePath('/other', 'es')).toBe('/es/other');
   });
 
+  it('translates the CV lens slug', () => {
+    expect(switchLocalePath('/es/cv/ia/', 'en')).toBe('/en/cv/ai/');
+    expect(switchLocalePath('/en/cv/ai/', 'es')).toBe('/es/cv/ia/');
+    expect(switchLocalePath('/es/cv/android/', 'en')).toBe('/en/cv/android/');
+    expect(switchLocalePath('/es/cv/', 'en')).toBe('/en/cv/');
+  });
+
   it('reads the language from a path', () => {
     expect(localeFromPath('/en/x')).toBe('en');
     expect(localeFromPath('/fr/')).toBeUndefined();

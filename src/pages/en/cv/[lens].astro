@@ -1,0 +1,16 @@
+---
+/** Hidden CV versions (S16): reachable by link only, `noindex`. */
+import CvPage from '../../../layouts/CvPage.astro';
+import { CV_SLUGS, CV_TRACKS, type CvTrack } from '../../../lib/cv';
+
+export function getStaticPaths() {
+  return CV_TRACKS.map((track) => ({
+    params: { lens: CV_SLUGS[track].en },
+    props: { track },
+  }));
+}
+
+const { track } = Astro.props as { track: CvTrack };
+---
+
+<CvPage locale="en" lens={track} />

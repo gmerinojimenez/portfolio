@@ -6,6 +6,8 @@ import { stagesOf, type StageRef } from '../../lib/stages';
 import { summarizeStacks, type StackSummary } from '../../lib/tech';
 import { techCatalog } from '../../lib/tech-catalog';
 import { profiles } from './profile';
+import { CV_TRACKS, type CvTrack } from '../../lib/cv';
+import { cvConfig } from '../../lib/cv-config';
 
 /**
  * Everything the console needs from the content layer, already localized.
@@ -24,14 +26,14 @@ export interface ConsoleData extends SiteProfile {
   readonly stages: readonly StageRef[];
   /** Technologies by stack with the items that use them (S15). */
   readonly stacks: readonly StackSummary[];
+  /** Headline and intro of each `?track=` (S16), from `cv.yaml`. */
+  readonly tracks: Readonly<Record<CvTrack, Profile>>;
 }
 
 /** Hand-written data about the author (see `profile.ts`). */
 export interface SiteProfile {
   readonly profile: Profile;
   readonly contact: Contact;
-  /** `null` while the PDF isn't published. */
-  readonly cv: { readonly url: string; readonly filename: string } | null;
 }
 
 export interface Profile {
@@ -92,5 +94,22 @@ async function loadConsoleData(locale: Locale): Promise<ConsoleData> {
     items: cards,
     stages: stagesOf(companies),
     stacks: summarizeStacks(techCatalog, toStackItems(cards), locale),
+    tracks: tracksOf(profiles[locale].profile, locale),
   };
+}
+
+/** The profile as a visit with `?track=` sees it: the lens title and intro. */
+function tracksOf(profile: Profile, locale: Locale): Record<CvTrack, Profile> {
+  const entries = CV_TRACKS.map((track): [CvTrack, Profile] => {
+    const lens = cvConfig[track];
+    return [
+      track,
+      {
+        name: profile.name,
+        headline: lens.title?.[locale] ?? profile.headline,
+        intro: lens.intro?.[locale] ?? profile.intro,
+      },
+    ];
+  });
+  return Object.fromEntries(entries) as Record<CvTrack, Profile>;
 }

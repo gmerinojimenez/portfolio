@@ -9,6 +9,8 @@ import {
   type ItemData,
   type NoteData,
 } from './content-schema';
+import { validateCvConfig } from './cv';
+import { cvConfig } from './cv-config';
 import { techCatalog } from './tech-catalog';
 
 /**
@@ -95,6 +97,11 @@ describe('content files', () => {
     expect(
       validateContent({ items, notes, companies, tech: techCatalog }),
     ).toEqual([]);
+  });
+
+  it('cv.yaml only points to existing items and stacks', () => {
+    const ids = new Set(items.map((entry) => entry.id.split('/').pop() ?? ''));
+    expect(validateCvConfig(cvConfig, ids, techCatalog)).toEqual([]);
   });
 
   it('every published app, project and library declares its stack', () => {

@@ -1,3 +1,4 @@
+import type { CvTrack } from '../../../lib/cv';
 import type { Locale } from '../../../lib/locales';
 import type { Localized, UiStrings } from '../../../i18n/ui';
 import type { ConsoleData } from '../data';
@@ -26,14 +27,16 @@ export interface CommandContext {
    * never knows it, so static output is always the same.
    */
   readonly company?: string | undefined;
+  /** The validated `?track=` of this visit (S16). Browser only, like `company`. */
+  readonly track?: CvTrack | undefined;
   /** Appends an output block to the console. */
   print(content: Html): void;
   /** Removes all output. */
   clear(): void;
   /** Leaves the page (e.g. language switch). */
   navigate(url: string): void;
-  /** Starts a file download. */
-  download(url: string, filename: string): void;
+  /** Opens a page of the site in a new tab (the CV). */
+  openTab(url: string): void;
   /**
    * Waits for an animation step. Resolves immediately with reduced motion or
    * when the visitor skips, so use it for any typing or streaming effect.

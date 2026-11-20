@@ -3,6 +3,7 @@
 import sitemap from '@astrojs/sitemap';
 import { defineConfig } from 'astro/config';
 import { switchLocalePath } from './src/i18n/paths.ts';
+import { isHiddenCvPath } from './src/lib/cv.ts';
 
 // The public origin, used for canonical URLs, hreflang and the sitemap.
 // It comes from the same variable the infrastructure uses (infra/config.ts).
@@ -28,9 +29,14 @@ export default defineConfig({
   integrations: [
     sitemap({
       // The language picker at `/` and the 404 page aren't real content.
+      // The CV lenses (S16) are reachable by link only.
       filter: (page) => {
         const { pathname } = new URL(page);
-        return pathname !== '/' && !pathname.startsWith('/404');
+        return (
+          pathname !== '/' &&
+          !pathname.startsWith('/404') &&
+          !isHiddenCvPath(pathname)
+        );
       },
       // Section names are translated (/es/proyectos/ ↔ /en/projects/), so
       // the alternates are computed with the site's own path helper instead

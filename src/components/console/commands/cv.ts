@@ -1,25 +1,21 @@
 import { pick } from '../../../i18n/ui';
-import { commandButton } from '../core/blocks';
+import { cvPath } from '../../../lib/cv';
 import { markup } from '../core/html';
 import type { Command } from '../core/types';
-import { contact } from './contact';
 
+/**
+ * Opens the printable CV (S16): the general one, or the version of the
+ * visit's `?track=`. There is no PDF file: the page prints to one.
+ */
 export const cv: Command = {
   name: 'cv',
   summary: pick((t) => t.commands.cv.summary),
   run(_input, ctx) {
     const strings = ctx.t.commands.cv;
-    const file = ctx.data.cv;
-    if (!file) {
-      const contactName = ctx.registry.displayName(contact, ctx.locale);
-      ctx.print(
-        markup`<p>${strings.missing} ${commandButton(contactName)}</p>`,
-      );
-      return;
-    }
+    const url = cvPath(ctx.track ?? 'general', ctx.locale);
     ctx.print(
-      markup`<p>${strings.downloading} ${file.filename}… <a class="c-link" href="${file.url}" download="${file.filename}">${strings.fallbackLink}</a></p>`,
+      markup`<p>${strings.opening} <a class="c-link" href="${url}" target="_blank" rel="noopener">${url}</a></p><p class="c-dim">${strings.pdfHint}</p>`,
     );
-    ctx.download(file.url, file.filename);
+    ctx.openTab(url);
   },
 };

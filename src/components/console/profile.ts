@@ -45,7 +45,6 @@ export const profiles: Record<Locale, SiteProfile> = {
       ],
     },
     contact,
-    cv: null,
   },
   en: {
     profile: {
@@ -57,6 +56,5 @@ export const profiles: Record<Locale, SiteProfile> = {
       ],
     },
     contact,
-    cv: null,
   },
 };

@@ -83,7 +83,7 @@ describe('command or question', () => {
       print: (content: Html) => output.push(content.value),
       clear: () => undefined,
       navigate: () => undefined,
-      download: () => undefined,
+      openTab: () => undefined,
       sleep: () => Promise.resolve(),
     };
     const run = (line: string) => execute(line, registryWithAi, () => ctx);
@@ -111,7 +111,7 @@ describe('command or question', () => {
       print: (content: Html) => output.push(content.value),
       clear: () => undefined,
       navigate: () => undefined,
-      download: () => undefined,
+      openTab: () => undefined,
       sleep: () => Promise.resolve(),
     };
     await execute('¿Qué experiencia tiene con Kotlin?', registry, () => ctx);

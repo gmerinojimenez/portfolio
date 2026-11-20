@@ -111,6 +111,13 @@ function build(locale: Locale): ConsoleData {
     items,
     stages: stagesOf([{ id: 'test-acme', stage: 'acme' }]),
     stacks: summarizeStacks(sampleTech, toStackItems(items), locale),
+    tracks: {
+      ai: { ...profiles[locale].profile, headline: 'AI Solutions Engineer' },
+      android: {
+        ...profiles[locale].profile,
+        headline: 'Senior Android Engineer',
+      },
+    },
   };
 }
 

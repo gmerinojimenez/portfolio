@@ -8,11 +8,12 @@ import { createAiAssistant, type AiAssistant } from '../ai/controller';
 import { resolveAiConfig } from '../ai/config';
 import { localeFromPath } from '../../i18n/paths';
 import { readCompany, withCompany } from '../../lib/company';
+import { readTrack, withTrack } from '../../lib/track';
 import type { Locale } from '../../lib/locales';
 import { useTranslations } from '../../i18n/ui';
 import { createRegistry } from './commands';
 import { createOfferCommand } from './commands/offer';
-import type { ConsoleData } from './data';
+import type { ConsoleData, Profile } from './data';
 import { Animator, typeInto } from './core/animator';
 import { complete } from './core/complete';
 import { execute } from './core/execute';
@@ -64,11 +65,26 @@ function required<T extends Element>(root: ParentNode, selector: string): T {
   return element;
 }
 
+/** Puts a track's headline and intro into the hero rendered at build time. */
+function showTrackProfile(log: HTMLElement, profile: Profile): void {
+  const hero = log.querySelector<HTMLElement>('.c-hero');
+  const headline = hero?.querySelector<HTMLElement>('.c-hero-headline');
+  if (!hero || !headline) return;
+  headline.textContent = profile.headline;
+  hero.querySelectorAll('p.c-dim').forEach((line) => line.remove());
+  for (const text of profile.intro) {
+    const line = document.createElement('p');
+    line.className = 'c-dim';
+    line.textContent = text;
+    hero.append(line);
+  }
+}
+
 export function startConsole(root: HTMLElement): ConsoleHandle {
   const payload = JSON.parse(
     required(root, '[data-console-data]').textContent ?? '{}',
   ) as Payload;
-  const { locale, data } = payload;
+  const { locale } = payload;
   const t = useTranslations(locale);
   const registry = createRegistry();
   const log = required<HTMLElement>(root, '[data-console-log]');
@@ -87,11 +103,21 @@ export function startConsole(root: HTMLElement): ConsoleHandle {
   // `?company=` (S11): validated once, kept in the URL (reload and share keep
   // the future node) and carried over to the other language.
   const company = readCompany(location.search);
-  if (company) {
+  // `?track=` (S16): same treatment. It also swaps the hero's headline and
+  // intro (rendered at build time for the general profile) before the boot
+  // reveals them, and tells `cv` which version to open.
+  const track = readTrack(location.search);
+  const keepParams = (path: string) =>
+    withTrack(withCompany(path, company), track);
+  if (company || track) {
     root.querySelectorAll<HTMLAnchorElement>('a[data-lang]').forEach((link) => {
-      link.href = withCompany(link.getAttribute('href') ?? '', company);
+      link.href = keepParams(link.getAttribute('href') ?? '');
     });
   }
+  const data: ConsoleData = track
+    ? { ...payload.data, profile: payload.data.tracks[track] }
+    : payload.data;
+  if (track) showTrackProfile(log, data.profile);
 
   // The AI answers whatever isn't a command. Without a backend URL and a
   // Turnstile key in the build, the registry keeps its "not configured"
@@ -159,6 +185,7 @@ export function startConsole(root: HTMLElement): ConsoleHandle {
       pathname: location.pathname,
       interactive: true,
       company,
+      track,
       print(content) {
         const name = command?.name ?? FALLBACK_OUTPUT;
         const element = append(outputBlock(name, content));
@@ -174,15 +201,10 @@ export function startConsole(root: HTMLElement): ConsoleHandle {
         if (to && to !== locale) {
           emit({ type: 'language-switched', from: locale, to });
         }
-        location.assign(to ? withCompany(url, company) : url);
+        location.assign(to ? keepParams(url) : url);
       },
-      download(url, filename) {
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        document.body.append(link);
-        link.click();
-        link.remove();
+      openTab(url) {
+        window.open(url, '_blank', 'noopener');
       },
       sleep: (ms) => animator.sleep(ms),
     };

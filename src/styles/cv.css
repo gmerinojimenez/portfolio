@@ -1,0 +1,247 @@
+/*
+ * Printable CV (S16). On screen it looks like a sheet of paper on a grey
+ * desk; printed (or "Save as PDF") it is plain black on white A4, without
+ * the site's palette, the action bar or link colours. Same look in light and
+ * dark mode: it is a document, not part of the console.
+ */
+
+body:has(.cv-shell) {
+  margin: 0;
+  background: #e9e9e6;
+}
+
+.cv-shell {
+  --cv-text: #1d1d1b;
+  --cv-muted: #5c5c57;
+  --cv-line: #d4d4cf;
+  --cv-accent: #1f5f8b;
+
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 16px;
+  color: var(--cv-text);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.cv-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  max-width: 210mm;
+  margin: 0 auto 12px;
+  font-size: 13px;
+}
+
+.cv-actions a {
+  color: var(--cv-accent);
+}
+
+.cv-print {
+  margin-left: auto;
+  padding: 6px 14px;
+  border: 1px solid var(--cv-accent);
+  border-radius: 4px;
+  color: #fff;
+  background: var(--cv-accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+.cv-print:focus-visible,
+.cv-actions a:focus-visible,
+.cv a:focus-visible {
+  outline: 2px solid var(--cv-accent);
+  outline-offset: 2px;
+}
+
+.cv {
+  box-sizing: border-box;
+  max-width: 210mm;
+  margin: 0 auto;
+  padding: 16mm 15mm;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.15);
+}
+
+.cv a {
+  color: inherit;
+  text-decoration-color: var(--cv-line);
+  text-underline-offset: 2px;
+}
+
+.cv-head h1 {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.2;
+}
+
+.cv-title {
+  margin: 2px 0 8px;
+  color: var(--cv-accent);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.cv .cv-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  margin: 0;
+  padding: 0;
+  color: var(--cv-muted);
+  font-size: 12.5px;
+  list-style: none;
+}
+
+.cv-summary {
+  margin: 14px 0 4px;
+}
+
+.cv h2 {
+  margin: 16px 0 6px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--cv-line);
+  color: var(--cv-accent);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cv ul {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+
+.cv li {
+  margin: 2px 0;
+}
+
+.cv-job {
+  margin: 8px 0 10px;
+  break-inside: avoid;
+}
+
+.cv-job > header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.cv-job h3 {
+  margin: 0;
+  font-size: 14.5px;
+}
+
+.cv-dates,
+.cv-muted {
+  color: var(--cv-muted);
+  font-weight: normal;
+}
+
+.cv-dates {
+  margin: 0;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.cv-role {
+  margin: 0;
+  font-style: italic;
+}
+
+.cv-job li a,
+.cv-skills dt {
+  font-weight: 600;
+}
+
+.cv-skills {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 12px;
+  margin: 4px 0;
+}
+
+.cv-skills dd {
+  margin: 0;
+}
+
+.cv-subhead {
+  margin: 10px 0 2px;
+  font-size: 13.5px;
+}
+
+.cv-certs {
+  font-size: 13px;
+}
+
+@media (max-width: 600px) {
+  .cv-shell {
+    padding: 0;
+  }
+
+  .cv-actions {
+    padding: 12px 16px 0;
+  }
+
+  .cv {
+    padding: 20px 16px;
+    box-shadow: none;
+  }
+
+  .cv-skills {
+    grid-template-columns: 1fr;
+  }
+
+  .cv-skills dd {
+    margin-bottom: 4px;
+  }
+}
+
+@page {
+  size: A4;
+  margin: 14mm 14mm 12mm;
+}
+
+@media print {
+  body:has(.cv-shell) {
+    background: #fff;
+  }
+
+  .cv-shell {
+    --cv-accent: #1d1d1b;
+
+    min-height: 0;
+    padding: 0;
+    font-size: 10.5pt;
+  }
+
+  .cv-actions {
+    display: none;
+  }
+
+  .cv {
+    max-width: none;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  .cv a {
+    text-decoration: none;
+  }
+
+  .cv h2 {
+    break-after: avoid;
+  }
+}

@@ -61,6 +61,7 @@ const es: PrivacyContent = {
       paragraphs: [
         'Si llegaste desde un enlace con un código corto (por ejemplo ?ref=empresa-x), ese código se guarda junto a tus eventos de esa visita y se quita de la barra de direcciones. Sirve para saber a qué candidatura corresponde el enlace: identifica el enlace que compartí, no a ti.',
         'Si el enlace lleva el nombre de una empresa (por ejemplo ?company=Amazon), ese nombre se muestra en la página, se mantiene en la dirección y también se guarda junto a tus eventos. Igual que el código, identifica el enlace que compartí, no a ti.',
+        'Si el enlace indica un perfil (?track=ai o ?track=android), la página destaca ese perfil, se mantiene en la dirección y el perfil se guarda junto a tus eventos. También identifica el enlace que compartí, no a ti.',
       ],
     },
     {
@@ -138,6 +139,7 @@ const en: PrivacyContent = {
       paragraphs: [
         'If you arrived through a link with a short code (for example ?ref=company-x), that code is stored with your events for that visit and removed from the address bar. It tells me which application the link belonged to: it identifies the link I shared, not you.',
         'If the link carries a company name (for example ?company=Amazon), that name is shown on the page, kept in the address and also stored with your events. Like the code, it identifies the link I shared, not you.',
+        'If the link names a profile (?track=ai or ?track=android), the page highlights that profile, keeps it in the address and stores it with your events. It too identifies the link I shared, not you.',
       ],
     },
     {

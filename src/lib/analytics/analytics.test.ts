@@ -189,6 +189,15 @@ describe('toCapture', () => {
     });
   });
 
+  it('adds the track to every event (S16)', () => {
+    const visit = { locale: 'es', company: 'amazon', track: 'ai' };
+    expect(toCapture({ type: 'pageview' }, visit).properties).toEqual({
+      locale: 'es',
+      company: 'amazon',
+      track: 'ai',
+    });
+  });
+
   it('adds the company to every event and maps the S11 events', () => {
     const visit = { locale: 'en', company: 'procter & gamble' };
     expect(toCapture({ type: 'pageview' }, visit).properties).toEqual({

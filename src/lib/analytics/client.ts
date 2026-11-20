@@ -19,6 +19,7 @@ import { classifyLink } from './links';
 import { isOptedOut, readPrivacySignals } from './privacy';
 import { captureRef } from './ref';
 import { companyProperty, readCompany } from '../company';
+import { readTrack } from '../track';
 
 function start(): void {
   // Always strip `?ref=` from the address bar (it's read only once), even
@@ -33,10 +34,13 @@ function start(): void {
   const lang = document.documentElement.lang;
   // `?company=` stays in the URL (S11), so every page of the visit has it.
   const company = readCompany(location.search);
+  const profileTrack = readTrack(location.search);
   const session: Session = {
     locale: isLocale(lang) ? lang : 'es',
     ref,
     ...(company ? { company: companyProperty(company) } : {}),
+    // `?track=` (S16) stays in the URL too.
+    ...(profileTrack ? { track: profileTrack } : {}),
   };
 
   // The library loads as a separate chunk, after the page is usable.

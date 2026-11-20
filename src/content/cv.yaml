@@ -1,0 +1,80 @@
+# CV versions (S16). The CV pages are generated from the content; this file
+# only holds what can't be derived from it: title, summary, the order of the
+# skills and manual picks. Written in both languages (not translated by S13).
+#
+#   general  public: /es/cv/, /en/cv/ (title and intro default to the profile)
+#   ai       hidden, link only: /es/cv/ia/, /en/cv/ai/
+#   android  hidden, link only: /es/cv/android/, /en/cv/android/
+#
+# `intro` (optional) replaces the console's two intro lines when the visit
+# comes with `?track=<lens>`. `include` / `exclude` take item ids.
+
+general:
+  summary:
+    es: >-
+      Ingeniero de software con más de diez años construyendo apps que usan
+      millones de personas. Fui parte del equipo core de la app Android de
+      Tuenti (Telefónica), con unos 40 millones de usuarios, y ahora llevo
+      LLMs a producto en Merlyn for Education, de la app al backend.
+    en: >-
+      Software engineer with over ten years building apps used by millions of
+      people. I was on the core team of Tuenti's (Telefónica) Android app,
+      with about 40 million users, and I now ship LLMs into products at Merlyn
+      for Education, from the app to the backend.
+  stacks: [android, ai, backend, languages, other]
+
+ai:
+  title:
+    es: AI Solutions Engineer
+    en: AI Solutions Engineer
+  intro:
+    es:
+      - Llevo LLMs a producto en Merlyn for Education, de la app al backend.
+      - RAG, inferencia en el dispositivo y agentes, sobre diez años de Android.
+    en:
+      - I ship LLMs into products at Merlyn for Education, from app to backend.
+      - RAG, on-device inference and agents, on top of ten years of Android.
+  summary:
+    es: >-
+      Ingeniero de software sénior que lleva LLMs a producto. En Merlyn for
+      Education construyo un asistente de IA para profesores que se usa en
+      cientos de colegios de Estados Unidos: pipelines de RAG alineados con
+      los estándares educativos de cada estado, inferencia de lenguaje natural
+      en el propio dispositivo y herramientas internas con agentes de IA. Más
+      de diez años de Android y backend detrás.
+    en: >-
+      Senior software engineer shipping LLMs into products. At Merlyn for
+      Education I build an AI assistant for teachers used in hundreds of US
+      schools: RAG pipelines aligned with each state's educational standards,
+      on-device natural language inference and internal tools built with AI
+      agents. Backed by over ten years of Android and backend work.
+  stacks: [ai, languages, backend, android, other]
+
+android:
+  title:
+    es: Senior Android Engineer
+    en: Senior Android Engineer
+  intro:
+    es:
+      - Más de diez años de Android, en apps que usan millones de personas.
+      - Arquitectura, modularización, Kotlin y Jetpack Compose.
+    en:
+      - Over ten years of Android, in apps used by millions of people.
+      - Architecture, modularization, Kotlin and Jetpack Compose.
+  summary:
+    es: >-
+      Ingeniero Android sénior con más de diez años de experiencia. En Tuenti
+      (Telefónica) formé parte del equipo core de una app con unos 40 millones
+      de usuarios: decisiones de arquitectura, modularización, adopción de
+      Kotlin y Jetpack Compose, y un sistema de compilación remota de Gradle
+      que redujo los tiempos de build a la mitad. Antes, SDK Android para
+      terminales biométricos en ZKTeco; hoy también llevo LLMs a producto en
+      Merlyn for Education.
+    en: >-
+      Senior Android engineer with over ten years of experience. At Tuenti
+      (Telefónica) I was on the core team of an app with about 40 million
+      users: architecture decisions, modularization, adopting Kotlin and
+      Jetpack Compose, and a remote Gradle build system that halved build
+      times. Before that, an Android SDK for biometric terminals at ZKTeco;
+      today I also ship LLMs into products at Merlyn for Education.
+  stacks: [android, languages, backend, other, ai]

@@ -39,7 +39,7 @@ export async function renderCommand(
     print: (content) => blocks.push(outputBlock(command.name, content)),
     clear: () => blocks.splice(0),
     navigate: () => {},
-    download: () => {},
+    openTab: () => {},
     sleep: () => Promise.resolve(),
   };
   await command.run({ raw: line, name, args, argText: args.join(' ') }, ctx);

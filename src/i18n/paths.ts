@@ -1,3 +1,4 @@
+import { CV_SLUGS, trackFromSlug } from '../lib/cv';
 import { isLocale, locales, type Locale } from '../lib/locales';
 
 /**
@@ -10,6 +11,7 @@ export const sections = {
   reading: { es: 'lectura', en: 'reading' },
   privacy: { es: 'privacidad', en: 'privacy' },
   notes: { es: 'notas', en: 'notes' },
+  cv: { es: 'cv', en: 'cv' },
 } as const satisfies Record<string, Record<Locale, string>>;
 
 export type Section = keyof typeof sections;
@@ -56,6 +58,12 @@ export function switchLocalePath(pathname: string, target: Locale): string {
   }
   segments[1] = target;
   const section = segments[2];
+  // CV lenses have their own slug per language: /es/cv/ia/ ↔ /en/cv/ai/.
+  const lens =
+    section === sections.cv[from]
+      ? trackFromSlug(segments[3] ?? '', from)
+      : undefined;
+  if (lens) segments[3] = CV_SLUGS[lens][target];
   for (const names of Object.values(sections)) {
     if (locales.some((l) => names[l] === section)) {
       segments[2] = names[target];

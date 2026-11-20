@@ -1,0 +1,226 @@
+---
+/**
+ * Printable CV (S16), generated from the content: `/es/cv/` (general and
+ * public) and the hidden lenses `/es/cv/ia/`, `/es/cv/android/` (and their
+ * English pairs). No JavaScript besides the print button. The print styles
+ * (cv.css) turn it into a clean A4 PDF with the browser's "Save as PDF".
+ */
+import '../styles/cv.css';
+import { formatDates } from '../components/card/model';
+import type { CardItem } from '../components/card/model';
+import { getConsoleData } from '../components/console/data';
+import { localeHome, sectionPath, switchLocalePath } from '../i18n/paths';
+import { useTranslations } from '../i18n/ui';
+import { getCompanies } from '../lib/content';
+import { selectCv, validateCvConfig, type CvLens } from '../lib/cv';
+import { cvConfig } from '../lib/cv-config';
+import { locales, type Locale } from '../lib/locales';
+import { techCatalog } from '../lib/tech-catalog';
+import { withTrack } from '../lib/track';
+import Base from './Base.astro';
+
+interface Props {
+  locale: Locale;
+  lens: CvLens;
+}
+
+/** Technologies per stack on the CV: the most used ones. */
+const MAX_TECHS_PER_STACK = 12;
+
+const { locale, lens } = Astro.props;
+const t = useTranslations(locale);
+const data = await getConsoleData(locale);
+const companies = await getCompanies();
+
+const errors = validateCvConfig(
+  cvConfig,
+  new Set(data.items.map((item) => item.id)),
+  techCatalog,
+);
+if (errors.length > 0) {
+  throw new Error(`Invalid cv.yaml:\n- ${errors.join('\n- ')}`);
+}
+
+const selection = selectCv({
+  items: data.items.map((item) => ({
+    ...item,
+    stackIds: item.stackUses.map((use) => use.id),
+  })),
+  companies,
+  catalog: techCatalog,
+  config: cvConfig,
+  lens,
+});
+const entry = cvConfig[lens];
+const { profile, contact } = data;
+const title = entry.title?.[locale] ?? profile.headline;
+const summary = entry.summary[locale];
+const companyById = new Map(companies.map((company) => [company.id, company]));
+const stacks = selection.stacks.flatMap((id) => {
+  const stack = data.stacks.find((s) => s.id === id);
+  return stack && stack.techs.length > 0 ? [stack] : [];
+});
+
+const site = Astro.site ?? new URL('http://localhost:4321');
+const track = lens === 'general' ? undefined : lens;
+const portfolioUrl = new URL(withTrack(localeHome(locale), track), site);
+const portfolioText = `${portfolioUrl.host}${portfolioUrl.pathname}${portfolioUrl.search}`;
+const linkText = (href: string) => href.replace(/^https?:\/\/(www\.)?/, '');
+const path = Astro.url.pathname.endsWith('/')
+  ? Astro.url.pathname
+  : `${Astro.url.pathname}/`;
+const dates = (from?: string, to?: string) => formatDates(from, to, locale);
+const bullet = (item: CardItem) => item.summary || item.title;
+---
+
+<Base
+  locale={locale}
+  title={`${profile.name} · ${t.cvPage.title} · ${title}`}
+  description={t.cvPage.description.replace('{name}', profile.name)}
+  theme="system"
+  noindex={lens !== 'general'}
+>
+  <div class="cv-shell">
+    <nav class="cv-actions" aria-label={t.cvPage.actions}>
+      <a href={withTrack(localeHome(locale), track)}>{t.nav.console}</a>
+      <a href={sectionPath('reading', locale)}>{t.nav.reading}</a>
+      {locales
+        .filter((l) => l !== locale)
+        .map((l) => (
+          <a href={switchLocalePath(path, l)} hreflang={l} lang={l}>
+            {l.toUpperCase()}
+          </a>
+        ))}
+      <button
+        type="button"
+        class="cv-print"
+        data-cv-print
+        title={t.cvPage.printHint}
+      >
+        {t.cvPage.print}
+      </button>
+    </nav>
+
+    <main class="cv">
+      <header class="cv-head">
+        <h1>{profile.name}</h1>
+        <p class="cv-title">{title}</p>
+        <ul class="cv-contact">
+          <li>
+            <a href={`mailto:${contact.email}`}>{contact.email}</a>
+          </li>
+          {contact.links
+            .filter((link) => link.label !== 'medium')
+            .map((link) => (
+              <li>
+                <a href={link.href}>{linkText(link.href)}</a>
+              </li>
+            ))}
+          <li>
+            <a href={portfolioUrl.href}>{portfolioText}</a>
+          </li>
+        </ul>
+      </header>
+
+      <p class="cv-summary">{summary}</p>
+
+      <section>
+        <h2>{t.cvPage.experience}</h2>
+        {selection.experience.map((job) => {
+          const company = companyById.get(job.companyId);
+          return (
+            <article class="cv-job">
+              <header>
+                <h3>
+                  {company?.name ?? job.companyId}
+                  {company?.location && (
+                    <span class="cv-muted"> · {company.location}</span>
+                  )}
+                </h3>
+                <p class="cv-dates">{dates(job.from, job.to)}</p>
+              </header>
+              {job.role && <p class="cv-role">{job.role}</p>}
+              {job.bullets.length > 0 && (
+                <ul>
+                  {job.bullets.map((item) => (
+                    <li>
+                      <a href={item.path}>{item.title}</a>: {bullet(item)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </article>
+          );
+        })}
+      </section>
+
+      {selection.projects.length > 0 && (
+        <section>
+          <h2>{t.cvPage.projects}</h2>
+          <ul>
+            {selection.projects.map((item) => (
+              <li>
+                <a href={item.path}>{item.title}</a>
+                <span class="cv-muted"> ({item.dates})</span>: {bullet(item)}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {stacks.length > 0 && (
+        <section>
+          <h2>{t.cvPage.skills}</h2>
+          <dl class="cv-skills">
+            {stacks.map((stack) => (
+              <>
+                <dt>{stack.label}</dt>
+                <dd>
+                  {stack.techs
+                    .slice(0, MAX_TECHS_PER_STACK)
+                    .map((tech) => tech.name)
+                    .join(' · ')}
+                </dd>
+              </>
+            ))}
+          </dl>
+        </section>
+      )}
+
+      <section>
+        <h2>{t.cvPage.education}</h2>
+        <ul>
+          {selection.education.map((item) => (
+            <li>
+              <strong>{item.summary || item.title}</strong>
+              {item.summary && <>, {item.title}</>}
+              <span class="cv-muted"> ({item.dates})</span>
+            </li>
+          ))}
+        </ul>
+        {selection.certificates.length > 0 && (
+          <>
+            <h3 class="cv-subhead">{t.cvPage.certificates}</h3>
+            <ul class="cv-certs">
+              {selection.certificates.map((item) => (
+                <li>
+                  {item.title}
+                  <span class="cv-muted">
+                    {' '}
+                    · {item.context} · {item.dates}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </section>
+    </main>
+  </div>
+
+  <script>
+    document
+      .querySelector<HTMLButtonElement>('[data-cv-print]')
+      ?.addEventListener('click', () => window.print());
+  </script>
+</Base>

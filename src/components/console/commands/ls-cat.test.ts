@@ -22,7 +22,7 @@ function fakeConsole(locale: Locale = 'es') {
     print: (content) => output.push(content.value),
     clear: () => output.splice(0),
     navigate: () => {},
-    download: () => {},
+    openTab: () => {},
     sleep: () => Promise.resolve(),
   };
   return {

@@ -1,3 +1,4 @@
+import type { CvTrack } from '../../../lib/cv';
 import { describe, expect, it } from 'vitest';
 import type { Locale } from '../../../lib/locales';
 import { useTranslations } from '../../../i18n/ui';
@@ -13,12 +14,17 @@ import { createRegistry } from './index';
 
 function fakeConsole(
   locale: Locale = 'es',
-  options: { pathname?: string; data?: ConsoleData; company?: string } = {},
+  options: {
+    pathname?: string;
+    data?: ConsoleData;
+    company?: string;
+    track?: CvTrack;
+  } = {},
 ) {
   const registry = createRegistry();
   const output: string[] = [];
   const navigations: string[] = [];
-  const downloads: string[] = [];
+  const tabs: string[] = [];
   let cleared = 0;
   const ctx: CommandContext = {
     locale,
@@ -28,13 +34,14 @@ function fakeConsole(
     pathname: options.pathname ?? `/${locale}/`,
     interactive: true,
     company: options.company,
+    track: options.track,
     print: (content: Html) => output.push(content.value),
     clear: () => {
       cleared += 1;
       output.splice(0);
     },
     navigate: (url) => navigations.push(url),
-    download: (url) => downloads.push(url),
+    openTab: (url) => tabs.push(url),
     sleep: () => Promise.resolve(),
   };
   const run = (line: string) => execute(line, registry, () => ctx);
@@ -43,7 +50,7 @@ function fakeConsole(
     ctx,
     output,
     navigations,
-    downloads,
+    tabs,
     run,
     get cleared() {
       return cleared;
@@ -98,22 +105,18 @@ describe('built-in commands', () => {
     expect(c.navigations).toEqual([]);
   });
 
-  it('cv points to contact while the PDF is missing', async () => {
+  it('cv opens the general CV in a new tab', async () => {
     const c = fakeConsole('en');
     await c.run('cv');
-    expect(c.text()).toContain('data-cmd="contact"');
-    expect(c.downloads).toEqual([]);
+    expect(c.tabs).toEqual(['/en/cv/']);
+    expect(c.text()).toContain('href="/en/cv/"');
+    expect(c.text()).toContain('Save as PDF');
   });
 
-  it('cv downloads the PDF when it exists', async () => {
-    const data: ConsoleData = {
-      ...sampleData.es,
-      cv: { url: '/es/cv.pdf', filename: 'cv.pdf' },
-    };
-    const c = fakeConsole('es', { data });
+  it('cv opens the version of the visit track', async () => {
+    const c = fakeConsole('es', { track: 'ai' });
     await c.run('cv');
-    expect(c.downloads).toEqual(['/es/cv.pdf']);
-    expect(c.text()).toContain('href="/es/cv.pdf"');
+    expect(c.tabs).toEqual(['/es/cv/ia/']);
   });
 
   it('contacto and contact both work in any language', async () => {
