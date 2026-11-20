@@ -10,6 +10,7 @@ app: tuenti-android-app
 importance: 4
 summary: Migraciones tecnológicas de la app Android, incluida la adopción de Kotlin y Jetpack Compose.
 tags: [android, kotlin, compose, migration]
+stack: [android-sdk, kotlin, { id: compose, from: 2021 }]
 related: [tuenti-android-app, tweaks]
 ---
 

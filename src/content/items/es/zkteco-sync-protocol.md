@@ -8,6 +8,7 @@ company: zkteco
 importance: 3
 summary: Protocolo de sincronización con Apache Thrift y PostgreSQL, y servidor REST con Play Framework (Scala).
 tags: [backend, scala, thrift, postgresql]
+stack: [scala, play-framework, thrift, postgresql, rest]
 related: [zkteco-android-sdk]
 ---
 

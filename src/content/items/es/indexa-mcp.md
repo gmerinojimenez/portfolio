@@ -7,6 +7,7 @@ topic: ai
 importance: 2
 summary: Servidor MCP local y de solo lectura para consultar desde Claude las cuentas de Indexa Capital.
 tags: [ai, mcp, python, open-source]
+stack: [python, mcp, claude]
 related: [cert-model-context-protocol]
 links:
   - label: GitHub

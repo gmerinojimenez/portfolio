@@ -9,6 +9,14 @@ import { isCertification, isPersonal } from '../../lib/item-kind';
 import type { Locale } from '../../lib/locales';
 import { itemPath } from '../../i18n/paths';
 import { useTranslations } from '../../i18n/ui';
+import {
+  inheritAppEnds,
+  itemStackGroups,
+  toStackUses,
+  type ItemStackGroup,
+  type StackUse,
+  type TechCatalog,
+} from '../../lib/tech';
 
 /** A pointer to another item (parent app, related items). */
 export interface CardRef {
@@ -31,6 +39,10 @@ export interface CardItem {
   readonly title: string;
   readonly summary: string;
   readonly tags: readonly string[];
+  /** Technologies by stack, in catalog order (S15). */
+  readonly stack: readonly ItemStackGroup[];
+  /** The `stack` entries, for the technology summary. */
+  readonly stackUses: readonly StackUse[];
   readonly topic?: string | undefined;
   readonly importance: number;
   /** Raw start date (`YYYY[-MM[-DD]]`), for sorting. */
@@ -121,12 +133,26 @@ export function compareItems(
   );
 }
 
+/** Cards as the stack summary (S15) sees them. */
+export const toStackItems = (cards: readonly CardItem[]) =>
+  inheritAppEnds(
+    cards.map((card) => ({
+      id: card.id,
+      stack: card.stackUses,
+      from: card.from,
+      to: card.to,
+      app: card.parent?.id,
+    })),
+  );
+
 export interface CardInput {
   readonly items: readonly Localized<ItemData>[];
   readonly companies: readonly (CompanyData & { id: string })[];
   readonly locale: Locale;
   /** Rendered HTML body per item id. */
   readonly bodies?: ReadonlyMap<string, string>;
+  /** Technology catalog (S15); without it cards show no stack. */
+  readonly tech?: TechCatalog;
 }
 
 /**
@@ -140,6 +166,7 @@ export function toCardItems({
   companies,
   locale,
   bodies,
+  tech = [],
 }: CardInput): CardItem[] {
   const byId = new Map(items.map((item) => [item.id, item]));
   const companyName = new Map(companies.map((c) => [c.id, c.name]));
@@ -173,6 +200,8 @@ export function toCardItems({
       title: data.title,
       summary: data.summary ?? '',
       tags: data.tags,
+      stack: itemStackGroups(tech, data.stack, locale),
+      stackUses: toStackUses(data.stack),
       topic: data.topic,
       importance: data.importance,
       from: data.from,

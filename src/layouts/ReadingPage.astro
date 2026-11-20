@@ -4,7 +4,11 @@
  * shows, as one ordinary page grouped by topic. It is also the accessible
  * alternative to the map. No JavaScript.
  */
-import { groupByTopic, TYPE_SHAPES } from '../components/card/model';
+import {
+  formatDates,
+  groupByTopic,
+  TYPE_SHAPES,
+} from '../components/card/model';
 import { getConsoleData } from '../components/console/data';
 import { useTranslations } from '../i18n/ui';
 import type { Locale } from '../lib/locales';
@@ -20,6 +24,11 @@ const t = useTranslations(locale);
 const data = await getConsoleData(locale);
 const { profile, contact } = data;
 const groups = groupByTopic(data.items);
+const titles = new Map(data.items.map((item) => [item.id, item]));
+const projectCount = (n: number) =>
+  n === 1
+    ? t.commands.stack.project
+    : t.commands.stack.projects.replace('{n}', String(n));
 const topicLabel = (topic: string): string =>
   (t.reading.topics as Record<string, string>)[topic] ??
   topic.charAt(0).toUpperCase() + topic.slice(1);
@@ -56,6 +65,46 @@ const topicLabel = (topic: string): string =>
         </>
       ))}
     </dl>
+
+    {data.stacks.length > 0 && (
+      <section aria-labelledby="stack">
+        <h2 id="stack">{t.reading.stack}</h2>
+        <p class="r-meta">{t.reading.stackIntro}</p>
+        {data.stacks.map((stack) => (
+          <>
+            <h3 class="r-stack-title" id={`stack-${stack.id}`}>
+              {stack.label}
+            </h3>
+            <ul class="r-stack">
+              {stack.techs.map((tech) => (
+                <li id={`tech-${tech.id}`}>
+                  <span class="r-tech">{tech.name}</span>{' '}
+                  <span class="r-meta">
+                    {[
+                      formatDates(tech.from, tech.to, locale),
+                      projectCount(tech.items.length),
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </span>
+                  <span class="r-meta">
+                    {': '}
+                    {tech.items
+                      .flatMap((id) => titles.get(id) ?? [])
+                      .map((item, i) => (
+                        <>
+                          {i > 0 && ', '}
+                          <a href={item.path}>{item.title}</a>
+                        </>
+                      ))}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
+        ))}
+      </section>
+    )}
 
     {groups.map((group) => (
       <section aria-labelledby={`topic-${group.topic}`}>

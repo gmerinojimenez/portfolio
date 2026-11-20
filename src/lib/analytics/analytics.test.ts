@@ -200,6 +200,17 @@ describe('toCapture', () => {
       properties: { locale: 'en', company: 'procter & gamble' },
     });
     expect(
+      toCapture({ type: 'stack-tech-clicked', tech: 'room' }, visit),
+    ).toEqual({
+      name: 'stack_tech_clicked',
+      properties: { locale: 'en', company: 'procter & gamble', tech: 'room' },
+    });
+    expect(
+      toCapture({ type: 'stack-tech-clicked', tech: '<b>' }, visit).properties[
+        'tech'
+      ],
+    ).toBe('invalid');
+    expect(
       toCapture({ type: 'offer-analyzed', matches: 4, gaps: 2 }, visit),
     ).toEqual({
       name: 'offer_analyzed',

@@ -10,6 +10,7 @@ badge: Bl
 importance: 3
 summary: Versión de marca blanca de la app Android de Tuenti para Blau, sobre la misma base de código.
 tags: [android, white-label]
+stack: [android-sdk, java, { id: kotlin, from: 2017 }]
 related: [tuenti-android-app]
 ---
 

@@ -383,6 +383,9 @@ export function startConsole(root: HTMLElement): ConsoleHandle {
       if (button.hasAttribute('data-company-node')) {
         emit({ type: 'company-node-clicked' });
       }
+      if (button.dataset.tech) {
+        emit({ type: 'stack-tech-clicked', tech: button.dataset.tech });
+      }
       void submit(button.dataset.cmd, true).then(() => {
         // If the button disappeared (e.g. after `clear`), keep focus usable.
         if (!button.isConnected) input.focus({ preventScroll: true });

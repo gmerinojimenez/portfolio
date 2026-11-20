@@ -9,6 +9,7 @@ app: merlyn-ai-assistant
 importance: 4
 summary: Pipelines de RAG y fine-tuning para que las respuestas del asistente se ajusten a los estándares educativos de cada estado de EE. UU.
 tags: [ai, rag, fine-tuning, llm]
+stack: [rag, fine-tuning, pgvector, pinecone, python, aws]
 related: [merlyn-ai-assistant]
 ---
 

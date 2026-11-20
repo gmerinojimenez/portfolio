@@ -74,6 +74,8 @@ export function toCapture(event: AnalyticsEvent, session: Session): Capture {
         matches: event.matches,
         gaps: event.gaps,
       });
+    case 'stack-tech-clicked':
+      return withBase('stack_tech_clicked', { tech: safeId(event.tech) });
     case 'card-opened':
       return withBase('card_opened', { item_id: safeId(event.itemId) });
     case 'link-clicked':

@@ -8,6 +8,7 @@ company: zkteco
 importance: 3
 summary: Desarrollo del terminal portátil P200 y contribución a la solución de control horario ZPAD.
 tags: [android, hardware, time-attendance]
+stack: [android-sdk, java]
 related: [zkteco-android-sdk]
 ---
 

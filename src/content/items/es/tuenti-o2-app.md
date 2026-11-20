@@ -10,6 +10,7 @@ badge: O2
 importance: 3
 summary: Versión de marca blanca de la app Android de Tuenti para O2, sobre la misma base de código.
 tags: [android, white-label]
+stack: [android-sdk, java, { id: kotlin, from: 2017 }]
 related: [tuenti-android-app]
 ---
 

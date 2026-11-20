@@ -19,6 +19,7 @@ const QUESTION = Symbol('question');
  */
 const ORDER = [
   'map',
+  'stack',
   'ls',
   'cv',
   'contacto',

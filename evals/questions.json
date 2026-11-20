@@ -432,6 +432,22 @@
       "minCited": 1,
       "maxWords": 130,
       "mustMention": ["analyze-job"]
+    },
+    {
+      "id": "tech-room-es",
+      "type": "aggregate",
+      "locale": "es",
+      "question": "¿En qué proyectos ha usado Room?",
+      "expectSources": ["tuenti-android-app"],
+      "mustMention": ["Tuenti"]
+    },
+    {
+      "id": "tech-coroutines-en",
+      "type": "aggregate",
+      "locale": "en",
+      "question": "Where has he used Kotlin Coroutines?",
+      "expectSources": ["tuenti-android-app", "solar-360"],
+      "mustMention": ["Tuenti"]
     }
   ]
 }

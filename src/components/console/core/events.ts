@@ -26,6 +26,8 @@ export type ConsoleEvent =
       readonly matches: number;
       readonly gaps: number;
     }
+  /** A technology button of `stack` was clicked (S15). Only its id. */
+  | { readonly type: 'stack-tech-clicked'; readonly tech: string }
   /** A card opened (dispatched by S05 with the item id). */
   | { readonly type: 'card-opened'; readonly itemId: string }
   /** The visitor is leaving for the other language version. */

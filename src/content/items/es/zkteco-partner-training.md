@@ -8,6 +8,7 @@ company: zkteco
 importance: 2
 summary: Cursos de formación técnica para partners y equipos en China, Sudáfrica y Madrid.
 tags: [training]
+stack: []
 related: [zkteco-android-sdk]
 ---
 

@@ -1,8 +1,10 @@
 import { renderedBodies } from '../card/body';
-import { toCardItems, type CardItem } from '../card/model';
+import { toCardItems, toStackItems, type CardItem } from '../card/model';
 import { getCompanies, getItems } from '../../lib/content';
 import type { Locale } from '../../lib/locales';
 import { stagesOf, type StageRef } from '../../lib/stages';
+import { summarizeStacks, type StackSummary } from '../../lib/tech';
+import { techCatalog } from '../../lib/tech-catalog';
 import { profiles } from './profile';
 
 /**
@@ -20,6 +22,8 @@ export interface ConsoleData extends SiteProfile {
   readonly items: readonly CardItem[];
   /** Career stages (companies with a `stage`), for the map's trunk. */
   readonly stages: readonly StageRef[];
+  /** Technologies by stack with the items that use them (S15). */
+  readonly stacks: readonly StackSummary[];
 }
 
 /** Hand-written data about the author (see `profile.ts`). */
@@ -76,9 +80,17 @@ async function loadConsoleData(locale: Locale): Promise<ConsoleData> {
     getCompanies(),
   ]);
   const bodies = await renderedBodies(items);
+  const cards = toCardItems({
+    items,
+    companies,
+    locale,
+    bodies,
+    tech: techCatalog,
+  });
   return {
     ...profiles[locale],
-    items: toCardItems({ items, companies, locale, bodies }),
+    items: cards,
     stages: stagesOf(companies),
+    stacks: summarizeStacks(techCatalog, toStackItems(cards), locale),
   };
 }

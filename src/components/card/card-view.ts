@@ -4,6 +4,7 @@
  * drift apart. Built with the console's `markup` template, which escapes
  * everything except the trusted Markdown body.
  */
+import { sectionPath } from '../../i18n/paths';
 import { useTranslations } from '../../i18n/ui';
 import type { Locale } from '../../lib/locales';
 import { markup, raw, type Html } from '../console/core/html';
@@ -54,6 +55,18 @@ export function renderCard(item: CardItem, options: CardViewOptions): Html {
   const tags = item.tags.length
     ? markup`<ul class="k-tags">${item.tags.map((tag) => markup`<li>${tag}</li>`)}</ul>`
     : '';
+  // Technologies by stack (S15); each links to its entry in the reading
+  // version, which lists every project that uses it.
+  const reading = sectionPath('reading', locale);
+  const stack = item.stack.length
+    ? markup`<section class="k-stack" aria-labelledby="card-stack"><h3 class="k-label" id="card-stack">${t.stack}</h3><dl>${item.stack.map(
+        (group) =>
+          markup`<dt>${group.label}</dt><dd><ul class="k-tags">${group.techs.map(
+            (tech) =>
+              markup`<li><a href="${reading}#tech-${tech.id}">${tech.name}</a></li>`,
+          )}</ul></dd>`,
+      )}</dl></section>`
+    : '';
   const links = item.links.length
     ? markup`<ul class="k-links" aria-label="${t.links}">${item.links.map(
         (link) =>
@@ -69,5 +82,5 @@ export function renderCard(item: CardItem, options: CardViewOptions): Html {
       )}</ul></section>`
     : '';
 
-  return markup`<header class="k-head"><p class="k-meta"><span class="k-badge k-type-${item.type}"><span aria-hidden="true">${TYPE_SHAPES[item.type]}</span> ${type}</span> <span>${meta}</span></p>${title}${parent}${role}</header>${notice}<div class="k-content"${langAttr}>${summary}${tags}${links}${body}</div>${related}`;
+  return markup`<header class="k-head"><p class="k-meta"><span class="k-badge k-type-${item.type}"><span aria-hidden="true">${TYPE_SHAPES[item.type]}</span> ${type}</span> <span>${meta}</span></p>${title}${parent}${role}</header>${notice}<div class="k-content"${langAttr}>${summary}${tags}${links}${body}${stack}</div>${related}`;
 }

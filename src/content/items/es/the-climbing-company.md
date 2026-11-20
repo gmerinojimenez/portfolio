@@ -8,6 +8,7 @@ topic: personal
 importance: 3
 summary: Videojuego de gestión de una cadena de rocódromos para Android e iOS, hecho con Godot y actualmente en desarrollo.
 tags: [godot, gamedev, android, ios]
+stack: [godot]
 related: [madrid-photo-guide]
 ---
 

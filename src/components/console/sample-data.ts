@@ -2,11 +2,12 @@
  * Test fixture: console data built from a few fake items, so command tests
  * don't depend on `astro:content` or on the real content.
  */
-import { toCardItems } from '../card/model';
+import { toCardItems, toStackItems } from '../card/model';
 import type { Localized } from '../../lib/content-core';
 import type { ItemData } from '../../lib/content-schema';
 import type { Locale } from '../../lib/locales';
 import { stagesOf } from '../../lib/stages';
+import { summarizeStacks, type TechCatalog } from '../../lib/tech';
 import type { ConsoleData } from './data';
 import { profiles } from './profile';
 
@@ -42,6 +43,7 @@ export const sampleItems = (locale: Locale): Localized<ItemData>[] => [
       title: 'Bank app',
       summary: 'A banking app.',
       tags: ['android', 'kotlin'],
+      stack: ['kotlin', 'room'],
       from: '2019-03',
       to: '2022-06',
       company: 'test-acme',
@@ -58,6 +60,7 @@ export const sampleItems = (locale: Locale): Localized<ItemData>[] => [
       title: 'Offline sync',
       summary: 'Sync engine.',
       tags: ['android'],
+      stack: ['kotlin'],
       from: '2020',
       app: 'test-bank-app',
     },
@@ -76,15 +79,31 @@ export const sampleItems = (locale: Locale): Localized<ItemData>[] => [
   ),
 ];
 
+export const sampleTech: TechCatalog = [
+  {
+    id: 'android',
+    label: { es: 'Android', en: 'Android' },
+    techs: [{ id: 'room', name: 'Room', aliases: ['Jetpack Room'] }],
+  },
+  {
+    id: 'languages',
+    label: { es: 'Lenguajes', en: 'Languages' },
+    techs: [{ id: 'kotlin', name: 'Kotlin', aliases: [] }],
+  },
+];
+
 function build(locale: Locale): ConsoleData {
+  const items = toCardItems({
+    items: sampleItems(locale),
+    companies: [{ id: 'test-acme', name: 'Acme' }],
+    locale,
+    tech: sampleTech,
+  });
   return {
     ...profiles[locale],
-    items: toCardItems({
-      items: sampleItems(locale),
-      companies: [{ id: 'test-acme', name: 'Acme' }],
-      locale,
-    }),
+    items,
     stages: stagesOf([{ id: 'test-acme', stage: 'acme' }]),
+    stacks: summarizeStacks(sampleTech, toStackItems(items), locale),
   };
 }
 

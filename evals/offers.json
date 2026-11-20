@@ -45,7 +45,7 @@
       "id": "offer-ai-fit-es",
       "locale": "es",
       "company": "Procter & Gamble",
-      "offer": "AI Solutions Engineer\n\nWe are looking for an engineer to design and ship LLM-based products for our internal teams.\n\nYou will:\n- Build RAG pipelines and evaluate their quality.\n- Create AI agents and tools, including MCP servers, that automate internal workflows.\n- Integrate models through the Anthropic and other LLM APIs.\n- Work with product teams to take prototypes to production on AWS.\n\nRequirements:\n- Hands-on experience shipping LLM features to real users.\n- Python and TypeScript.\n- Experience with cloud infrastructure (AWS).\n- Nice to have: fine-tuning experience, Kubernetes.",
+      "offer": "AI Solutions Engineer\n\nWe are looking for an engineer to design and ship LLM-based products for our internal teams.\n\nYou will:\n- Build RAG pipelines and evaluate their quality.\n- Create AI agents and tools, including MCP servers, that automate internal workflows.\n- Integrate models through the Anthropic and other LLM APIs.\n- Work with product teams to take prototypes to production on AWS.\n\nRequirements:\n- Hands-on experience shipping LLM features to real users.\n- Python and TypeScript.\n- Experience with cloud infrastructure (AWS).\n- Nice to have: fine-tuning experience, LangGraph.",
       "minMatches": 3,
       "expectSources": [
         "merlyn-rag-standards",
@@ -53,7 +53,7 @@
         "merlyn-ai-assistant",
         "indexa-mcp"
       ],
-      "forbidInMatches": ["Kubernetes"]
+      "forbidInMatches": ["LangGraph"]
     },
     {
       "id": "offer-mobile-either-es",

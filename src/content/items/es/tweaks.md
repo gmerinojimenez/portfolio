@@ -8,6 +8,7 @@ company: tuenti
 importance: 4
 summary: Librería open source que añade un menú de desarrollador a las apps con Jetpack Compose.
 tags: [android, compose, open-source]
+stack: [compose, kotlin]
 related: [tweaks-post, tuenti-android-app]
 ---
 

@@ -9,6 +9,7 @@ app: tuenti-android-app
 importance: 3
 summary: Sistema de compilación remota de Gradle, montado sobre un frontal del chat que se iba a retirar, que redujo radicalmente los tiempos de compilación.
 tags: [android, gradle, build, ci-cd]
+stack: [gradle, android-sdk]
 related: [tuenti-release-cicd]
 links:
   - label: Android Remote Compilation (Medium)

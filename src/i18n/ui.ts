@@ -109,6 +109,20 @@ const es = {
       futureAction: 'Analiza la oferta con la IA',
       futureCommand: 'analiza-oferta',
     },
+    stack: {
+      summary: 'tecnologías agrupadas por stack',
+      heading:
+        'Stack: tecnologías con las que he trabajado, con sus años y proyectos.',
+      hint: 'Pulsa una tecnología para ver dónde la usé y resaltarla en el árbol.',
+      unknown: 'stack: no conozco esa tecnología',
+      empty: 'Aún no hay tecnologías publicadas.',
+      projects: '{n} proyectos',
+      project: '1 proyecto',
+      usedIn: 'Dónde usé {tech}',
+      showInTree: 'ver en el árbol',
+      clearFilter: 'quitar filtro',
+      filtered: 'El árbol muestra solo los proyectos con {tech}.',
+    },
     offer: {
       summary: 'analiza cómo encajo en una oferta',
       intro:
@@ -145,6 +159,7 @@ const es = {
     close: 'Cerrar',
     inside: 'Dentro de:',
     related: 'Relacionado',
+    stack: 'Stack',
     links: 'Enlaces',
     fallback:
       'Este elemento aún no está traducido al inglés: se muestra en español.',
@@ -177,6 +192,9 @@ const es = {
       'Todo el portfolio en una página normal: experiencia en Android, full stack e IA aplicada, agrupada por tema.',
     intro: 'Lo mismo que la consola, en una página para leer de corrido.',
     contact: 'Contacto',
+    stack: 'Stack',
+    stackIntro:
+      'Tecnologías con las que he trabajado, agrupadas por stack, con sus años y los proyectos donde las usé.',
     topics: {
       android: 'Android',
       cloud: 'Cloud',
@@ -341,6 +359,20 @@ const en: UiStrings = {
       futureAction: 'Analyze the job offer with the AI',
       futureCommand: 'analyze-job',
     },
+    stack: {
+      summary: 'technologies grouped by stack',
+      heading:
+        "Stack: technologies I've worked with, with their years and projects.",
+      hint: 'Click a technology to see where I used it and highlight it in the tree.',
+      unknown: "stack: I don't know that technology",
+      empty: 'No technologies published yet.',
+      projects: '{n} projects',
+      project: '1 project',
+      usedIn: 'Where I used {tech}',
+      showInTree: 'show in the tree',
+      clearFilter: 'clear filter',
+      filtered: 'The tree only shows the projects with {tech}.',
+    },
     offer: {
       summary: 'see how I fit a job offer',
       intro:
@@ -377,6 +409,7 @@ const en: UiStrings = {
     close: 'Close',
     inside: 'Part of:',
     related: 'Related',
+    stack: 'Stack',
     links: 'Links',
     fallback:
       "This item isn't translated into English yet, so it is shown in Spanish.",
@@ -409,6 +442,9 @@ const en: UiStrings = {
       'The whole portfolio as a plain page: Android, full stack and applied AI experience, grouped by topic.',
     intro: 'Same as the console, as a page you can read top to bottom.',
     contact: 'Contact',
+    stack: 'Stack',
+    stackIntro:
+      "Technologies I've worked with, grouped by stack, with their years and the projects where I used them.",
     topics: {
       android: 'Android',
       cloud: 'Cloud',

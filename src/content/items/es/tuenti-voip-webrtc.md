@@ -9,6 +9,7 @@ company: tuenti
 importance: 3
 summary: Un año en el equipo de VoIP mejorando WebRTC y los protocolos de comunicación de las llamadas de voz.
 tags: [voip, webrtc]
+stack: [webrtc, android-sdk]
 related: [tuenti-android-app]
 ---
 

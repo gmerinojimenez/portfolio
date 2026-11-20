@@ -10,6 +10,7 @@ app: tuenti-android-app
 importance: 4
 summary: Decisiones de arquitectura, modularización y grandes refactorizaciones de la app Android principal.
 tags: [android, architecture, modularization]
+stack: [android-sdk, { id: kotlin, from: 2017 }, gradle, dagger]
 related: [tuenti-android-app, android-modularization-post]
 ---
 

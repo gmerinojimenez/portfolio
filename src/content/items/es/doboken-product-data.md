@@ -9,6 +9,7 @@ company: doboken
 importance: 1
 summary: Librería PHP que buscaba información de productos japoneses para comercializarlos en mercados occidentales.
 tags: [php]
+stack: [php]
 role: PHP Developer
 ---
 

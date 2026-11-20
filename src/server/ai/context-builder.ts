@@ -30,6 +30,16 @@ import {
   type LocaleContext,
   type SourceRef,
 } from './context';
+import {
+  inheritAppEnds,
+  itemStackGroups,
+  parseTechCatalog,
+  toStackUses,
+  summarizeStacks,
+  type TechCatalog,
+} from '../../lib/tech';
+
+const TECH_FILE = 'tech.yaml';
 
 export interface BuildOptions {
   /** Only sample data (src/content/fixtures). */
@@ -59,6 +69,17 @@ function splitFrontmatter(text: string): { data: unknown; body: string } {
 export function readContentSnapshot(contentRoot: string): ContentSnapshot {
   const errors: string[] = [];
   const snapshot: ContentSnapshot = { items: [], notes: [], companies: [] };
+  const techFile = join(contentRoot, TECH_FILE);
+  try {
+    snapshot.tech = parseTechCatalog(readFileSync(techFile, 'utf8'));
+  } catch (error) {
+    // No catalog (e.g. a fixtures-only root) is fine; a broken one isn't.
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      errors.push(
+        `tech.yaml: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
 
   for (const file of listFiles(contentRoot)) {
     const id = relative(contentRoot, file)
@@ -112,10 +133,68 @@ function field(name: string, value: string | undefined): string[] {
   return value ? [`${name}: ${value}`] : [];
 }
 
+/** `Android: Room, Hilt · Languages: Kotlin` (S15). */
+function stackLine(
+  tech: TechCatalog,
+  stack: ItemData['stack'],
+  locale: Locale,
+): string | undefined {
+  const groups = itemStackGroups(tech, stack, locale);
+  if (groups.length === 0) return undefined;
+  return groups
+    .map((g) => `${g.label}: ${g.techs.map((t) => t.name).join(', ')}`)
+    .join(' · ');
+}
+
+/**
+ * Every technology with its aliases, years and the items that use it, so
+ * "where did he use Room?" doesn't need a pass over every item (S15).
+ */
+function renderTechIndex(
+  tech: TechCatalog,
+  items: Localized<ItemData>[],
+  locale: Locale,
+): string | undefined {
+  const stacks = summarizeStacks(
+    tech,
+    inheritAppEnds(
+      items.map((i) => ({
+        id: i.id,
+        stack: toStackUses(i.data.stack),
+        from: i.data.from,
+        to: i.data.to,
+        app: i.data.app,
+      })),
+    ),
+    locale,
+  );
+  if (stacks.length === 0) return undefined;
+  const present = labels[locale].present;
+  const lines = stacks.flatMap((stack) =>
+    stack.techs.map((t) => {
+      const aliases = t.aliases.length
+        ? ` (also: ${t.aliases.join(', ')})`
+        : '';
+      const end = t.to === 'present' ? present : t.to;
+      const years = t.from
+        ? ` ${t.from}${end && end !== t.from ? `–${end}` : ''}`
+        : '';
+      return `- ${t.name}${aliases} [${stack.label}]${years}: ${t.items.join(', ')}`;
+    }),
+  );
+  return [
+    '<tech_index>',
+    'Technologies by stack, with the ids of the items that use them.',
+    ...lines,
+    '</tech_index>',
+  ].join('\n');
+}
+
 function renderItem(
   item: Localized<ItemData>,
   companies: RawEntry<CompanyData>[],
   locale: Locale,
+  tech: TechCatalog = [],
 ): string {
   const d = item.data;
   const to = d.to === 'present' ? labels[locale].present : d.to;
@@ -129,6 +208,7 @@ function renderItem(
     ...field('dates', dates),
     ...field('topic', d.topic),
     ...field('tags', d.tags.join(', ')),
+    ...field('stack', stackLine(tech, d.stack, locale)),
     ...field('part_of', d.app),
     ...field('related', d.related.join(', ')),
     ...field(
@@ -172,9 +252,15 @@ export function buildLocaleContext(
   const notes = keep(visible(localize(snapshot.notes, locale), false));
 
   const sections = [
-    ...items.map((item) => renderItem(item, snapshot.companies, locale)),
+    ...items.map((item) =>
+      renderItem(item, snapshot.companies, locale, snapshot.tech),
+    ),
     ...notes.map(renderNote),
   ];
+  const techIndex = snapshot.tech
+    ? renderTechIndex(snapshot.tech, items, locale)
+    : undefined;
+  if (techIndex) sections.push(techIndex);
   const document = [
     `<portfolio_content locale="${locale}">`,
     ...sections,

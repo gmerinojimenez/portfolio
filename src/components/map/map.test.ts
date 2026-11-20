@@ -11,6 +11,7 @@ import {
   shownEdges,
   toggleFilter,
   visibleIds,
+  withItems,
 } from './filters';
 import { CANVAS, labelText, nodeRadius, placeLabels } from './geometry';
 import { layoutTree } from './layout';
@@ -356,6 +357,18 @@ describe('filters', () => {
       false,
     );
     expect([...visibleIds(model.nodes, byType)]).toEqual(['lib']);
+  });
+
+  it('limits the tree to the items of a technology (S15)', () => {
+    const byTech = withItems(NO_FILTER, ['lib', 'voip']);
+    expect(isFiltering(byTech)).toBe(true);
+    expect([...visibleIds(model.nodes, byTech)].sort()).toEqual([
+      'lib',
+      'voip',
+    ]);
+    const both = toggleFilter(byTech, 'types', 'oss');
+    expect([...visibleIds(model.nodes, both)]).toEqual(['lib']);
+    expect(isFiltering(withItems(byTech, null))).toBe(false);
   });
 
   it('lights the focused node, its path to the trunk and its children', () => {

@@ -5,6 +5,7 @@
 import type { Locale } from './locales';
 import { defaultLocale } from './locales';
 import type { CompanyData, ItemData, NoteData } from './content-schema';
+import { stackIdsOf, techIds, type TechCatalog } from './tech';
 
 /** A raw collection entry: what `getCollection()` returns, reduced to what we use. */
 export interface RawEntry<T> {
@@ -116,6 +117,8 @@ export interface ContentSnapshot {
   items: RawEntry<ItemData>[];
   notes: RawEntry<NoteData>[];
   companies: RawEntry<CompanyData>[];
+  /** Technology catalog (S15); without it, `stack` ids aren't checked. */
+  tech?: TechCatalog | undefined;
 }
 
 /**
@@ -149,10 +152,32 @@ export function validateContent(snapshot: ContentSnapshot): string[] {
     }
   }
 
+  const knownTech = snapshot.tech ? techIds(snapshot.tech) : undefined;
+
   for (const entry of snapshot.items) {
     const { id, lang } = parseEntryId(entry.id);
-    if (lang !== 'es') continue; // structure is read from the Spanish source
+    if (lang !== 'es') {
+      if (entry.data.stack) {
+        errors.push(
+          `items: "${id}" has "stack" in its English file; put it in the Spanish one`,
+        );
+      }
+      continue; // structure is read from the Spanish source
+    }
     const { company, app, related } = entry.data;
+    const stack = stackIdsOf(entry.data.stack);
+    if (knownTech) {
+      for (const tech of stack) {
+        if (!knownTech.has(tech)) {
+          errors.push(
+            `items: "${id}" has stack id "${tech}" that is not in tech.yaml`,
+          );
+        }
+      }
+    }
+    if (new Set(stack).size !== stack.length) {
+      errors.push(`items: "${id}" repeats an id in "stack"`);
+    }
     if (company && !companyIds.has(company)) {
       errors.push(`items: "${id}" references unknown company "${company}"`);
     }

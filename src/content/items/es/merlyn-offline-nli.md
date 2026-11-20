@@ -9,6 +9,7 @@ app: merlyn-ai-assistant
 importance: 4
 summary: Natural Language Inference ejecutada por completo en el dispositivo, sin depender de la red en el aula.
 tags: [ai, nli, on-device, offline]
+stack: [onnx-runtime, kotlin, android-sdk]
 related: [merlyn-ai-assistant]
 ---
 

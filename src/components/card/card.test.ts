@@ -118,6 +118,19 @@ describe('card view', () => {
     }).value;
     expect(post).toContain('<h1');
     expect(post).toContain('LLM evals &lt;post&gt;');
+    expect(post).not.toContain('k-stack');
+  });
+
+  it('lists the stack by group, linking to the reading version (S15)', () => {
+    const html = renderCard(card('en', 'test-bank-app'), {
+      locale: 'en',
+      heading: 'h2',
+    }).value;
+    expect(html).toContain('<h3 class="k-label" id="card-stack">Stack</h3>');
+    expect(html.indexOf('<dt>Android</dt>')).toBeLessThan(
+      html.indexOf('<dt>Languages</dt>'),
+    );
+    expect(html).toContain('<a href="/en/reading/#tech-room">Room</a>');
   });
 
   it('shows the parent app and the Spanish fallback notice in English', () => {

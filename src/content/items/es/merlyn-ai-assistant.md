@@ -9,6 +9,22 @@ company: merlyn
 importance: 5
 summary: Asistente de IA para profesores en pizarras digitales interactivas, desplegado en cientos de colegios de EE. UU.
 tags: [ai, llm, rag, android, kotlin, aws]
+stack:
+  [
+    kotlin,
+    android-sdk,
+    compose,
+    aws,
+    react,
+    typescript,
+    redux,
+    tailwind,
+    claude,
+    gemini,
+    llama,
+    ollama,
+    pinecone,
+  ]
 related:
   [
     merlyn-rag-standards,

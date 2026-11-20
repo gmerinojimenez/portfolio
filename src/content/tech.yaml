@@ -1,0 +1,99 @@
+# Technology catalog (S15). Each technology is declared once, in one stack,
+# and items reference it by id in their `stack` field. Stacks show in this
+# order. A technology no published item uses doesn't show anywhere.
+# Names are never translated; aliases are other names job offers use.
+
+- id: android
+  label: { es: Android, en: Android }
+  techs:
+    - { id: android-sdk, name: Android SDK }
+    - { id: compose, name: Jetpack Compose, aliases: [Compose] }
+    - { id: views-xml, name: Views/XML, aliases: [Android Views, XML layouts] }
+    - { id: viewmodel, name: ViewModel, aliases: [Jetpack ViewModel] }
+    - { id: livedata, name: LiveData, aliases: [Jetpack LiveData] }
+    - { id: room, name: Room, aliases: [Jetpack Room] }
+    - { id: navigation, name: Navigation, aliases: [Jetpack Navigation] }
+    - { id: workmanager, name: WorkManager, aliases: [Jetpack WorkManager] }
+    - { id: coroutines, name: Coroutines, aliases: [Kotlin Coroutines] }
+    - { id: flow, name: Flow, aliases: [Kotlin Flow, StateFlow] }
+    - { id: hilt, name: Hilt }
+    - { id: dagger, name: Dagger, aliases: [Dagger 2] }
+    - { id: retrofit, name: Retrofit }
+    - { id: okhttp, name: OkHttp }
+    - { id: junit, name: JUnit }
+    - { id: espresso, name: Espresso }
+    - { id: mockk, name: MockK }
+    - { id: fcm, name: Firebase Cloud Messaging, aliases: [FCM] }
+    - {
+        id: billing,
+        name: Billing Library,
+        aliases: [Google Play Billing, In-App Purchases],
+      }
+    - { id: talkback, name: TalkBack }
+    - { id: gradle, name: Gradle }
+    - { id: fastlane, name: Fastlane }
+    - { id: wear-os, name: Wear OS, aliases: [Android Wear] }
+    - { id: kmp, name: Kotlin Multiplatform, aliases: [KMP] }
+
+- id: backend
+  label: { es: 'Backend, web y cloud', en: 'Backend, web & cloud' }
+  techs:
+    - { id: aws, name: AWS, aliases: [Amazon Web Services] }
+    - { id: node, name: Node.js, aliases: [Node, NodeJS] }
+    - { id: spring-boot, name: Spring Boot, aliases: [Spring] }
+    - { id: ktor, name: Ktor }
+    - { id: play-framework, name: Play Framework }
+    - { id: thrift, name: Apache Thrift, aliases: [Thrift] }
+    - { id: rest, name: REST APIs, aliases: [REST, RESTful] }
+    - { id: postgresql, name: PostgreSQL, aliases: [Postgres] }
+    - { id: oracle, name: Oracle Database, aliases: [Oracle] }
+    - { id: docker, name: Docker }
+    - { id: kubernetes, name: Kubernetes, aliases: [K8s] }
+    - { id: terraform, name: Terraform }
+    - { id: github-actions, name: GitHub Actions }
+    - { id: circleci, name: CircleCI }
+    - { id: jenkins, name: Jenkins }
+    - { id: git, name: Git, aliases: [GitHub] }
+    - { id: react, name: React, aliases: [React.js, ReactJS] }
+    - { id: redux, name: Redux }
+    - { id: tailwind, name: Tailwind CSS, aliases: [Tailwind] }
+
+- id: ai
+  label: { es: IA, en: AI }
+  techs:
+    - { id: claude, name: Claude, aliases: [Anthropic API, Claude API] }
+    - { id: gemini, name: Gemini, aliases: [Google Gemini] }
+    - { id: claude-code, name: Claude Code }
+    - { id: codex, name: Codex, aliases: [OpenAI Codex] }
+    - { id: mcp, name: Model Context Protocol, aliases: [MCP] }
+    - { id: rag, name: RAG, aliases: [Retrieval-Augmented Generation] }
+    - { id: fine-tuning, name: Fine-tuning }
+    - { id: llama, name: Llama }
+    - { id: ollama, name: Ollama }
+    - { id: onnx-runtime, name: ONNX Runtime, aliases: [ONNX] }
+    - { id: voyage-ai, name: Voyage AI, aliases: [Voyage] }
+    - { id: pgvector, name: pgvector }
+    - { id: pinecone, name: Pinecone }
+
+- id: languages
+  label: { es: Lenguajes, en: Languages }
+  techs:
+    - { id: kotlin, name: Kotlin }
+    - { id: java, name: Java }
+    - { id: python, name: Python }
+    - { id: typescript, name: TypeScript, aliases: [TS] }
+    - { id: javascript, name: JavaScript, aliases: [JS] }
+    - { id: scala, name: Scala }
+    - { id: cpp, name: C++ }
+    - { id: csharp, name: 'C#', aliases: [C Sharp] }
+    - { id: php, name: PHP }
+    - { id: plsql, name: PL/SQL }
+
+- id: other
+  label: { es: Otros, en: Other }
+  techs:
+    - { id: react-native, name: React Native }
+    - { id: expo, name: Expo }
+    - { id: javafx, name: JavaFX }
+    - { id: godot, name: Godot }
+    - { id: webrtc, name: WebRTC }

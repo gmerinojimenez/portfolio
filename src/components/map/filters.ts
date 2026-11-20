@@ -10,12 +10,43 @@ import type { ClusterId, MapEdge, MapModel, MapNode } from './model';
 export interface MapFilter {
   readonly types: ReadonlySet<ItemType>;
   readonly clusters: ReadonlySet<ClusterId>;
+  /**
+   * Items that use the technology chosen with `stack <tech>` (S15); `null`
+   * when no technology is chosen.
+   */
+  readonly items?: ReadonlySet<string> | null;
 }
 
-export const NO_FILTER: MapFilter = { types: new Set(), clusters: new Set() };
+export const NO_FILTER: MapFilter = {
+  types: new Set(),
+  clusters: new Set(),
+  items: null,
+};
+
+/**
+ * Event the `stack` command dispatches on a map (`[data-map]`) to show only
+ * the items of a technology. `detail.items` is `null` to clear it.
+ */
+export const TECH_FILTER_EVENT = 'map:tech-filter';
+
+export interface TechFilterDetail {
+  readonly items: readonly string[] | null;
+}
 
 export function isFiltering(filter: MapFilter): boolean {
-  return filter.types.size > 0 || filter.clusters.size > 0;
+  return (
+    filter.types.size > 0 ||
+    filter.clusters.size > 0 ||
+    (filter.items ?? null) !== null
+  );
+}
+
+/** The same filter, limited to `items` (or no longer limited, with `null`). */
+export function withItems(
+  filter: MapFilter,
+  items: readonly string[] | null,
+): MapFilter {
+  return { ...filter, items: items ? new Set(items) : null };
 }
 
 /** A node shows when it matches both dimensions. */
@@ -48,8 +79,12 @@ export function visibleIds(
   nodes: readonly MapNode[],
   filter: MapFilter,
 ): Set<string> {
+  const items = filter.items ?? null;
   return new Set(
-    nodes.filter((node) => matchesFilter(node, filter)).map((node) => node.id),
+    nodes
+      .filter((node) => matchesFilter(node, filter))
+      .filter((node) => items === null || items.has(node.id))
+      .map((node) => node.id),
   );
 }
 

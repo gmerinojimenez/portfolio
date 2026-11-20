@@ -9,6 +9,31 @@ company: tuenti
 importance: 5
 summary: Arquitectura de una app Android de consumo con unos 40 millones de usuarios, en el equipo core.
 tags: [android, kotlin, architecture, compose]
+# Los `from` son aproximados: el año de la versión estable de cada librería.
+stack:
+  - android-sdk
+  - java
+  - { id: kotlin, from: 2017 }
+  - { id: coroutines, from: 2018 }
+  - { id: flow, from: 2019 }
+  - { id: compose, from: 2021 }
+  - views-xml
+  - { id: viewmodel, from: 2017 }
+  - { id: livedata, from: 2017 }
+  - { id: room, from: 2017 }
+  - { id: navigation, from: 2019 }
+  - { id: workmanager, from: 2019 }
+  - { id: hilt, from: 2020 }
+  - dagger
+  - retrofit
+  - okhttp
+  - rest
+  - junit
+  - espresso
+  - { id: mockk, from: 2017 }
+  - { id: fcm, from: 2016 }
+  - gradle
+  - git
 related:
   [
     tuenti-modularization,

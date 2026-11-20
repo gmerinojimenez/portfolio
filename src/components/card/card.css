@@ -211,6 +211,48 @@
   font-size: 12px;
 }
 
+.k-stack {
+  margin-top: 16px;
+}
+
+.k-stack dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+  margin: 0;
+}
+
+.k-stack dt {
+  color: var(--color-dim);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.k-stack dd {
+  margin: 0;
+}
+
+.k-stack .k-tags {
+  margin-bottom: 0;
+}
+
+.k-stack .k-tags a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.k-stack .k-tags a:hover,
+.k-stack .k-tags a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .k-stack dl {
+    grid-template-columns: 1fr;
+  }
+}
+
 .k-links {
   display: flex;
   flex-wrap: wrap;

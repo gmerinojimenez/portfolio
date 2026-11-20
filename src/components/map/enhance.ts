@@ -19,9 +19,12 @@ import {
   NO_FILTER,
   pathSet,
   shownEdges,
+  TECH_FILTER_EVENT,
   toggleFilter,
   visibleIds,
+  withItems,
   type MapFilter,
+  type TechFilterDetail,
 } from './filters';
 import { buildTreeModel, type MapModel } from './model';
 import { renderPanel } from './render';
@@ -180,6 +183,14 @@ export function enhanceMap(
       pinned = nodeIdOf(target);
       apply();
     }
+  });
+
+  // `stack <tech>` (S15) limits the tree to the items of a technology.
+  root.addEventListener(TECH_FILTER_EVENT, (event) => {
+    const { items } = (event as CustomEvent<TechFilterDetail>).detail;
+    filter = withItems(filter, items);
+    updatePanel(panelFor, visibleIds(model.nodes, filter));
+    apply();
   });
 
   for (const button of filterEls) button.disabled = false;

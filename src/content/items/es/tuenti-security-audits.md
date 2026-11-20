@@ -10,6 +10,7 @@ app: tuenti-android-app
 importance: 2
 summary: Análisis e implantación de las auditorías de seguridad de la app junto al departamento de seguridad.
 tags: [android, security]
+stack: [android-sdk, kotlin]
 related: [tuenti-android-app]
 ---
 

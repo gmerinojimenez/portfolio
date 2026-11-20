@@ -10,6 +10,7 @@ app: tuenti-android-app
 importance: 3
 summary: Responsable de la gestión de releases y de las mejoras del pipeline de CI/CD.
 tags: [android, ci-cd, release-management]
+stack: [gradle, jenkins, github-actions, fastlane, git]
 related: [tuenti-android-app, tuenti-gradle-remote-compilation]
 ---
 

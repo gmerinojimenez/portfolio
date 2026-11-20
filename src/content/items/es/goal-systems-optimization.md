@@ -9,6 +9,7 @@ company: goal-systems
 importance: 1
 summary: Algoritmos de optimización en C++, interfaces en C# e integraciones en PL/SQL.
 tags: [cpp, csharp, plsql, oracle]
+stack: [cpp, csharp, plsql, oracle]
 role: Junior Developer
 ---
 

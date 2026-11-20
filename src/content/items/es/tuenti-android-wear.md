@@ -8,6 +8,7 @@ company: tuenti
 importance: 3
 summary: App de Tuenti para Android Wear, nacida en un hackatón, para contestar llamadas de Voz Digital, responder mensajes y consultar consumos desde el reloj.
 tags: [android, wear-os, voip, hackathon]
+stack: [wear-os, android-sdk, java]
 related: [tuenti-android-app, tuenti-voip-webrtc]
 ---
 

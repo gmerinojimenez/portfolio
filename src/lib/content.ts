@@ -18,6 +18,7 @@ import {
   type Localized,
 } from './content-core';
 import type { CompanyData, ItemData, NoteData } from './content-schema';
+import { techCatalog } from './tech-catalog';
 
 export type Item = Localized<ItemData>;
 export type Note = Localized<NoteData>;
@@ -41,7 +42,12 @@ function loadSnapshot(): Promise<ContentSnapshot> {
       getCollection('notes'),
       getCollection('companies'),
     ]);
-    const loaded: ContentSnapshot = { items, notes, companies };
+    const loaded: ContentSnapshot = {
+      items,
+      notes,
+      companies,
+      tech: techCatalog,
+    };
     const errors = validateContent(loaded);
     if (errors.length > 0) {
       throw new Error(`Invalid content:\n- ${errors.join('\n- ')}`);

@@ -208,6 +208,7 @@ describe('quickCommands', () => {
     const labels = quickCommands(createRegistry(), 'en').map((q) => q.label);
     expect(labels).toEqual([
       'map',
+      'stack',
       'ls',
       'cv',
       'contact',
@@ -254,5 +255,55 @@ describe('S11: company link and offer analyzer', () => {
     await en.run('map');
     expect(en.text()).toContain('>Amazon?</text>');
     expect(en.text()).toContain('data-cmd="analyze-job"');
+  });
+});
+
+describe('S15: stack', () => {
+  it('lists technologies by stack, with years and project counts', async () => {
+    const es = fakeConsole('es');
+    await es.run('stack');
+    const text = es.text();
+    expect(text.indexOf('>Android</h3>')).toBeLessThan(
+      text.indexOf('>Lenguajes</h3>'),
+    );
+    expect(text).toContain('data-cmd="stack kotlin" data-tech="kotlin"');
+    expect(text).toContain('2019 – 2022 · 2 proyectos');
+    expect(text).toContain('data-cmd="stack room"');
+    expect(text).toContain('1 proyecto');
+  });
+
+  it('shows where a technology was used, by id, name or alias', async () => {
+    const en = fakeConsole('en');
+    await en.run('stack jetpack room');
+    expect(en.text()).not.toContain('data-stack-tech');
+    await en.run('stack ROOM');
+    expect(en.text()).toContain('data-stack-tech="room"');
+    expect(en.text()).toContain('Where I used Room');
+    expect(en.text()).toContain('data-cmd="cat test-bank-app"');
+    expect(en.text()).not.toContain('data-cmd="cat test-offline-sync"');
+    expect(en.text()).toContain('data-stack-clear');
+  });
+
+  it('treats an unknown word as a typo and a sentence as a question', async () => {
+    const es = fakeConsole('es');
+    await es.run('stack cobol');
+    expect(es.text()).toContain('stack: no conozco esa tecnología "cobol"');
+    expect(es.text()).toContain('data-cmd="stack kotlin"');
+    const command = es.registry.resolve('stack');
+    expect(
+      command?.accepts?.({
+        name: 'stack',
+        args: ['que', 'usa', 'guillermo'],
+      } as never),
+    ).toBe(false);
+  });
+
+  it('completes technology ids', () => {
+    const es = fakeConsole('es');
+    const command = es.registry.resolve('stack');
+    expect(command?.complete?.({ args: [], current: '' }, es.ctx)).toEqual([
+      'room',
+      'kotlin',
+    ]);
   });
 });

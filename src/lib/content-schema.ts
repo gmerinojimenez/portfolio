@@ -40,6 +40,16 @@ const partialDate = z.preprocess(
 
 const idList = z.array(z.string()).default([]);
 
+/**
+ * One technology an item used (S15): its id, or `{ id, from }` when it
+ * started later than the item (Compose in an app that began in 2015).
+ */
+const stackEntry = z.union([
+  z.string(),
+  z.object({ id: z.string(), from: partialDate }).strict(),
+]);
+export type StackEntry = z.infer<typeof stackEntry>;
+
 const link = z.object({
   label: z.string(),
   url: z.url(),
@@ -117,6 +127,11 @@ export const itemSchema = requirePublished(
     related: idList,
     links: z.array(link).default([]),
     role: z.string().optional(),
+    /**
+     * Ids from the technology catalog (`src/content/tech.yaml`, S15). Only
+     * in the Spanish file: the English one inherits it, like `related`.
+     */
+    stack: z.array(stackEntry).optional(),
   }),
   true,
 );

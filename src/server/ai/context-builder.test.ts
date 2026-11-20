@@ -177,4 +177,21 @@ describe('AI context builder', () => {
       expect(new Set(ids).size).toBe(ids.length);
     }
   });
+
+  it("adds each item's stack and a technology index (S15)", () => {
+    const real = buildAiContext(readContentSnapshot('src/content'));
+    const en = real.locales.en.document;
+    expect(en).toMatch(
+      /\nstack: Android: [^\n]*Room[^\n]* · Languages: Kotlin, Java\n/,
+    );
+    const index = en.slice(
+      en.indexOf('<tech_index>'),
+      en.indexOf('</tech_index>'),
+    );
+    expect(index).toMatch(
+      /- Room \(also: Jetpack Room\) \[Android\] 2017–2023: [^\n]*tuenti-android-app/,
+    );
+    expect(index).toContain('[Languages]');
+    expect(real.locales.es.document).toContain('[Lenguajes]');
+  });
 });

@@ -9,6 +9,7 @@ import {
   type ItemData,
   type NoteData,
 } from './content-schema';
+import { techCatalog } from './tech-catalog';
 
 /**
  * Validates the real files in src/content (fixtures included) the same way
@@ -90,8 +91,21 @@ describe('content files', () => {
     expect(errors).toEqual([]);
   });
 
-  it('every reference (related, app, company) points to an existing id', () => {
-    expect(validateContent({ items, notes, companies })).toEqual([]);
+  it('every reference (related, app, company, stack) points to an existing id', () => {
+    expect(
+      validateContent({ items, notes, companies, tech: techCatalog }),
+    ).toEqual([]);
+  });
+
+  it('every published app, project and library declares its stack', () => {
+    const missing = items
+      .filter((entry) => entry.id.startsWith('items/es/'))
+      .filter(({ data }) => data.status === 'published')
+      .filter(({ data }) => ['app', 'project', 'oss'].includes(data.type))
+      .filter(({ data }) => data.stack === undefined)
+      .map((entry) => entry.id);
+    // `stack: []` marks an item with no technology on purpose.
+    expect(missing).toEqual([]);
   });
 
   it('the item template is itself valid', () => {

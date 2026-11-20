@@ -9,6 +9,7 @@ app: merlyn-ai-assistant
 importance: 2
 summary: Diseño del tratamiento de los datos de analítica para cumplir el RGPD.
 tags: [privacy, gdpr, analytics]
+stack: []
 related: [merlyn-ai-assistant]
 ---
 
