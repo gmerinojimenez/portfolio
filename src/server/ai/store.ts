@@ -28,7 +28,13 @@ export interface CounterStore {
 }
 
 export type Outcome =
-  'answered' | 'refusal' | 'max_tokens' | 'budget_exhausted' | 'provider_error';
+  | 'answered'
+  | 'refusal'
+  | 'max_tokens'
+  | 'budget_exhausted'
+  | 'provider_error'
+  /** Rejected by the scope gate (S17): the model was not called. */
+  | 'off_topic';
 
 /** One row per question that reached the model or the brake. No IP data. */
 export interface QuestionLogEntry {
@@ -54,6 +60,18 @@ export interface QuestionLogEntry {
   cacheCreationInputTokens: number;
   costMicroUsd: number;
   latencyMs: number;
+  /**
+   * Scope gate (S17), when it ran. `shadow_reject`: shadow mode, it would
+   * have rejected. The question still went to the model.
+   */
+  gate?: 'pass' | 'reject' | 'error' | 'shadow_reject';
+  /** Probability (0–1) that the question was in scope. */
+  gateScore?: number;
+  gateModel?: string;
+  gateLatencyMs?: number;
+  gateCostMicroUsd?: number;
+  /** Why the gate failed open (`timeout`, `http_429`...). */
+  gateError?: string;
 }
 
 export interface QuestionLog {

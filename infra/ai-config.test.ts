@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LOCAL_DEV_ORIGIN, resolveAiConfig } from './ai-config';
+import { LOCAL_DEV_ORIGIN, resolveAiConfig, scopeGateLinks } from './ai-config';
 import { resolveConfig } from './config';
 
 describe('resolveAiConfig', () => {
@@ -9,6 +9,7 @@ describe('resolveAiConfig', () => {
       enabled: false,
       allowedOrigins: [],
       dailyLimitUsd: 0.5,
+      scopeGate: 'off',
     });
   });
 
@@ -63,5 +64,22 @@ describe('resolveAiConfig', () => {
       resolveAiConfig({ PORTFOLIO_AI_DAILY_LIMIT_USD: '2' }, config)
         .dailyLimitUsd,
     ).toBe(2);
+  });
+
+  it('reads the scope gate mode and only links its secret when it runs', () => {
+    const config = resolveConfig({}, 'production');
+    const mode = (value?: string) =>
+      resolveAiConfig({ PORTFOLIO_AI_SCOPE_GATE: value }, config);
+    expect(mode().scopeGate).toBe('off');
+    expect(mode(' shadow ').scopeGate).toBe('shadow');
+    expect(mode('enforce').scopeGate).toBe('enforce');
+    expect(() => mode('on')).toThrow(/PORTFOLIO_AI_SCOPE_GATE/);
+
+    let created = 0;
+    const secret = () => ++created;
+    expect(scopeGateLinks(mode(), secret)).toEqual([]);
+    expect(created).toBe(0);
+    expect(scopeGateLinks(mode('shadow'), secret)).toEqual([1]);
+    expect(scopeGateLinks(mode('enforce'), secret)).toEqual([2]);
   });
 });

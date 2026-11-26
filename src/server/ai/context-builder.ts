@@ -289,10 +289,20 @@ export function buildLocaleContext(
       title: n.data.title,
     })),
   ];
+  const companyNames = items.flatMap((item) => {
+    const company = snapshot.companies.find(
+      (c) => c.id.split('/').pop() === item.data.company,
+    );
+    return company ? [company.data.name] : [];
+  });
+  const topics = [
+    ...new Set([...companyNames, ...items.map((i) => i.data.title)]),
+  ];
   return {
     document,
     sources,
     estimatedTokens: estimateDocumentTokens(document),
+    topics,
   };
 }
 

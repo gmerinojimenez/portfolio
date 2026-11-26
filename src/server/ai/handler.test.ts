@@ -14,6 +14,12 @@ import {
   type ProviderRequest,
 } from './provider';
 import { OFFER_RATE_LIMITS, RateLimiter } from './rate-limit';
+import type {
+  ScopeGate,
+  ScopeGateInput,
+  ScopeGateMode,
+  ScopeGateResult,
+} from './scope-gate';
 import { SpendBrake, dayKey } from './spend-brake';
 import { MemoryStore } from './store';
 
@@ -30,6 +36,7 @@ const context: AiContextFile = {
         { id: 'demo-note', kind: 'note', title: 'Nota' },
       ],
       estimatedTokens: 10,
+      topics: ['Demo Co', 'App'],
     },
     en: {
       document: '<portfolio_content locale="en">…</portfolio_content>',
@@ -98,6 +105,8 @@ function setup(
     turnstile?: boolean;
     perMinute?: number;
     offersPerDay?: number;
+    scopeGate?: ScopeGate;
+    scopeGateMode?: ScopeGateMode;
   } = {},
 ) {
   const store = new MemoryStore();
@@ -119,6 +128,12 @@ function setup(
     verifyTurnstile: async () => options.turnstile ?? true,
     hashIp: (ip) => `hash-${ip}`,
     context,
+    ...(options.scopeGate
+      ? {
+          scopeGate: options.scopeGate,
+          scopeGateMode: options.scopeGateMode ?? 'enforce',
+        }
+      : {}),
     allowedOrigins: [ORIGIN],
     now: () => NOW,
     newRequestId: () => 'req-1',
@@ -547,5 +562,184 @@ describe('AI handler, offer mode (S11)', () => {
       mode: 'offer',
       outcome: 'budget_exhausted',
     });
+  });
+});
+
+class FakeGate implements ScopeGate {
+  readonly model = 'fake-gate';
+  inputs: ScopeGateInput[] = [];
+  constructor(private readonly result: ScopeGateResult) {}
+  async check(input: ScopeGateInput): Promise<ScopeGateResult> {
+    this.inputs.push(input);
+    return this.result;
+  }
+}
+
+const gateMeta = { model: 'jev-test', inputTokens: 1_000, latencyMs: 120 };
+const rejecting = (language?: 'es' | 'en') =>
+  new FakeGate({
+    verdict: 'reject',
+    inScope: 0.05,
+    ...(language ? { language } : {}),
+    ...gateMeta,
+  });
+const passing = () =>
+  new FakeGate({ verdict: 'pass', inScope: 0.92, language: 'es', ...gateMeta });
+
+describe('AI handler with the scope gate (S17)', () => {
+  it('passes in-scope questions on to the model and logs the score', async () => {
+    const scopeGate = passing();
+    const { run, provider, store } = setup({ scopeGate });
+    const sink = await run();
+
+    expect(sink.status).toBe(200);
+    expect(provider.requests).toHaveLength(1);
+    expect(scopeGate.inputs[0]).toEqual({
+      locale: 'es',
+      messages: [{ role: 'user', content: '¿Ha hecho apps de banca?' }],
+      topics: ['Demo Co', 'App'],
+    });
+    expect(store.logs[0]).toMatchObject({
+      outcome: 'answered',
+      gate: 'pass',
+      gateScore: 0.92,
+      gateModel: 'jev-test',
+      gateLatencyMs: 120,
+      // 1000 tokens x 0.042 USD/MTok = 42 µUSD
+      gateCostMicroUsd: 42,
+      costMicroUsd: 55,
+    });
+    // The brake counts both: 42 (gate) + 55 (model).
+    expect(store.items.get(dayKey(NOW))).toEqual({
+      committed: 97,
+      spent: 97,
+      requests: 1,
+    });
+  });
+
+  it('answers a rejected question itself, without calling the model', async () => {
+    const { run, provider, store } = setup({ scopeGate: rejecting('en') });
+    const sink = await run();
+
+    expect(sink.status).toBe(200);
+    expect(provider.requests).toHaveLength(0);
+    const events = sink.events;
+    expect(events.map((e) => e.type)).toEqual(['meta', 'delta', 'done']);
+    expect(events[0]).toEqual({
+      type: 'meta',
+      requestId: 'req-1',
+      model: 'jev-test',
+    });
+    // In the language the gate detected, not the page locale.
+    expect(events[1]).toMatchObject({
+      text: expect.stringContaining('professional profile'),
+    });
+    expect(events[2]).toMatchObject({
+      type: 'done',
+      sources: [],
+      stopReason: 'off_topic',
+      costUsd: 0.000042,
+      model: 'jev-test',
+    });
+    expect(store.logs[0]).toMatchObject({
+      outcome: 'off_topic',
+      gate: 'reject',
+      gateScore: 0.05,
+      costMicroUsd: 0,
+      gateCostMicroUsd: 42,
+      sources: [],
+    });
+    expect(store.items.get(dayKey(NOW))).toEqual({ committed: 42, spent: 42 });
+  });
+
+  it('falls back to the page locale when the language is unsure', async () => {
+    const { run } = setup({ scopeGate: rejecting() });
+    const sink = await run();
+    expect(sink.events[1]).toMatchObject({
+      text: expect.stringContaining('perfil profesional'),
+    });
+  });
+
+  it('lets the question through when the gate fails (fail open)', async () => {
+    const scopeGate = new FakeGate({
+      verdict: 'error',
+      reason: 'timeout',
+      model: 'jev-test',
+      inputTokens: 0,
+      latencyMs: 1_500,
+    });
+    const { run, provider, store } = setup({ scopeGate });
+    const sink = await run();
+
+    expect(sink.status).toBe(200);
+    expect(provider.requests).toHaveLength(1);
+    expect(store.logs[0]).toMatchObject({
+      outcome: 'answered',
+      gate: 'error',
+      gateError: 'timeout',
+      gateCostMicroUsd: 0,
+    });
+    expect(store.logs[0]).not.toHaveProperty('gateScore');
+  });
+
+  it('never blocks in shadow mode, but logs what it would have done', async () => {
+    const { run, provider, store } = setup({
+      scopeGate: rejecting('es'),
+      scopeGateMode: 'shadow',
+    });
+    const sink = await run();
+
+    expect(sink.status).toBe(200);
+    expect(provider.requests).toHaveLength(1);
+    expect(store.logs[0]).toMatchObject({
+      outcome: 'answered',
+      gate: 'shadow_reject',
+      gateScore: 0.05,
+    });
+  });
+
+  it('does not run in off mode', async () => {
+    const scopeGate = rejecting();
+    const { run, provider } = setup({ scopeGate, scopeGateMode: 'off' });
+    await run();
+    expect(scopeGate.inputs).toHaveLength(0);
+    expect(provider.requests).toHaveLength(1);
+  });
+
+  it('runs after the per-IP limit and Turnstile', async () => {
+    const limitedGate = passing();
+    const limited = setup({ scopeGate: limitedGate, perMinute: 1 });
+    await limited.run();
+    expect((await limited.run()).status).toBe(429);
+    expect(limitedGate.inputs).toHaveLength(1);
+
+    const botGate = passing();
+    const bot = setup({ scopeGate: botGate, turnstile: false });
+    expect((await bot.run()).status).toBe(403);
+    expect(botGate.inputs).toHaveLength(0);
+  });
+
+  it('never runs on job offers', async () => {
+    const scopeGate = rejecting();
+    const { run } = setup({ scopeGate });
+    await run(
+      {},
+      {
+        mode: 'offer',
+        locale: 'es',
+        turnstileToken: 'token',
+        offer: 'Buscamos ingeniera de IA.',
+      },
+    );
+    expect(scopeGate.inputs).toHaveLength(0);
+  });
+
+  it('keeps the question text out of the operational log', async () => {
+    const { run, operational } = setup({ scopeGate: rejecting() });
+    await run();
+    expect(JSON.stringify(operational)).not.toContain('banca');
+    expect(operational).toContainEqual(
+      expect.objectContaining({ outcome: 'off_topic' }),
+    );
   });
 });

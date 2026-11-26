@@ -1,4 +1,4 @@
-import type { AiConfig } from './ai-config';
+import { scopeGateLinks, type AiConfig } from './ai-config';
 
 /**
  * AI backend (S09): a streaming Lambda behind a Function URL, one DynamoDB
@@ -8,6 +8,8 @@ import type { AiConfig } from './ai-config';
  *   pnpm exec sst secret set AnthropicApiKey <key> --stage <stage>
  *   pnpm exec sst secret set TurnstileSecret <secret> --stage <stage>
  *   pnpm exec sst secret set IpHashSalt "$(openssl rand -hex 32)" --stage <stage>
+ * With the scope gate (S17) in shadow or enforce, also:
+ *   pnpm exec sst secret set TypeSafeApiKey <key> --stage <stage>
  *
  * `contextDir` holds context.json, generated from src/content right before
  * this runs (see sst.config.ts); it is copied next to the handler.
@@ -16,6 +18,11 @@ export function createAi(config: AiConfig, contextDir: string) {
   const anthropicApiKey = new sst.Secret('AnthropicApiKey');
   const turnstileSecret = new sst.Secret('TurnstileSecret');
   const ipHashSalt = new sst.Secret('IpHashSalt');
+  // Only declared when the gate runs, so stages without it need no key.
+  const gateLinks = scopeGateLinks(
+    config,
+    () => new sst.Secret('TypeSafeApiKey'),
+  );
 
   const table = new sst.aws.Dynamo('AiTable', {
     fields: { pk: 'string', sk: 'string' },
@@ -35,7 +42,7 @@ export function createAi(config: AiConfig, contextDir: string) {
     streaming: true,
     // Only the secrets are linked: linking the table would grant
     // dynamodb:* on it, so its access is declared by hand below.
-    link: [anthropicApiKey, turnstileSecret, ipHashSalt],
+    link: [anthropicApiKey, turnstileSecret, ipHashSalt, ...gateLinks],
     permissions: [
       {
         actions: ['dynamodb:UpdateItem', 'dynamodb:PutItem'],
@@ -46,6 +53,7 @@ export function createAi(config: AiConfig, contextDir: string) {
       AI_TABLE_NAME: table.name,
       AI_ALLOWED_ORIGINS: allowedOrigins.join(','),
       AI_DAILY_LIMIT_USD: String(config.dailyLimitUsd),
+      AI_SCOPE_GATE: config.scopeGate,
     },
     copyFiles: [{ from: contextDir, to: 'ai-context' }],
     logging: { retention: '1 month' },

@@ -98,6 +98,16 @@ export function maxCostMicroUsd(
   );
 }
 
+/**
+ * Jev (TypeSafe AI, scope gate of S17): USD per million input tokens, from
+ * docs.typesafe.ai/models (2026-11-26). Output tokens are free.
+ */
+export const JEV_INPUT_PRICE = 0.042;
+
+/** Real cost of a gate call, rounded up to a whole micro-dollar. */
+export const jevCostMicroUsd = (inputTokens: number): number =>
+  Math.ceil(Number((inputTokens * JEV_INPUT_PRICE).toFixed(6)));
+
 export const microUsdToUsd = (micro: number): number => micro / 1_000_000;
 export const usdToMicroUsd = (usd: number): number =>
   Math.round(usd * 1_000_000);

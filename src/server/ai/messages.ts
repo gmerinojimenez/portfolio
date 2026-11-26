@@ -62,6 +62,15 @@ export const MESSAGES: Record<Locale, Record<ErrorCode, string>> = {
   },
 };
 
+/**
+ * Answer to a question the scope gate rejected (S17). It streams like any
+ * answer, so the console shows it as a decline, not as an error.
+ */
+export const OFF_TOPIC_ANSWER: Record<Locale, string> = {
+  es: 'Solo puedo hablar de su perfil profesional: experiencia, proyectos, tecnologías, formación o cómo contactarle. Prueba, por ejemplo, con «¿Qué experiencia tiene con IA?», o escribe `help` para ver los comandos.',
+  en: 'I can only talk about his professional profile: experience, projects, technologies, education or how to reach him. Try, for example, "What AI experience does he have?", or type `help` to see the commands.',
+};
+
 export interface WireUsage {
   inputTokens: number;
   outputTokens: number;

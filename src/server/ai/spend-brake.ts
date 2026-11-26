@@ -66,6 +66,20 @@ export class SpendBrake {
     );
   }
 
+  /**
+   * Adds a cost already incurred without a reservation: the scope gate (S17),
+   * whose calls cost a few micro-dollars. Unconditional, so it can push the
+   * day past the limit by that much; the next reservation then fails.
+   */
+  async charge(amountMicroUsd: number, now: Date): Promise<void> {
+    if (amountMicroUsd <= 0) return;
+    await this.store.add(
+      dayKey(now),
+      { committed: amountMicroUsd, spent: amountMicroUsd },
+      this.expiresAt(now),
+    );
+  }
+
   /** Gives the reservation back (the call failed before costing anything). */
   async release(reservation: Reservation, now: Date): Promise<void> {
     await this.store.add(

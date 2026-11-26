@@ -27,6 +27,7 @@ Exported in the shell before running `sst deploy`.
 | `PORTFOLIO_AI_ENABLED`         | `true` creates the AI backend (needs its three secrets set first). |
 | `PORTFOLIO_AI_ALLOWED_ORIGINS` | Extra origins allowed to call it, e.g. the CloudFront URL.         |
 | `PORTFOLIO_AI_DAILY_LIMIT_USD` | Daily spend brake for Claude calls, default 0.5.                   |
+| `PORTFOLIO_AI_SCOPE_GATE`      | Scope gate (S17): `off` (default), `shadow` or `enforce`.          |
 
 ## Deploying
 
@@ -70,6 +71,12 @@ secrets (see the header of `ai.ts`):
 pnpm exec sst secret set AnthropicApiKey <key> --stage production
 pnpm exec sst secret set TurnstileSecret <secret> --stage production
 pnpm exec sst secret set IpHashSalt "$(openssl rand -hex 32)" --stage production
+```
+
+With `PORTFOLIO_AI_SCOPE_GATE=shadow` or `enforce`, also set the Jev key:
+
+```sh
+pnpm exec sst secret set TypeSafeApiKey <key> --stage production
 ```
 
 Each deploy rebuilds `.ai-context/context.json` from `src/content` and ships it

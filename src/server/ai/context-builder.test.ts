@@ -110,6 +110,10 @@ describe('AI context builder', () => {
       'item:lib',
       'note:nota',
     ]);
+    // Scope gate topics (S17): companies first, then the published titles.
+    expect(es.topics?.[0]).toBe('Acme');
+    expect(es.topics).not.toContain('Borrador secreto');
+    expect(es.topics?.length).toBe(1 + 3);
     expect(es.document).toContain('<item id="app" type="app" lang="es">');
     expect(es.document).toContain('<note id="nota" lang="es">');
     expect(es.document).not.toContain('Borrador secreto');

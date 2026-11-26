@@ -8,13 +8,21 @@
  *                                  endpoint, e.g. https://xxxx.cloudfront.net.
  *                                  Added to the custom domain's origins.
  *   PORTFOLIO_AI_DAILY_LIMIT_USD   daily spend brake (default 0.5).
+ *   PORTFOLIO_AI_SCOPE_GATE        scope gate (S17): off (default), shadow or
+ *                                  enforce. shadow and enforce need the
+ *                                  TypeSafeApiKey secret.
  */
 import type { PortfolioConfig } from './config';
+
+/** Same values as ScopeGateMode in src/server/ai/scope-gate.ts. */
+export type ScopeGateMode = 'off' | 'shadow' | 'enforce';
+const SCOPE_GATE_MODES: readonly ScopeGateMode[] = ['off', 'shadow', 'enforce'];
 
 export interface AiConfig {
   enabled: boolean;
   allowedOrigins: string[];
   dailyLimitUsd: number;
+  scopeGate: ScopeGateMode;
 }
 
 export const DEFAULT_AI_DAILY_LIMIT_USD = 0.5;
@@ -61,9 +69,22 @@ export function resolveAiConfig(env: Env, config: PortfolioConfig): AiConfig {
     );
   }
 
+  const rawGate = env.PORTFOLIO_AI_SCOPE_GATE?.trim() || 'off';
+  if (!SCOPE_GATE_MODES.includes(rawGate as ScopeGateMode)) {
+    throw new Error(
+      `PORTFOLIO_AI_SCOPE_GATE must be one of ${SCOPE_GATE_MODES.join(', ')}: "${rawGate}"`,
+    );
+  }
+
   return {
     enabled: env.PORTFOLIO_AI_ENABLED?.trim() === 'true',
     allowedOrigins: [...origins],
     dailyLimitUsd,
+    scopeGate: rawGate as ScopeGateMode,
   };
+}
+
+/** The scope gate's secret, created only when the gate runs (S17). */
+export function scopeGateLinks<T>(config: AiConfig, secret: () => T): T[] {
+  return config.scopeGate === 'off' ? [] : [secret()];
 }

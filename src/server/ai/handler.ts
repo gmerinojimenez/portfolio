@@ -4,8 +4,13 @@
  * tests drive it with in-memory fakes.
  *
  * Order of checks, cheapest and most protective first:
- *   method -> origin -> body -> per-IP limit -> Turnstile -> spend brake
- *   -> model (streamed) -> settle the brake -> question log.
+ *   method -> origin -> body -> per-IP limit -> Turnstile -> scope gate
+ *   -> spend brake -> model (streamed) -> settle the brake -> question log.
+ *
+ * The scope gate (S17) only runs on questions, after the limits so nobody can
+ * spend gate calls without passing them. In `enforce` mode a clear off-topic
+ * question gets a fixed answer and never reaches the model; a gate failure
+ * lets the question through.
  *
  * Two modes share that pipeline: questions (`chat`, S09), whose answer
  * streams as `delta` lines, and job offers (`offer`, S11), whose structured
@@ -17,6 +22,7 @@ import type { Locale } from '../../lib/locales';
 import type { AiContextFile } from './context';
 import {
   NDJSON,
+  OFF_TOPIC_ANSWER,
   STATUS,
   errorEvent,
   line,
@@ -27,6 +33,7 @@ import {
   costMicroUsd,
   emptyUsage,
   estimateTokens,
+  jevCostMicroUsd,
   maxCostMicroUsd,
   microUsdToUsd,
   type TokenUsage,
@@ -43,8 +50,9 @@ import {
 import { extractSources, systemInstructions } from './prompt';
 import { ProviderError, type AiProvider } from './provider';
 import type { RateLimiter } from './rate-limit';
+import type { ScopeGate, ScopeGateMode } from './scope-gate';
 import type { SpendBrake } from './spend-brake';
-import type { Outcome, QuestionLog } from './store';
+import type { Outcome, QuestionLog, QuestionLogEntry } from './store';
 import type { TurnstileVerifier } from './turnstile';
 import {
   DEFAULT_INPUT_LIMITS,
@@ -78,6 +86,9 @@ export interface HandlerDeps {
   verifyTurnstile: TurnstileVerifier;
   hashIp: (ip: string) => string;
   context: AiContextFile;
+  /** Scope gate for questions (S17). Without it, or in `off`, it never runs. */
+  scopeGate?: ScopeGate;
+  scopeGateMode?: ScopeGateMode;
   /** Exact `Origin` values allowed. Empty = reject everything (fail closed). */
   allowedOrigins: string[];
   maxTokens?: number;
@@ -110,6 +121,9 @@ export function createAiHandler(deps: HandlerDeps) {
   const maxTokens = deps.maxTokens ?? DEFAULT_MAX_TOKENS;
   const offerMaxTokens = deps.offerMaxTokens ?? OFFER_MAX_TOKENS;
   const logTtlDays = deps.logTtlDays ?? DEFAULT_LOG_TTL_DAYS;
+  const gateMode: ScopeGateMode = deps.scopeGate
+    ? (deps.scopeGateMode ?? 'off')
+    : 'off';
 
   return async function handle(
     request: HttpRequest,
@@ -209,6 +223,8 @@ export function createAiHandler(deps: HandlerDeps) {
       const { instructions, messages, question, turn } = plan;
       const mode = isOffer ? 'offer' : 'chat';
       const company = value.mode === 'offer' ? value.company : undefined;
+      // Scope gate fields of the question log, set when the gate runs.
+      let gateLog: Partial<QuestionLogEntry> = {};
 
       const writeLog = async (
         outcome: Outcome,
@@ -239,6 +255,7 @@ export function createAiHandler(deps: HandlerDeps) {
               ...usage,
               costMicroUsd: cost,
               latencyMs: at.getTime() - startedAt.getTime(),
+              ...gateLog,
             },
             Math.floor(at.getTime() / 1000) + logTtlDays * 86_400,
           );
@@ -250,6 +267,64 @@ export function createAiHandler(deps: HandlerDeps) {
           });
         }
       };
+
+      if (value.mode !== 'offer' && deps.scopeGate && gateMode !== 'off') {
+        const result = await deps.scopeGate.check({
+          locale,
+          messages: value.messages,
+          topics: context.topics ?? [],
+        });
+        const gateCost = jevCostMicroUsd(result.inputTokens);
+        try {
+          await deps.brake.charge(gateCost, now());
+        } catch (error) {
+          logger({
+            requestId,
+            warning: 'brake charge failed',
+            error: String(error),
+          });
+        }
+        const rejects = result.verdict === 'reject';
+        const enforced = rejects && gateMode === 'enforce';
+        gateLog = {
+          gate: rejects && !enforced ? 'shadow_reject' : result.verdict,
+          ...(result.verdict === 'error'
+            ? { gateError: result.reason }
+            : { gateScore: result.inScope }),
+          gateModel: result.model,
+          gateLatencyMs: result.latencyMs,
+          gateCostMicroUsd: gateCost,
+        };
+        logger({ requestId, mode, ...gateLog });
+
+        if (enforced) {
+          const replyLocale =
+            (result.verdict === 'reject' ? result.language : undefined) ??
+            locale;
+          const text = OFF_TOPIC_ANSWER[replyLocale];
+          const gateUsage = {
+            ...emptyUsage(),
+            inputTokens: result.inputTokens,
+          };
+          start(200);
+          send({ type: 'meta', requestId, model: result.model });
+          send({ type: 'delta', text });
+          send({
+            type: 'done',
+            sources: [],
+            stopReason: 'off_topic',
+            usage: gateUsage,
+            costUsd: microUsdToUsd(gateCost),
+            latencyMs: now().getTime() - startedAt.getTime(),
+            model: result.model,
+          });
+          finish();
+          // The log's token and cost fields stay the model's: none here.
+          await writeLog('off_topic', text, [], emptyUsage(), 0, result.model);
+          logger({ requestId, outcome: 'off_topic', mode, locale, turn });
+          return;
+        }
+      }
 
       const estimatedInput = estimateTokens(
         instructions +

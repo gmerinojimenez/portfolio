@@ -137,4 +137,16 @@ describe('SpendBrake', () => {
     );
     expect(second.filter((r) => r !== null)).toHaveLength(4);
   });
+
+  it('charges the scope gate cost unconditionally, counted in the day (S17)', async () => {
+    const store = new MemoryStore();
+    const brake = new SpendBrake(store, 100);
+    await brake.charge(0, day);
+    expect(store.items.size).toBe(0);
+    await brake.charge(42, day);
+    expect(store.items.get(dayKey(day))).toEqual({ committed: 42, spent: 42 });
+    // The next reservation sees it.
+    expect(await brake.reserve(60, day)).toBeNull();
+    expect(await brake.reserve(58, day)).not.toBeNull();
+  });
 });
