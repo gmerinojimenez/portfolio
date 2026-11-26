@@ -28,9 +28,10 @@ const known = [
 ];
 
 describe('eval questions', () => {
-  it('has 30–45 questions with unique ids and every type', () => {
+  it('has 30–65 questions with unique ids and every type', () => {
     expect(questions.length).toBeGreaterThanOrEqual(30);
-    expect(questions.length).toBeLessThanOrEqual(45);
+    // S17 added borderline and off-topic questions for the scope gate.
+    expect(questions.length).toBeLessThanOrEqual(65);
     expect(new Set(questions.map((q) => q.id)).size).toBe(questions.length);
     expect(new Set(questions.map((q) => q.type))).toEqual(
       new Set([
@@ -40,6 +41,7 @@ describe('eval questions', () => {
         'english',
         'offtopic',
         'multiturn',
+        'borderline',
       ]),
     );
   });

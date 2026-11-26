@@ -8,7 +8,14 @@ import { extractSources } from '../src/server/ai/prompt';
 import type { ChatTurn } from '../src/server/ai/validation';
 
 export type QuestionType =
-  'aggregate' | 'detail' | 'negative' | 'english' | 'offtopic' | 'multiturn';
+  | 'aggregate'
+  | 'detail'
+  | 'negative'
+  | 'english'
+  | 'offtopic'
+  | 'multiturn'
+  /** In scope, but easy for the scope gate (S17) to get wrong. */
+  | 'borderline';
 
 export interface EvalQuestion {
   id: string;
@@ -30,6 +37,11 @@ export interface EvalQuestion {
   minCited?: number;
   /** At most this many words (e.g. "a short summary"). */
   maxWords?: number;
+  /**
+   * Expected scope gate verdict (S17). Default: `reject` for offtopic,
+   * `pass` for everything else. `any` when either is fine.
+   */
+  gate?: 'pass' | 'reject' | 'any';
 }
 
 export interface Grade {

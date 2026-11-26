@@ -8,7 +8,9 @@
  *   AI_ALLOWED_ORIGINS     comma-separated exact origins
  *   AI_DAILY_LIMIT_USD     spend brake limit
  *   AI_CONTEXT_PATH        optional; defaults to <task root>/ai-context/context.json
- * Secrets come from SST links: AnthropicApiKey, TurnstileSecret, IpHashSalt.
+ *   AI_SCOPE_GATE          off (default), shadow or enforce (S17)
+ * Secrets come from SST links: AnthropicApiKey, TurnstileSecret, IpHashSalt,
+ * and TypeSafeApiKey when the scope gate runs.
  */
 import { join } from 'node:path';
 import type { LambdaFunctionURLEvent } from 'aws-lambda';
@@ -23,9 +25,11 @@ import {
   type ResponseSink,
 } from './handler';
 import { hashIp } from './ip-hash';
+import { JevScopeGate, createJevClient } from './jev-scope-gate';
 import { NDJSON, errorEvent, line } from './messages';
 import { usdToMicroUsd } from './pricing';
 import { OFFER_RATE_LIMITS, RateLimiter } from './rate-limit';
+import { SCOPE_GATE_MODES, type ScopeGateMode } from './scope-gate';
 import { SpendBrake } from './spend-brake';
 import { DynamoStore } from './store-dynamo';
 import { createTurnstileVerifier } from './turnstile';
@@ -69,6 +73,12 @@ function getHandler() {
     required('AI_TABLE_NAME'),
   );
   const salt = secret('IpHashSalt');
+  const gateMode = (process.env.AI_SCOPE_GATE ?? 'off') as ScopeGateMode;
+  if (!SCOPE_GATE_MODES.includes(gateMode)) {
+    throw new Error(
+      `AI_SCOPE_GATE must be one of ${SCOPE_GATE_MODES.join(', ')}`,
+    );
+  }
   const contextPath =
     process.env.AI_CONTEXT_PATH ??
     join(
@@ -89,6 +99,14 @@ function getHandler() {
     ),
     hashIp: (ip) => hashIp(ip, salt),
     context: loadAiContext(contextPath),
+    ...(gateMode === 'off'
+      ? {}
+      : {
+          scopeGate: new JevScopeGate(
+            createJevClient(secret('TypeSafeApiKey')),
+          ),
+          scopeGateMode: gateMode,
+        }),
     allowedOrigins,
   });
   return cached;

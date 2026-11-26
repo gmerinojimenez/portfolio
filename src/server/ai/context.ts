@@ -20,6 +20,11 @@ export interface LocaleContext {
   sources: SourceRef[];
   /** Rough size (~3.5 chars per token), for the cost estimate and ADR 0011. */
   estimatedTokens: number;
+  /**
+   * Item titles and company names, for the scope gate (S17): a question about
+   * "the ZKTeco SDK" is in scope even if it never mentions the author.
+   */
+  topics?: string[];
 }
 
 export interface AiContextFile {

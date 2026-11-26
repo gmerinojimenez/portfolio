@@ -7,6 +7,12 @@
  *   ANTHROPIC_API_KEY=... pnpm eval --offers   only the offers (S11)
  *   ANTHROPIC_API_KEY=... pnpm eval --questions
  *                                              only the questions
+ *   TYPESAFE_API_KEY=... pnpm eval --gate
+ *                                              only the scope gate (S17) over
+ *                                              every question: no Claude calls
+ *   ANTHROPIC_API_KEY=... TYPESAFE_API_KEY=... pnpm eval --with-gate
+ *                                              the questions with the gate in
+ *                                              enforce mode in front of Claude
  *   pnpm eval --regrade evals/results/<file>.json
  *                                              re-grade saved answers with the
  *                                              current grader and questions,
@@ -25,6 +31,8 @@ import {
   readContentSnapshot,
 } from '../src/server/ai/context-builder';
 import { DEFAULT_MAX_TOKENS } from '../src/server/ai/handler';
+import { JevScopeGate, createJevClient } from '../src/server/ai/jev-scope-gate';
+import { OFF_TOPIC_ANSWER } from '../src/server/ai/messages';
 import {
   OFFER_MAX_TOKENS,
   offerInstructions,
@@ -34,6 +42,7 @@ import {
 import {
   costMicroUsd,
   emptyUsage,
+  jevCostMicroUsd,
   microUsdToUsd,
   type TokenUsage,
 } from '../src/server/ai/pricing';
@@ -47,6 +56,7 @@ import {
   type Grade,
   type OfferGrade,
 } from './grade';
+import { gateExpectation, summarizeGate, type GateOutcome } from './gate';
 
 /** Questions with the file-wide `mustNotMentionAnywhere` added to each one. */
 function loadQuestions(): EvalQuestion[] {
@@ -97,6 +107,70 @@ if (regradeAt !== -1) {
   process.exit(0);
 }
 
+function writeResults(payload: unknown, suffix = ''): string {
+  mkdirSync('evals/results', { recursive: true });
+  const file = join(
+    'evals/results',
+    `${new Date().toISOString().replace(/[:.]/g, '-')}${suffix}.json`,
+  );
+  writeFileSync(file, `${JSON.stringify(payload, null, 2)}\n`);
+  return file;
+}
+
+const typesafeKey = process.env.TYPESAFE_API_KEY;
+const scopeGate = typesafeKey
+  ? new JevScopeGate(createJevClient(typesafeKey))
+  : undefined;
+
+if (process.argv.includes('--gate')) {
+  if (!scopeGate) {
+    console.log('TYPESAFE_API_KEY is not set: skipping the gate eval.');
+    process.exit(0);
+  }
+  const gateContext = buildAiContext(readContentSnapshot('src/content'));
+  const outcomes: GateOutcome[] = [];
+  for (const q of loadQuestions()) {
+    const result = await scopeGate.check({
+      locale: q.locale,
+      messages: turnsOf(q),
+      topics: gateContext.locales[q.locale].topics ?? [],
+    });
+    const outcome: GateOutcome = {
+      id: q.id,
+      type: q.type,
+      expected: gateExpectation(q),
+      verdict: result.verdict,
+      ...(result.verdict === 'error'
+        ? { reason: result.reason }
+        : { inScope: result.inScope }),
+      latencyMs: result.latencyMs,
+      inputTokens: result.inputTokens,
+    };
+    outcomes.push(outcome);
+    const wrong =
+      outcome.expected !== 'any' && outcome.verdict !== outcome.expected;
+    console.log(
+      `${wrong ? 'MISS' : 'ok  '}  ${q.id.padEnd(28)} ${outcome.verdict.padEnd(6)} ${outcome.inScope?.toFixed(2) ?? outcome.reason}  ${outcome.latencyMs} ms`,
+    );
+  }
+  const report = summarizeGate(outcomes);
+  const summary = {
+    model: scopeGate.model,
+    ...report,
+    costUsd: microUsdToUsd(jevCostMicroUsd(report.inputTokens)),
+  };
+  const file = writeResults({ summary, outcomes }, '-gate');
+  console.log(JSON.stringify(summary, null, 2));
+  console.log(`Wrote ${file}`);
+  process.exit(0);
+}
+
+const withGate = process.argv.includes('--with-gate');
+if (withGate && !scopeGate) {
+  console.error('--with-gate needs TYPESAFE_API_KEY.');
+  process.exit(1);
+}
+
 const apiKey = process.env.ANTHROPIC_API_KEY;
 if (!apiKey) {
   console.log(
@@ -143,6 +217,8 @@ interface Result {
   error?: string;
   /** Fill in by hand: 0 (bad) to 2 (good) for tone and usefulness. */
   manual: number | null;
+  /** --with-gate: the gate's verdict and score. */
+  gate?: { verdict: string; inScope?: number; latencyMs: number };
 }
 
 const results: Result[] = [];
@@ -154,19 +230,42 @@ for (const q of selected) {
   let usage = emptyUsage();
   let stopReason = 'error';
   let error: string | undefined;
-  try {
-    for await (const event of provider.stream({
-      instructions: systemInstructions(q.locale),
-      context: context.locales[q.locale].document,
+  let gate: Result['gate'];
+  let gateCost = 0;
+  let rejected = false;
+  if (withGate && scopeGate) {
+    const checked = await scopeGate.check({
+      locale: q.locale,
       messages,
-      maxTokens: DEFAULT_MAX_TOKENS,
-    })) {
-      if (event.type === 'text') answer += event.text;
-      else {
-        usage = event.usage;
-        stopReason = event.stopReason;
-      }
+      topics: context.locales[q.locale].topics ?? [],
+    });
+    gateCost = jevCostMicroUsd(checked.inputTokens);
+    gate = {
+      verdict: checked.verdict,
+      ...(checked.verdict === 'error' ? {} : { inScope: checked.inScope }),
+      latencyMs: checked.latencyMs,
+    };
+    if (checked.verdict === 'reject') {
+      // As in enforce mode: the fixed answer, and Claude is not called.
+      rejected = true;
+      answer = OFF_TOPIC_ANSWER[checked.language ?? q.locale];
+      stopReason = 'off_topic';
     }
+  }
+  try {
+    if (!rejected)
+      for await (const event of provider.stream({
+        instructions: systemInstructions(q.locale),
+        context: context.locales[q.locale].document,
+        messages,
+        maxTokens: DEFAULT_MAX_TOKENS,
+      })) {
+        if (event.type === 'text') answer += event.text;
+        else {
+          usage = event.usage;
+          stopReason = event.stopReason;
+        }
+      }
   } catch (e) {
     error = e instanceof Error ? e.message : String(e);
   }
@@ -178,15 +277,16 @@ for (const q of selected) {
     answer,
     stopReason,
     usage,
-    costUsd: microUsdToUsd(costMicroUsd(usage)),
+    costUsd: microUsdToUsd(costMicroUsd(usage) + gateCost),
     latencyMs: Date.now() - started,
     grade: error ? null : grade(q, answer, context.locales[q.locale].sources),
     ...(error ? { error } : {}),
     manual: null,
+    ...(gate ? { gate } : {}),
   };
   results.push(result);
   console.log(
-    `${result.grade?.pass ? 'PASS' : 'FAIL'}  ${q.id.padEnd(28)} ${result.latencyMs} ms  $${result.costUsd.toFixed(5)}`,
+    `${result.grade?.pass ? 'PASS' : 'FAIL'}  ${q.id.padEnd(28)} ${result.latencyMs} ms  $${result.costUsd.toFixed(5)}${gate ? `  gate ${gate.verdict} ${gate.inScope?.toFixed(2) ?? ''}` : ''}`,
   );
 }
 
@@ -256,6 +356,7 @@ const totalCost =
   offerResults.reduce((sum, r) => sum + r.costUsd, 0);
 const summary = {
   model: provider.model,
+  ...(withGate ? { scopeGate: scopeGate?.model } : {}),
   contextTokensEstimate: context.locales.es.estimatedTokens,
   questions: results.length,
   passed: results.filter((r) => r.grade?.pass).length,
@@ -269,14 +370,9 @@ const summary = {
     : 0,
 };
 
-mkdirSync('evals/results', { recursive: true });
-const file = join(
-  'evals/results',
-  `${new Date().toISOString().replace(/[:.]/g, '-')}.json`,
-);
-writeFileSync(
-  file,
-  `${JSON.stringify({ summary, results, offerResults }, null, 2)}\n`,
+const file = writeResults(
+  { summary, results, offerResults },
+  withGate ? '-with-gate' : '',
 );
 console.log(JSON.stringify(summary, null, 2));
 console.log(`Wrote ${file}`);
