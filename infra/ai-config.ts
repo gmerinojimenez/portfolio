@@ -11,6 +11,11 @@
  *   PORTFOLIO_AI_SCOPE_GATE        scope gate (S17): off (default), shadow or
  *                                  enforce. shadow and enforce need the
  *                                  TypeSafeApiKey secret.
+ *   PORTFOLIO_AI_ORCHESTRATOR      who chains the chat's AI steps (S18):
+ *                                  direct (default) or langgraph.
+ *   PORTFOLIO_AI_TRACING           "true" traces the graph in LangSmith (EU).
+ *                                  Needs langgraph and the LangSmithApiKey
+ *                                  secret.
  */
 import type { PortfolioConfig } from './config';
 
@@ -18,11 +23,17 @@ import type { PortfolioConfig } from './config';
 export type ScopeGateMode = 'off' | 'shadow' | 'enforce';
 const SCOPE_GATE_MODES: readonly ScopeGateMode[] = ['off', 'shadow', 'enforce'];
 
+/** Same values as OrchestratorName in src/server/ai/chat-orchestrator.ts. */
+export type Orchestrator = 'direct' | 'langgraph';
+const ORCHESTRATORS: readonly Orchestrator[] = ['direct', 'langgraph'];
+
 export interface AiConfig {
   enabled: boolean;
   allowedOrigins: string[];
   dailyLimitUsd: number;
   scopeGate: ScopeGateMode;
+  orchestrator: Orchestrator;
+  tracing: boolean;
 }
 
 export const DEFAULT_AI_DAILY_LIMIT_USD = 0.5;
@@ -76,15 +87,41 @@ export function resolveAiConfig(env: Env, config: PortfolioConfig): AiConfig {
     );
   }
 
+  const rawOrchestrator = env.PORTFOLIO_AI_ORCHESTRATOR?.trim() || 'direct';
+  if (!ORCHESTRATORS.includes(rawOrchestrator as Orchestrator)) {
+    throw new Error(
+      `PORTFOLIO_AI_ORCHESTRATOR must be one of ${ORCHESTRATORS.join(', ')}: "${rawOrchestrator}"`,
+    );
+  }
+  const rawTracing = env.PORTFOLIO_AI_TRACING?.trim() || 'false';
+  if (rawTracing !== 'true' && rawTracing !== 'false') {
+    throw new Error(
+      `PORTFOLIO_AI_TRACING must be true or false: "${rawTracing}"`,
+    );
+  }
+  const tracing = rawTracing === 'true';
+  if (tracing && rawOrchestrator !== 'langgraph') {
+    throw new Error(
+      'PORTFOLIO_AI_TRACING=true needs PORTFOLIO_AI_ORCHESTRATOR=langgraph: only the graph is traced.',
+    );
+  }
+
   return {
     enabled: env.PORTFOLIO_AI_ENABLED?.trim() === 'true',
     allowedOrigins: [...origins],
     dailyLimitUsd,
     scopeGate: rawGate as ScopeGateMode,
+    orchestrator: rawOrchestrator as Orchestrator,
+    tracing,
   };
 }
 
 /** The scope gate's secret, created only when the gate runs (S17). */
 export function scopeGateLinks<T>(config: AiConfig, secret: () => T): T[] {
   return config.scopeGate === 'off' ? [] : [secret()];
+}
+
+/** LangSmith's secret, created only when tracing is on (S18). */
+export function tracingLinks<T>(config: AiConfig, secret: () => T): T[] {
+  return config.tracing ? [secret()] : [];
 }

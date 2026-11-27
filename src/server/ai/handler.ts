@@ -7,6 +7,9 @@
  *   method -> origin -> body -> per-IP limit -> Turnstile -> scope gate
  *   -> spend brake -> model (streamed) -> settle the brake -> question log.
  *
+ * The handler does the HTTP and abuse checks (up to Turnstile). The AI steps
+ * that follow live in chat-steps.ts, chained by an orchestrator (S18).
+ *
  * The scope gate (S17) only runs on questions, after the limits so nobody can
  * spend gate calls without passing them. In `enforce` mode a clear off-topic
  * question gets a fixed answer and never reaches the model; a gate failure
@@ -19,10 +22,15 @@
  */
 import { randomUUID } from 'node:crypto';
 import type { Locale } from '../../lib/locales';
+import {
+  DirectOrchestrator,
+  type ChatOrchestrator,
+  type ChatRun,
+} from './chat-orchestrator';
+import type { StepDeps } from './chat-steps';
 import type { AiContextFile } from './context';
 import {
   NDJSON,
-  OFF_TOPIC_ANSWER,
   STATUS,
   errorEvent,
   line,
@@ -30,34 +38,21 @@ import {
   type WireEvent,
 } from './messages';
 import {
-  costMicroUsd,
-  emptyUsage,
-  estimateTokens,
-  jevCostMicroUsd,
-  maxCostMicroUsd,
-  microUsdToUsd,
-  type TokenUsage,
-} from './pricing';
-import {
   OFFER_MAX_TOKENS,
-  analysisSources,
   offerInstructions,
   offerMessage,
   offerSchema,
-  parseAnalysis,
-  type OfferAnalysis,
 } from './offer';
-import { extractSources, systemInstructions } from './prompt';
-import { ProviderError, type AiProvider } from './provider';
+import { systemInstructions } from './prompt';
+import type { AiProvider } from './provider';
 import type { RateLimiter } from './rate-limit';
 import type { ScopeGate, ScopeGateMode } from './scope-gate';
 import type { SpendBrake } from './spend-brake';
-import type { Outcome, QuestionLog, QuestionLogEntry } from './store';
+import type { QuestionLog } from './store';
 import type { TurnstileVerifier } from './turnstile';
 import {
   DEFAULT_INPUT_LIMITS,
   validateRequest,
-  type ChatTurn,
   type InputLimits,
 } from './validation';
 
@@ -99,13 +94,15 @@ export interface HandlerDeps {
   newRequestId?: () => string;
   /** Structured operational log (CloudWatch). Never receives question text. */
   logger?: (record: Record<string, unknown>) => void;
+  /**
+   * Who chains the AI steps of a question (S18). Default: `direct`. Job
+   * offers always go direct.
+   */
+  createChatOrchestrator?: (steps: StepDeps) => ChatOrchestrator;
 }
 
 export const DEFAULT_MAX_TOKENS = 1024;
 export const DEFAULT_LOG_TTL_DAYS = 90;
-const MAX_LOGGED_ANSWER = 2_000;
-/** An analysis is JSON with several lists: keep more of it. */
-const MAX_LOGGED_ANALYSIS = 6_000;
 
 const baseHeaders = {
   'content-type': NDJSON,
@@ -124,6 +121,18 @@ export function createAiHandler(deps: HandlerDeps) {
   const gateMode: ScopeGateMode = deps.scopeGate
     ? (deps.scopeGateMode ?? 'off')
     : 'off';
+  const steps: StepDeps = {
+    provider: deps.provider,
+    brake: deps.brake,
+    log: deps.log,
+    ...(deps.scopeGate ? { scopeGate: deps.scopeGate } : {}),
+    gateMode,
+    logTtlDays,
+    now,
+    logger,
+  };
+  const direct = new DirectOrchestrator(steps);
+  const chat = deps.createChatOrchestrator?.(steps) ?? direct;
 
   return async function handle(
     request: HttpRequest,
@@ -144,6 +153,14 @@ export function createAiHandler(deps: HandlerDeps) {
       sink.start(status, baseHeaders);
     };
     const send = (event: WireEvent) => sink.write(line(event));
+    // Steps emit wire events; the first sets the status, and `done` or
+    // `error` ends the response (what follows never delays the visitor).
+    const emit = (event: WireEvent) => {
+      if (ended) return;
+      start(event.type === 'error' ? STATUS[event.code] : 200);
+      send(event);
+      if (event.type === 'done' || event.type === 'error') finish();
+    };
     const reject = (
       code: ErrorCode,
       locale: Locale,
@@ -191,288 +208,55 @@ export function createAiHandler(deps: HandlerDeps) {
       const context = deps.context.locales[locale];
       // What each mode sends to the model. The company of an offer only
       // goes in the user message (see offer.ts).
-      const plan: {
-        instructions: string;
-        messages: ChatTurn[];
-        maxTokens: number;
-        jsonSchema?: Record<string, unknown>;
-        question: string;
-        turn: number;
-      } =
+      const run: ChatRun =
         value.mode === 'offer'
           ? {
-              instructions: offerInstructions(locale),
-              messages: [
-                {
-                  role: 'user',
-                  content: offerMessage(value.offer, value.company),
-                },
-              ],
-              maxTokens: offerMaxTokens,
-              jsonSchema: offerSchema(context.sources),
-              question: value.offer,
-              turn: 1,
+              req: {
+                requestId,
+                startedAt,
+                locale,
+                mode: 'offer',
+                ...(value.company ? { company: value.company } : {}),
+                question: value.offer,
+                turn: 1,
+              },
+              call: {
+                instructions: offerInstructions(locale),
+                context: context.document,
+                messages: [
+                  {
+                    role: 'user',
+                    content: offerMessage(value.offer, value.company),
+                  },
+                ],
+                maxTokens: offerMaxTokens,
+                jsonSchema: offerSchema(context.sources),
+                sources: context.sources,
+                topics: [],
+              },
             }
           : {
-              instructions: systemInstructions(locale),
-              messages: value.messages,
-              maxTokens,
-              question: value.messages.at(-1)?.content ?? '',
-              turn: Math.ceil(value.messages.length / 2),
+              req: {
+                requestId,
+                startedAt,
+                locale,
+                mode: 'chat',
+                question: value.messages.at(-1)?.content ?? '',
+                turn: Math.ceil(value.messages.length / 2),
+              },
+              call: {
+                instructions: systemInstructions(locale),
+                context: context.document,
+                messages: value.messages,
+                maxTokens,
+                sources: context.sources,
+                topics: context.topics ?? [],
+              },
             };
-      const { instructions, messages, question, turn } = plan;
-      const mode = isOffer ? 'offer' : 'chat';
-      const company = value.mode === 'offer' ? value.company : undefined;
-      // Scope gate fields of the question log, set when the gate runs.
-      let gateLog: Partial<QuestionLogEntry> = {};
 
-      const writeLog = async (
-        outcome: Outcome,
-        answer: string,
-        sources: string[],
-        usage: TokenUsage,
-        cost: number,
-        model: string,
-      ) => {
-        const at = now();
-        try {
-          await deps.log.put(
-            {
-              requestId,
-              at: startedAt.toISOString(),
-              locale,
-              mode,
-              ...(company ? { company } : {}),
-              question,
-              turn,
-              answer: answer.slice(
-                0,
-                isOffer ? MAX_LOGGED_ANALYSIS : MAX_LOGGED_ANSWER,
-              ),
-              sources,
-              outcome,
-              model,
-              ...usage,
-              costMicroUsd: cost,
-              latencyMs: at.getTime() - startedAt.getTime(),
-              ...gateLog,
-            },
-            Math.floor(at.getTime() / 1000) + logTtlDays * 86_400,
-          );
-        } catch (error) {
-          logger({
-            requestId,
-            warning: 'question log failed',
-            error: String(error),
-          });
-        }
-      };
-
-      if (value.mode !== 'offer' && deps.scopeGate && gateMode !== 'off') {
-        const result = await deps.scopeGate.check({
-          locale,
-          messages: value.messages,
-          topics: context.topics ?? [],
-        });
-        const gateCost = jevCostMicroUsd(result.inputTokens);
-        try {
-          await deps.brake.charge(gateCost, now());
-        } catch (error) {
-          logger({
-            requestId,
-            warning: 'brake charge failed',
-            error: String(error),
-          });
-        }
-        const rejects = result.verdict === 'reject';
-        const enforced = rejects && gateMode === 'enforce';
-        gateLog = {
-          gate: rejects && !enforced ? 'shadow_reject' : result.verdict,
-          ...(result.verdict === 'error'
-            ? { gateError: result.reason }
-            : { gateScore: result.inScope }),
-          gateModel: result.model,
-          gateLatencyMs: result.latencyMs,
-          gateCostMicroUsd: gateCost,
-        };
-        logger({ requestId, mode, ...gateLog });
-
-        if (enforced) {
-          const replyLocale =
-            (result.verdict === 'reject' ? result.language : undefined) ??
-            locale;
-          const text = OFF_TOPIC_ANSWER[replyLocale];
-          const gateUsage = {
-            ...emptyUsage(),
-            inputTokens: result.inputTokens,
-          };
-          start(200);
-          send({ type: 'meta', requestId, model: result.model });
-          send({ type: 'delta', text });
-          send({
-            type: 'done',
-            sources: [],
-            stopReason: 'off_topic',
-            usage: gateUsage,
-            costUsd: microUsdToUsd(gateCost),
-            latencyMs: now().getTime() - startedAt.getTime(),
-            model: result.model,
-          });
-          finish();
-          // The log's token and cost fields stay the model's: none here.
-          await writeLog('off_topic', text, [], emptyUsage(), 0, result.model);
-          logger({ requestId, outcome: 'off_topic', mode, locale, turn });
-          return;
-        }
-      }
-
-      const estimatedInput = estimateTokens(
-        instructions +
-          context.document +
-          messages.map((m) => m.content).join('\n'),
-      );
-      const reservation = await deps.brake.reserve(
-        maxCostMicroUsd(estimatedInput, plan.maxTokens),
-        startedAt,
-      );
-      if (!reservation) {
-        await writeLog(
-          'budget_exhausted',
-          '',
-          [],
-          emptyUsage(),
-          0,
-          deps.provider.model,
-        );
-        return reject('budget_exhausted', locale);
-      }
-
-      let answer = '';
-      let produced = false;
-      let end:
-        { usage: TokenUsage; stopReason: string; model: string } | undefined;
-
-      try {
-        for await (const event of deps.provider.stream({
-          instructions,
-          context: context.document,
-          messages,
-          maxTokens: plan.maxTokens,
-          ...(plan.jsonSchema ? { jsonSchema: plan.jsonSchema } : {}),
-        })) {
-          if (!produced) {
-            produced = true;
-            start(200);
-            send({ type: 'meta', requestId, model: deps.provider.model });
-          }
-          if (event.type === 'text') {
-            answer += event.text;
-            // An analysis is JSON: half of it is useless to the browser.
-            if (!isOffer) send({ type: 'delta', text: event.text });
-          } else {
-            end = event;
-          }
-        }
-        if (!end) throw new ProviderError('busy', 'stream ended without usage');
-      } catch (error) {
-        const kind = error instanceof ProviderError ? error.kind : 'internal';
-        logger({
-          requestId,
-          outcome: 'provider_error',
-          kind,
-          status: error instanceof ProviderError ? error.status : undefined,
-          error: error instanceof Error ? error.message : String(error),
-        });
-        try {
-          if (produced) {
-            // Tokens may have been billed: keep the whole reservation.
-            await deps.brake.settle(
-              reservation,
-              reservation.amountMicroUsd,
-              now(),
-            );
-          } else {
-            await deps.brake.release(reservation, now());
-          }
-        } catch (brakeError) {
-          logger({
-            requestId,
-            warning: 'brake update failed',
-            error: String(brakeError),
-          });
-        }
-        await writeLog(
-          'provider_error',
-          answer,
-          [],
-          emptyUsage(),
-          produced ? reservation.amountMicroUsd : 0,
-          deps.provider.model,
-        );
-        const code: ErrorCode =
-          error instanceof ProviderError ? 'unavailable' : 'internal';
-        start(STATUS[code]);
-        send(errorEvent(code, locale));
-        finish();
-        return;
-      }
-
-      const cost = costMicroUsd(end.usage);
-      let analysis: OfferAnalysis | undefined;
-      let sources;
-      if (isOffer) {
-        analysis = parseAnalysis(answer, context.sources);
-        sources = analysis ? analysisSources(analysis, context.sources) : [];
-        if (analysis) send({ type: 'analysis', analysis });
-      } else {
-        sources = extractSources(answer, context.sources);
-      }
-      const latencyMs = now().getTime() - startedAt.getTime();
-      send({
-        type: 'done',
-        sources,
-        stopReason: end.stopReason,
-        usage: end.usage,
-        costUsd: microUsdToUsd(cost),
-        latencyMs,
-        model: end.model,
-      });
-      finish();
-
-      try {
-        await deps.brake.settle(reservation, cost, now());
-      } catch (error) {
-        logger({
-          requestId,
-          warning: 'brake settle failed',
-          error: String(error),
-        });
-      }
-      const outcome: Outcome =
-        end.stopReason === 'refusal'
-          ? 'refusal'
-          : end.stopReason === 'max_tokens'
-            ? 'max_tokens'
-            : 'answered';
-      await writeLog(
-        outcome,
-        answer,
-        sources.map((s) => s.id),
-        end.usage,
-        cost,
-        end.model,
-      );
-      logger({
-        requestId,
-        outcome,
-        mode,
-        ...(isOffer ? { analysis: analysis !== undefined } : {}),
-        locale,
-        turn,
-        latencyMs,
-        costMicroUsd: cost,
-        ...end.usage,
-      });
+      // Job offers always take the direct path (ADR 0016).
+      const orchestrator = isOffer ? direct : chat;
+      await orchestrator.run(run, emit);
     } catch (error) {
       logger({ requestId, outcome: 'internal', error: String(error) });
       if (!started) {

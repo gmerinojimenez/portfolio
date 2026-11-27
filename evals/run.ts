@@ -13,6 +13,16 @@
  *   ANTHROPIC_API_KEY=... TYPESAFE_API_KEY=... pnpm eval --with-gate
  *                                              the questions with the gate in
  *                                              enforce mode in front of Claude
+ *   ANTHROPIC_API_KEY=... pnpm eval --orchestrator=langgraph
+ *                                              the questions through the real
+ *                                              handler with that orchestrator
+ *                                              (S18; `direct` is the
+ *                                              reference). Uses the gate in
+ *                                              enforce mode when
+ *                                              TYPESAFE_API_KEY is set, and
+ *                                              traces in LangSmith (project
+ *                                              portfolio-eval) when
+ *                                              LANGSMITH_API_KEY is set
  *   pnpm eval --regrade evals/results/<file>.json
  *                                              re-grade saved answers with the
  *                                              current grader and questions,
@@ -25,7 +35,14 @@
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { wrapAnthropic } from 'langsmith/wrappers/anthropic';
 import { AnthropicProvider } from '../src/server/ai/anthropic-provider';
+import { LangGraphOrchestrator } from '../src/server/ai/chat-graph';
+import {
+  ORCHESTRATORS,
+  type OrchestratorName,
+} from '../src/server/ai/chat-orchestrator';
+import { EVAL_PROJECT, createTracing } from '../src/server/ai/chat-tracing';
 import {
   buildAiContext,
   readContentSnapshot,
@@ -56,7 +73,13 @@ import {
   type Grade,
   type OfferGrade,
 } from './grade';
-import { gateExpectation, summarizeGate, type GateOutcome } from './gate';
+import {
+  gateExpectation,
+  percentile,
+  summarizeGate,
+  type GateOutcome,
+} from './gate';
+import { createEvalHandler } from './through-handler';
 
 /** Questions with the file-wide `mustNotMentionAnywhere` added to each one. */
 function loadQuestions(): EvalQuestion[] {
@@ -176,6 +199,77 @@ if (!apiKey) {
   console.log(
     'ANTHROPIC_API_KEY is not set: skipping the eval (no API calls made).',
   );
+  process.exit(0);
+}
+
+const orchestratorArg = process.argv
+  .find((a) => a.startsWith('--orchestrator='))
+  ?.slice('--orchestrator='.length);
+if (orchestratorArg !== undefined) {
+  if (!ORCHESTRATORS.includes(orchestratorArg as OrchestratorName)) {
+    console.error(`--orchestrator must be one of ${ORCHESTRATORS.join(', ')}`);
+    process.exit(1);
+  }
+  const name = orchestratorArg as OrchestratorName;
+  const langsmithKey = process.env.LANGSMITH_API_KEY;
+  const tracing =
+    name === 'langgraph' && langsmithKey
+      ? createTracing({ apiKey: langsmithKey, projectName: EVAL_PROJECT })
+      : undefined;
+  const evalContext = buildAiContext(readContentSnapshot('src/content'));
+  const ask = createEvalHandler({
+    provider: new AnthropicProvider({
+      apiKey,
+      ...(tracing ? { wrapClient: (client) => wrapAnthropic(client) } : {}),
+    }),
+    context: evalContext,
+    ...(scopeGate ? { scopeGate } : {}),
+    ...(name === 'langgraph'
+      ? {
+          createChatOrchestrator: (steps) =>
+            new LangGraphOrchestrator(steps, tracing),
+        }
+      : {}),
+  });
+  const only = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+  const picked = loadQuestions().filter(
+    (q) => !only.length || only.includes(q.id),
+  );
+  const handled = [];
+  // Sequential on purpose, as in the main eval: later questions hit the cache.
+  for (const q of picked) {
+    const reply = await ask(q.locale, turnsOf(q));
+    const graded = reply.error
+      ? null
+      : grade(q, reply.answer, evalContext.locales[q.locale].sources);
+    handled.push({ id: q.id, type: q.type, ...reply, grade: graded });
+    console.log(
+      `${graded?.pass ? 'PASS' : 'FAIL'}  ${q.id.padEnd(28)} first ${reply.firstDeltaMs ?? '-'} ms  total ${reply.totalMs} ms  ${reply.stopReason}${reply.error ? `  ${reply.error}` : ''}`,
+    );
+  }
+  const firstDeltas = handled
+    .map((r) => r.firstDeltaMs)
+    .filter((ms): ms is number => ms !== null);
+  const totals = handled.map((r) => r.totalMs);
+  const summary = {
+    orchestrator: name,
+    tracing: tracing ? EVAL_PROJECT : false,
+    scopeGate: scopeGate?.model ?? 'off',
+    questions: handled.length,
+    passed: handled.filter((r) => r.grade?.pass).length,
+    firstDeltaMs: {
+      p50: percentile(firstDeltas, 50),
+      p95: percentile(firstDeltas, 95),
+    },
+    totalMs: { p50: percentile(totals, 50), p95: percentile(totals, 95) },
+    totalCostUsd: handled.reduce((sum, r) => sum + r.costUsd, 0),
+  };
+  const out = writeResults(
+    { summary, results: handled },
+    `-orchestrator-${name}`,
+  );
+  console.log(JSON.stringify(summary, null, 2));
+  console.log(`Wrote ${out}`);
   process.exit(0);
 }
 

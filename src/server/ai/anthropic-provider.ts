@@ -17,6 +17,8 @@ export interface AnthropicProviderOptions {
   effort?: 'low' | 'medium' | 'high';
   /** Per-attempt timeout in ms. */
   timeoutMs?: number;
+  /** Wraps the SDK client, e.g. with LangSmith's `wrapAnthropic` (S18). */
+  wrapClient?: (client: Anthropic) => Anthropic;
 }
 
 function toProviderError(error: unknown): ProviderError {
@@ -51,11 +53,12 @@ export class AnthropicProvider implements AiProvider {
   constructor(options: AnthropicProviderOptions) {
     this.model = options.model ?? MODEL;
     this.effort = options.effort ?? 'low';
-    this.client = new Anthropic({
+    const client = new Anthropic({
       apiKey: options.apiKey,
       maxRetries: 1,
       timeout: options.timeoutMs ?? 30_000,
     });
+    this.client = options.wrapClient ? options.wrapClient(client) : client;
   }
 
   async *stream(request: ProviderRequest): AsyncIterable<ProviderEvent> {
