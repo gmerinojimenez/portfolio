@@ -1,4 +1,4 @@
-import { scopeGateLinks, type AiConfig } from './ai-config';
+import { scopeGateLinks, tracingLinks, type AiConfig } from './ai-config';
 
 /**
  * AI backend (S09): a streaming Lambda behind a Function URL, one DynamoDB
@@ -10,6 +10,8 @@ import { scopeGateLinks, type AiConfig } from './ai-config';
  *   pnpm exec sst secret set IpHashSalt "$(openssl rand -hex 32)" --stage <stage>
  * With the scope gate (S17) in shadow or enforce, also:
  *   pnpm exec sst secret set TypeSafeApiKey <key> --stage <stage>
+ * With LangSmith tracing (S18), also:
+ *   pnpm exec sst secret set LangSmithApiKey <key> --stage <stage>
  *
  * `contextDir` holds context.json, generated from src/content right before
  * this runs (see sst.config.ts); it is copied next to the handler.
@@ -22,6 +24,10 @@ export function createAi(config: AiConfig, contextDir: string) {
   const gateLinks = scopeGateLinks(
     config,
     () => new sst.Secret('TypeSafeApiKey'),
+  );
+  const tracingLinkList = tracingLinks(
+    config,
+    () => new sst.Secret('LangSmithApiKey'),
   );
 
   const table = new sst.aws.Dynamo('AiTable', {
@@ -42,7 +48,13 @@ export function createAi(config: AiConfig, contextDir: string) {
     streaming: true,
     // Only the secrets are linked: linking the table would grant
     // dynamodb:* on it, so its access is declared by hand below.
-    link: [anthropicApiKey, turnstileSecret, ipHashSalt, ...gateLinks],
+    link: [
+      anthropicApiKey,
+      turnstileSecret,
+      ipHashSalt,
+      ...gateLinks,
+      ...tracingLinkList,
+    ],
     permissions: [
       {
         actions: ['dynamodb:UpdateItem', 'dynamodb:PutItem'],
@@ -54,6 +66,8 @@ export function createAi(config: AiConfig, contextDir: string) {
       AI_ALLOWED_ORIGINS: allowedOrigins.join(','),
       AI_DAILY_LIMIT_USD: String(config.dailyLimitUsd),
       AI_SCOPE_GATE: config.scopeGate,
+      AI_ORCHESTRATOR: config.orchestrator,
+      AI_TRACING: String(config.tracing),
     },
     copyFiles: [{ from: contextDir, to: 'ai-context' }],
     logging: { retention: '1 month' },

@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { BaseCallbackHandler } from '@langchain/core/callbacks/base';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { LangGraphOrchestrator } from './chat-graph';
+import { ORCHESTRATORS, type OrchestratorName } from './chat-orchestrator';
 import type { AiContextFile } from './context';
 import {
   createAiHandler,
@@ -22,6 +25,7 @@ import type {
 } from './scope-gate';
 import { SpendBrake, dayKey } from './spend-brake';
 import { MemoryStore } from './store';
+import type { StepDeps } from './chat-steps';
 
 const ORIGIN = 'https://example.com';
 const NOW = new Date('2026-11-18T10:00:00Z');
@@ -52,6 +56,16 @@ const usage: TokenUsage = {
   cacheReadInputTokens: 2_000,
   cacheCreationInputTokens: 0,
 };
+
+/** The chat orchestrator under test; offers always go direct. */
+let orchestrator: OrchestratorName = 'direct';
+const withOrchestrator = () =>
+  orchestrator === 'langgraph'
+    ? {
+        createChatOrchestrator: (steps: StepDeps) =>
+          new LangGraphOrchestrator(steps),
+      }
+    : {};
 
 class FakeProvider implements AiProvider {
   readonly model = 'fake-model';
@@ -138,6 +152,7 @@ function setup(
     now: () => NOW,
     newRequestId: () => 'req-1',
     logger: (record) => operational.push(record),
+    ...withOrchestrator(),
   });
   const run = async (overrides: Partial<HttpRequest> = {}, body?: unknown) => {
     const sink = new MemorySink();
@@ -162,7 +177,11 @@ function setup(
   return { store, provider, run, operational };
 }
 
-describe('AI handler', () => {
+describe.each(ORCHESTRATORS)('AI handler (%s)', (name) => {
+  beforeEach(() => {
+    orchestrator = name;
+  });
+
   it('streams meta, deltas and done with cited sources, cost and usage', async () => {
     const { run, store, provider } = setup();
     const sink = await run();
@@ -375,6 +394,7 @@ describe('AI handler', () => {
       context,
       allowedOrigins: [ORIGIN],
       logger: () => {},
+      ...withOrchestrator(),
     });
     const sink = new MemorySink();
     await handle(
@@ -411,6 +431,7 @@ describe('AI handler', () => {
       context,
       allowedOrigins: [ORIGIN],
       logger: () => {},
+      ...withOrchestrator(),
     });
     const sink = new MemorySink();
     await handle(
@@ -433,6 +454,11 @@ describe('AI handler', () => {
 });
 
 describe('AI handler, offer mode (S11)', () => {
+  // Offers take the direct path even when questions use the graph.
+  beforeEach(() => {
+    orchestrator = 'langgraph';
+  });
+
   const analysis = {
     summary: 'Encaja en lo principal.',
     matches: [
@@ -586,160 +612,396 @@ const rejecting = (language?: 'es' | 'en') =>
 const passing = () =>
   new FakeGate({ verdict: 'pass', inScope: 0.92, language: 'es', ...gateMeta });
 
-describe('AI handler with the scope gate (S17)', () => {
-  it('passes in-scope questions on to the model and logs the score', async () => {
-    const scopeGate = passing();
-    const { run, provider, store } = setup({ scopeGate });
-    const sink = await run();
-
-    expect(sink.status).toBe(200);
-    expect(provider.requests).toHaveLength(1);
-    expect(scopeGate.inputs[0]).toEqual({
-      locale: 'es',
-      messages: [{ role: 'user', content: '¿Ha hecho apps de banca?' }],
-      topics: ['Demo Co', 'App'],
+describe.each(ORCHESTRATORS)(
+  'AI handler with the scope gate (S17, %s)',
+  (name) => {
+    beforeEach(() => {
+      orchestrator = name;
     });
-    expect(store.logs[0]).toMatchObject({
-      outcome: 'answered',
-      gate: 'pass',
-      gateScore: 0.92,
-      gateModel: 'jev-test',
-      gateLatencyMs: 120,
-      // 1000 tokens x 0.042 USD/MTok = 42 µUSD
-      gateCostMicroUsd: 42,
-      costMicroUsd: 55,
-    });
-    // The brake counts both: 42 (gate) + 55 (model).
-    expect(store.items.get(dayKey(NOW))).toEqual({
-      committed: 97,
-      spent: 97,
-      requests: 1,
-    });
-  });
 
-  it('answers a rejected question itself, without calling the model', async () => {
-    const { run, provider, store } = setup({ scopeGate: rejecting('en') });
-    const sink = await run();
+    it('passes in-scope questions on to the model and logs the score', async () => {
+      const scopeGate = passing();
+      const { run, provider, store } = setup({ scopeGate });
+      const sink = await run();
 
-    expect(sink.status).toBe(200);
-    expect(provider.requests).toHaveLength(0);
-    const events = sink.events;
-    expect(events.map((e) => e.type)).toEqual(['meta', 'delta', 'done']);
-    expect(events[0]).toEqual({
-      type: 'meta',
-      requestId: 'req-1',
-      model: 'jev-test',
-    });
-    // In the language the gate detected, not the page locale.
-    expect(events[1]).toMatchObject({
-      text: expect.stringContaining('professional profile'),
-    });
-    expect(events[2]).toMatchObject({
-      type: 'done',
-      sources: [],
-      stopReason: 'off_topic',
-      costUsd: 0.000042,
-      model: 'jev-test',
-    });
-    expect(store.logs[0]).toMatchObject({
-      outcome: 'off_topic',
-      gate: 'reject',
-      gateScore: 0.05,
-      costMicroUsd: 0,
-      gateCostMicroUsd: 42,
-      sources: [],
-    });
-    expect(store.items.get(dayKey(NOW))).toEqual({ committed: 42, spent: 42 });
-  });
-
-  it('falls back to the page locale when the language is unsure', async () => {
-    const { run } = setup({ scopeGate: rejecting() });
-    const sink = await run();
-    expect(sink.events[1]).toMatchObject({
-      text: expect.stringContaining('perfil profesional'),
-    });
-  });
-
-  it('lets the question through when the gate fails (fail open)', async () => {
-    const scopeGate = new FakeGate({
-      verdict: 'error',
-      reason: 'timeout',
-      model: 'jev-test',
-      inputTokens: 0,
-      latencyMs: 1_500,
-    });
-    const { run, provider, store } = setup({ scopeGate });
-    const sink = await run();
-
-    expect(sink.status).toBe(200);
-    expect(provider.requests).toHaveLength(1);
-    expect(store.logs[0]).toMatchObject({
-      outcome: 'answered',
-      gate: 'error',
-      gateError: 'timeout',
-      gateCostMicroUsd: 0,
-    });
-    expect(store.logs[0]).not.toHaveProperty('gateScore');
-  });
-
-  it('never blocks in shadow mode, but logs what it would have done', async () => {
-    const { run, provider, store } = setup({
-      scopeGate: rejecting('es'),
-      scopeGateMode: 'shadow',
-    });
-    const sink = await run();
-
-    expect(sink.status).toBe(200);
-    expect(provider.requests).toHaveLength(1);
-    expect(store.logs[0]).toMatchObject({
-      outcome: 'answered',
-      gate: 'shadow_reject',
-      gateScore: 0.05,
-    });
-  });
-
-  it('does not run in off mode', async () => {
-    const scopeGate = rejecting();
-    const { run, provider } = setup({ scopeGate, scopeGateMode: 'off' });
-    await run();
-    expect(scopeGate.inputs).toHaveLength(0);
-    expect(provider.requests).toHaveLength(1);
-  });
-
-  it('runs after the per-IP limit and Turnstile', async () => {
-    const limitedGate = passing();
-    const limited = setup({ scopeGate: limitedGate, perMinute: 1 });
-    await limited.run();
-    expect((await limited.run()).status).toBe(429);
-    expect(limitedGate.inputs).toHaveLength(1);
-
-    const botGate = passing();
-    const bot = setup({ scopeGate: botGate, turnstile: false });
-    expect((await bot.run()).status).toBe(403);
-    expect(botGate.inputs).toHaveLength(0);
-  });
-
-  it('never runs on job offers', async () => {
-    const scopeGate = rejecting();
-    const { run } = setup({ scopeGate });
-    await run(
-      {},
-      {
-        mode: 'offer',
+      expect(sink.status).toBe(200);
+      expect(provider.requests).toHaveLength(1);
+      expect(scopeGate.inputs[0]).toEqual({
         locale: 'es',
-        turnstileToken: 'token',
-        offer: 'Buscamos ingeniera de IA.',
-      },
-    );
-    expect(scopeGate.inputs).toHaveLength(0);
+        messages: [{ role: 'user', content: '¿Ha hecho apps de banca?' }],
+        topics: ['Demo Co', 'App'],
+      });
+      expect(store.logs[0]).toMatchObject({
+        outcome: 'answered',
+        gate: 'pass',
+        gateScore: 0.92,
+        gateModel: 'jev-test',
+        gateLatencyMs: 120,
+        // 1000 tokens x 0.042 USD/MTok = 42 µUSD
+        gateCostMicroUsd: 42,
+        costMicroUsd: 55,
+      });
+      // The brake counts both: 42 (gate) + 55 (model).
+      expect(store.items.get(dayKey(NOW))).toEqual({
+        committed: 97,
+        spent: 97,
+        requests: 1,
+      });
+    });
+
+    it('answers a rejected question itself, without calling the model', async () => {
+      const { run, provider, store } = setup({ scopeGate: rejecting('en') });
+      const sink = await run();
+
+      expect(sink.status).toBe(200);
+      expect(provider.requests).toHaveLength(0);
+      const events = sink.events;
+      expect(events.map((e) => e.type)).toEqual(['meta', 'delta', 'done']);
+      expect(events[0]).toEqual({
+        type: 'meta',
+        requestId: 'req-1',
+        model: 'jev-test',
+      });
+      // In the language the gate detected, not the page locale.
+      expect(events[1]).toMatchObject({
+        text: expect.stringContaining('professional profile'),
+      });
+      expect(events[2]).toMatchObject({
+        type: 'done',
+        sources: [],
+        stopReason: 'off_topic',
+        costUsd: 0.000042,
+        model: 'jev-test',
+      });
+      expect(store.logs[0]).toMatchObject({
+        outcome: 'off_topic',
+        gate: 'reject',
+        gateScore: 0.05,
+        costMicroUsd: 0,
+        gateCostMicroUsd: 42,
+        sources: [],
+      });
+      expect(store.items.get(dayKey(NOW))).toEqual({
+        committed: 42,
+        spent: 42,
+      });
+    });
+
+    it('falls back to the page locale when the language is unsure', async () => {
+      const { run } = setup({ scopeGate: rejecting() });
+      const sink = await run();
+      expect(sink.events[1]).toMatchObject({
+        text: expect.stringContaining('perfil profesional'),
+      });
+    });
+
+    it('lets the question through when the gate fails (fail open)', async () => {
+      const scopeGate = new FakeGate({
+        verdict: 'error',
+        reason: 'timeout',
+        model: 'jev-test',
+        inputTokens: 0,
+        latencyMs: 1_500,
+      });
+      const { run, provider, store } = setup({ scopeGate });
+      const sink = await run();
+
+      expect(sink.status).toBe(200);
+      expect(provider.requests).toHaveLength(1);
+      expect(store.logs[0]).toMatchObject({
+        outcome: 'answered',
+        gate: 'error',
+        gateError: 'timeout',
+        gateCostMicroUsd: 0,
+      });
+      expect(store.logs[0]).not.toHaveProperty('gateScore');
+    });
+
+    it('never blocks in shadow mode, but logs what it would have done', async () => {
+      const { run, provider, store } = setup({
+        scopeGate: rejecting('es'),
+        scopeGateMode: 'shadow',
+      });
+      const sink = await run();
+
+      expect(sink.status).toBe(200);
+      expect(provider.requests).toHaveLength(1);
+      expect(store.logs[0]).toMatchObject({
+        outcome: 'answered',
+        gate: 'shadow_reject',
+        gateScore: 0.05,
+      });
+    });
+
+    it('does not run in off mode', async () => {
+      const scopeGate = rejecting();
+      const { run, provider } = setup({ scopeGate, scopeGateMode: 'off' });
+      await run();
+      expect(scopeGate.inputs).toHaveLength(0);
+      expect(provider.requests).toHaveLength(1);
+    });
+
+    it('runs after the per-IP limit and Turnstile', async () => {
+      const limitedGate = passing();
+      const limited = setup({ scopeGate: limitedGate, perMinute: 1 });
+      await limited.run();
+      expect((await limited.run()).status).toBe(429);
+      expect(limitedGate.inputs).toHaveLength(1);
+
+      const botGate = passing();
+      const bot = setup({ scopeGate: botGate, turnstile: false });
+      expect((await bot.run()).status).toBe(403);
+      expect(botGate.inputs).toHaveLength(0);
+    });
+
+    it('never runs on job offers', async () => {
+      const scopeGate = rejecting();
+      const { run } = setup({ scopeGate });
+      await run(
+        {},
+        {
+          mode: 'offer',
+          locale: 'es',
+          turnstileToken: 'token',
+          offer: 'Buscamos ingeniera de IA.',
+        },
+      );
+      expect(scopeGate.inputs).toHaveLength(0);
+    });
+
+    it('keeps the question text out of the operational log', async () => {
+      const { run, operational } = setup({ scopeGate: rejecting() });
+      await run();
+      expect(JSON.stringify(operational)).not.toContain('banca');
+      expect(operational).toContainEqual(
+        expect.objectContaining({ outcome: 'off_topic' }),
+      );
+    });
+  },
+);
+
+describe.each(ORCHESTRATORS)('AI handler orchestration (S18, %s)', (name) => {
+  beforeEach(() => {
+    orchestrator = name;
   });
 
-  it('keeps the question text out of the operational log', async () => {
-    const { run, operational } = setup({ scopeGate: rejecting() });
-    await run();
-    expect(JSON.stringify(operational)).not.toContain('banca');
-    expect(operational).toContainEqual(
-      expect.objectContaining({ outcome: 'off_topic' }),
+  it('ends the response before settling the brake and writing the log', async () => {
+    const store = new MemoryStore();
+    let releaseLog!: () => void;
+    const logGate = new Promise<void>((resolve) => (releaseLog = resolve));
+    const sink = new MemorySink();
+    let endedBeforeLog: number | undefined;
+    const handle = createAiHandler({
+      provider: new FakeProvider(),
+      brake: new SpendBrake(store, 100_000),
+      rateLimiter: new RateLimiter(store),
+      offerRateLimiter: new RateLimiter(store, OFFER_RATE_LIMITS, 'offer'),
+      log: {
+        put: async (entry) => {
+          endedBeforeLog = sink.ended;
+          await logGate;
+          await store.put(entry);
+        },
+      },
+      verifyTurnstile: async () => true,
+      hashIp: (ip) => ip,
+      context,
+      allowedOrigins: [ORIGIN],
+      logger: () => {},
+      ...withOrchestrator(),
+    });
+    const pending = handle(
+      {
+        method: 'POST',
+        headers: { origin: ORIGIN },
+        sourceIp: '1.1.1.1',
+        body: JSON.stringify({
+          locale: 'es',
+          turnstileToken: 't',
+          messages: [{ role: 'user', content: 'hola' }],
+        }),
+      },
+      sink,
     );
+    // The log write is held: the response must end anyway.
+    await vi.waitFor(() => expect(endedBeforeLog).toBeDefined());
+    await vi.waitFor(() => expect(sink.ended).toBe(1));
+    expect(sink.events.at(-1)?.type).toBe('done');
+    expect(store.logs).toHaveLength(0);
+    releaseLog();
+    await pending;
+    expect(store.logs).toHaveLength(1);
+  });
+
+  it('answers 500 when a step throws unexpectedly', async () => {
+    const store = new MemoryStore();
+    const brake = new SpendBrake(store, 100_000);
+    brake.reserve = async () => {
+      throw new Error('dynamo down');
+    };
+    const operational: Record<string, unknown>[] = [];
+    const handle = createAiHandler({
+      provider: new FakeProvider(),
+      brake,
+      rateLimiter: new RateLimiter(store),
+      offerRateLimiter: new RateLimiter(store, OFFER_RATE_LIMITS, 'offer'),
+      log: store,
+      verifyTurnstile: async () => true,
+      hashIp: (ip) => ip,
+      context,
+      allowedOrigins: [ORIGIN],
+      logger: (record) => operational.push(record),
+      ...withOrchestrator(),
+    });
+    const sink = new MemorySink();
+    await handle(
+      {
+        method: 'POST',
+        headers: { origin: ORIGIN },
+        sourceIp: '1.1.1.1',
+        body: JSON.stringify({
+          locale: 'es',
+          turnstileToken: 't',
+          messages: [{ role: 'user', content: 'hola' }],
+        }),
+      },
+      sink,
+    );
+    expect(sink.status).toBe(500);
+    expect(sink.events).toEqual([
+      expect.objectContaining({ type: 'error', code: 'internal' }),
+    ]);
+    expect(sink.ended).toBe(1);
+    expect(operational).toContainEqual(
+      expect.objectContaining({ outcome: 'internal' }),
+    );
+  });
+});
+
+describe('LangGraph orchestrator (S18)', () => {
+  /** Records what a trace would receive: every run's inputs and outputs. */
+  class Recorder extends BaseCallbackHandler {
+    name = 'recorder';
+    runs: { name?: string; inputs: unknown }[] = [];
+    outputs: unknown[] = [];
+    // Positional, as @langchain/core's CallbackManager calls it.
+    override async handleChainStart(...args: unknown[]) {
+      this.runs.push({ name: args[7] as string | undefined, inputs: args[1] });
+    }
+    override async handleChainEnd(outputs: unknown) {
+      this.outputs.push(outputs);
+    }
+  }
+
+  function graphSetup(recorder: Recorder, flush = async () => {}) {
+    const store = new MemoryStore();
+    const gate = new FakeGate({
+      verdict: 'pass',
+      inScope: 0.9,
+      model: 'jev-test',
+      inputTokens: 1_000,
+      latencyMs: 120,
+    });
+    const handle = createAiHandler({
+      provider: new FakeProvider(),
+      brake: new SpendBrake(store, 100_000),
+      rateLimiter: new RateLimiter(store),
+      offerRateLimiter: new RateLimiter(store, OFFER_RATE_LIMITS, 'offer'),
+      log: store,
+      verifyTurnstile: async () => true,
+      hashIp: (ip) => `hash-${ip}`,
+      context,
+      scopeGate: gate,
+      scopeGateMode: 'enforce',
+      allowedOrigins: [ORIGIN],
+      logger: () => {},
+      createChatOrchestrator: (steps) =>
+        new LangGraphOrchestrator(steps, {
+          callbacks: () => [recorder],
+          flush,
+        }),
+    });
+    const run = async () => {
+      const sink = new MemorySink();
+      await handle(
+        {
+          method: 'POST',
+          headers: { origin: ORIGIN },
+          sourceIp: '203.0.113.7',
+          body: JSON.stringify({
+            locale: 'es',
+            turnstileToken: 'secret-turnstile-token',
+            messages: [{ role: 'user', content: '¿Ha hecho apps de banca?' }],
+          }),
+        },
+        sink,
+      );
+      return sink;
+    };
+    return { run, store };
+  }
+
+  it('runs gate, budget, answer and finish as traced nodes', async () => {
+    const recorder = new Recorder();
+    const { run } = graphSetup(recorder);
+    const sink = await run();
+    expect(sink.events.at(-1)?.type).toBe('done');
+    const names = recorder.runs.map((r) => r.name);
+    expect(names[0]).toBe('chat');
+    for (const node of ['gate', 'budget', 'answer', 'finish']) {
+      expect(names).toContain(node);
+    }
+  });
+
+  it('never puts the IP, its hash or the Turnstile token in the state', async () => {
+    const recorder = new Recorder();
+    const { run } = graphSetup(recorder);
+    await run();
+    const traced = JSON.stringify([recorder.runs, recorder.outputs]);
+    expect(traced).toContain('banca');
+    expect(traced).not.toContain('203.0.113.7');
+    expect(traced).not.toContain('hash-');
+    expect(traced).not.toContain('secret-turnstile-token');
+  });
+
+  it('flushes the traces after the response has ended', async () => {
+    const recorder = new Recorder();
+    let endedAtFlush: number | undefined;
+    const sinkRef = new MemorySink();
+    const store = new MemoryStore();
+    const handle = createAiHandler({
+      provider: new FakeProvider(),
+      brake: new SpendBrake(store, 100_000),
+      rateLimiter: new RateLimiter(store),
+      offerRateLimiter: new RateLimiter(store, OFFER_RATE_LIMITS, 'offer'),
+      log: store,
+      verifyTurnstile: async () => true,
+      hashIp: (ip) => ip,
+      context,
+      allowedOrigins: [ORIGIN],
+      logger: () => {},
+      createChatOrchestrator: (steps) =>
+        new LangGraphOrchestrator(steps, {
+          callbacks: () => [recorder],
+          flush: async () => {
+            endedAtFlush = sinkRef.ended;
+          },
+        }),
+    });
+    await handle(
+      {
+        method: 'POST',
+        headers: { origin: ORIGIN },
+        sourceIp: '1.1.1.1',
+        body: JSON.stringify({
+          locale: 'es',
+          turnstileToken: 't',
+          messages: [{ role: 'user', content: 'hola' }],
+        }),
+      },
+      sinkRef,
+    );
+    expect(endedAtFlush).toBe(1);
+    expect(store.logs).toHaveLength(1);
   });
 });

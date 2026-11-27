@@ -9,15 +9,21 @@
  *   AI_DAILY_LIMIT_USD     spend brake limit
  *   AI_CONTEXT_PATH        optional; defaults to <task root>/ai-context/context.json
  *   AI_SCOPE_GATE          off (default), shadow or enforce (S17)
+ *   AI_ORCHESTRATOR        direct (default) or langgraph (S18)
+ *   AI_TRACING             "true": LangSmith tracing of the graph (S18)
  * Secrets come from SST links: AnthropicApiKey, TurnstileSecret, IpHashSalt,
- * and TypeSafeApiKey when the scope gate runs.
+ * TypeSafeApiKey when the scope gate runs and LangSmithApiKey when tracing.
  */
 import { join } from 'node:path';
 import type { LambdaFunctionURLEvent } from 'aws-lambda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { Resource } from 'sst';
+import { wrapAnthropic } from 'langsmith/wrappers/anthropic';
 import { AnthropicProvider } from './anthropic-provider';
+import { LangGraphOrchestrator } from './chat-graph';
+import { ORCHESTRATORS, type OrchestratorName } from './chat-orchestrator';
+import { PRODUCTION_PROJECT, createTracing } from './chat-tracing';
 import { CONTEXT_FILE_NAME, loadAiContext } from './context';
 import {
   createAiHandler,
@@ -79,6 +85,21 @@ function getHandler() {
       `AI_SCOPE_GATE must be one of ${SCOPE_GATE_MODES.join(', ')}`,
     );
   }
+  const orchestrator = (process.env.AI_ORCHESTRATOR ??
+    'direct') as OrchestratorName;
+  if (!ORCHESTRATORS.includes(orchestrator)) {
+    throw new Error(
+      `AI_ORCHESTRATOR must be one of ${ORCHESTRATORS.join(', ')}`,
+    );
+  }
+  // Only the graph is traced (infra/ai-config.ts enforces it at deploy).
+  const tracing =
+    orchestrator === 'langgraph' && process.env.AI_TRACING === 'true'
+      ? createTracing({
+          apiKey: secret('LangSmithApiKey'),
+          projectName: PRODUCTION_PROJECT,
+        })
+      : undefined;
   const contextPath =
     process.env.AI_CONTEXT_PATH ??
     join(
@@ -88,7 +109,12 @@ function getHandler() {
     );
 
   cached = createAiHandler({
-    provider: new AnthropicProvider({ apiKey: secret('AnthropicApiKey') }),
+    provider: new AnthropicProvider({
+      apiKey: secret('AnthropicApiKey'),
+      // The model call shows up as an LLM span under the graph's `answer`
+      // node. Outside a traced run (job offers) nothing is sent.
+      ...(tracing ? { wrapClient: (client) => wrapAnthropic(client) } : {}),
+    }),
     brake: new SpendBrake(store, usdToMicroUsd(limitUsd)),
     rateLimiter: new RateLimiter(store),
     offerRateLimiter: new RateLimiter(store, OFFER_RATE_LIMITS, 'offer-rate'),
@@ -108,6 +134,12 @@ function getHandler() {
           scopeGateMode: gateMode,
         }),
     allowedOrigins,
+    ...(orchestrator === 'langgraph'
+      ? {
+          createChatOrchestrator: (steps) =>
+            new LangGraphOrchestrator(steps, tracing),
+        }
+      : {}),
   });
   return cached;
 }

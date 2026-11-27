@@ -28,6 +28,8 @@ Exported in the shell before running `sst deploy`.
 | `PORTFOLIO_AI_ALLOWED_ORIGINS` | Extra origins allowed to call it, e.g. the CloudFront URL.         |
 | `PORTFOLIO_AI_DAILY_LIMIT_USD` | Daily spend brake for Claude calls, default 0.5.                   |
 | `PORTFOLIO_AI_SCOPE_GATE`      | Scope gate (S17): `off` (default), `shadow` or `enforce`.          |
+| `PORTFOLIO_AI_ORCHESTRATOR`    | Chat orchestration (S18): `direct` (default) or `langgraph`.       |
+| `PORTFOLIO_AI_TRACING`         | `true` traces the graph in LangSmith (EU). Needs `langgraph`.      |
 
 ## Deploying
 
@@ -77,6 +79,13 @@ With `PORTFOLIO_AI_SCOPE_GATE=shadow` or `enforce`, also set the Jev key:
 
 ```sh
 pnpm exec sst secret set TypeSafeApiKey <key> --stage production
+```
+
+With `PORTFOLIO_AI_TRACING=true`, also set the LangSmith key. It must belong to
+an organization created in the EU region (eu.smith.langchain.com):
+
+```sh
+pnpm exec sst secret set LangSmithApiKey <key> --stage production
 ```
 
 Each deploy rebuilds `.ai-context/context.json` from `src/content` and ships it

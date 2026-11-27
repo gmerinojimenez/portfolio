@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { LOCAL_DEV_ORIGIN, resolveAiConfig, scopeGateLinks } from './ai-config';
+import {
+  LOCAL_DEV_ORIGIN,
+  resolveAiConfig,
+  scopeGateLinks,
+  tracingLinks,
+} from './ai-config';
 import { resolveConfig } from './config';
 
 describe('resolveAiConfig', () => {
@@ -10,6 +15,8 @@ describe('resolveAiConfig', () => {
       allowedOrigins: [],
       dailyLimitUsd: 0.5,
       scopeGate: 'off',
+      orchestrator: 'direct',
+      tracing: false,
     });
   });
 
@@ -81,5 +88,32 @@ describe('resolveAiConfig', () => {
     expect(created).toBe(0);
     expect(scopeGateLinks(mode('shadow'), secret)).toEqual([1]);
     expect(scopeGateLinks(mode('enforce'), secret)).toEqual([2]);
+  });
+
+  it('reads the orchestrator and tracing, and only links LangSmith when tracing', () => {
+    const config = resolveConfig({}, 'production');
+    const resolve = (orchestrator?: string, tracing?: string) =>
+      resolveAiConfig(
+        {
+          PORTFOLIO_AI_ORCHESTRATOR: orchestrator,
+          PORTFOLIO_AI_TRACING: tracing,
+        },
+        config,
+      );
+    expect(resolve().orchestrator).toBe('direct');
+    expect(resolve(' langgraph ').orchestrator).toBe('langgraph');
+    expect(() => resolve('langchain')).toThrow(/PORTFOLIO_AI_ORCHESTRATOR/);
+    expect(resolve('langgraph', 'true').tracing).toBe(true);
+    expect(resolve('langgraph', 'false').tracing).toBe(false);
+    expect(() => resolve('langgraph', 'yes')).toThrow(/PORTFOLIO_AI_TRACING/);
+    // Only the graph is traced.
+    expect(() => resolve(undefined, 'true')).toThrow(/needs/);
+    expect(() => resolve('direct', 'true')).toThrow(/needs/);
+
+    let created = 0;
+    const secret = () => ++created;
+    expect(tracingLinks(resolve('langgraph'), secret)).toEqual([]);
+    expect(created).toBe(0);
+    expect(tracingLinks(resolve('langgraph', 'true'), secret)).toEqual([1]);
   });
 });
