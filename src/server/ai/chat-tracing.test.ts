@@ -28,6 +28,14 @@ describe('hideContext', () => {
       n: 3,
     });
   });
+
+  it('hides the document inside a longer text, as in the real model span', () => {
+    const instructions = 'The portfolio content is inside <portfolio_content>.';
+    expect(hideContext(`${instructions}\n${CONTEXT}\nAfter`)).toBe(
+      `${instructions}\n[context: ${CONTEXT.length} chars]\nAfter`,
+    );
+    expect(hideContext(instructions)).toBe(instructions);
+  });
 });
 
 interface Posted {

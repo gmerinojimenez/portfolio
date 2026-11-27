@@ -18,15 +18,21 @@ export const EVAL_PROJECT = 'portfolio-eval';
 /** Longest wait for pending traces after a response. */
 export const FLUSH_TIMEOUT_MS = 2_000;
 
-const CONTEXT_MARKER = '<portfolio_content';
+/**
+ * The content document as built by context-builder.ts. The prompt mentions a
+ * bare `<portfolio_content>` tag, which has no `locale`, so it never matches.
+ * The real wrapAnthropic span joins the system blocks into one string, so the
+ * document can sit in the middle of a longer text.
+ */
+const CONTEXT_DOCUMENT =
+  /<portfolio_content locale=[\s\S]*?(?:<\/portfolio_content>|$)/g;
 
 /** Replaces every copy of the content document with its length. */
 export function hideContext<T>(value: T): T {
   if (typeof value === 'string') {
-    return (
-      value.startsWith(CONTEXT_MARKER)
-        ? `[context: ${value.length} chars]`
-        : value
+    return value.replace(
+      CONTEXT_DOCUMENT,
+      (document) => `[context: ${document.length} chars]`,
     ) as T;
   }
   if (Array.isArray(value)) return value.map(hideContext) as T;
